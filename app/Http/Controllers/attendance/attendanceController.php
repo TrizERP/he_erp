@@ -1,0 +1,327 @@
+<?php
+
+namespace App\Http\Controllers\attendance;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use function App\Helpers\is_mobile;
+use App\Http\Controllers\AJAXController;
+use App\Http\Controllers\student\studentAttendanceController;
+use function App\Helpers\getCountDays;
+use App\Models\student\tblstudentModel;
+use DB;
+use Illuminate\Support\Facades\Date;
+
+class attendanceController extends Controller
+{
+    //
+    public function index(Request $request){
+        $type= $request->get('type');
+        $sub_institute_id = session()->get('sub_institute_id');
+        $syear = session()->get('syear');
+        $user_id=session()->get('user_id');
+        $todayDate = Date::now();
+        $formattedDate = $todayDate->format('Y-m-d'); 
+
+        $res['show'] = $this->get_proxy($request);
+        // echo "<pre>";print_r($res);exit;
+
+        return is_mobile($type, 'attendance/show', $res, 'view');
+    }
+
+    public function get_proxy($request){
+        if(session()->get('user_profile_name') == "Lecturer" || session()->get('user_profile_name') == "LMS Teacher"){
+                $get_proxy = DB::table('proxy_master')->where(['syear'=>$syear,'sub_institute_id'=>$sub_institute_id])->where('teacher_id',$user_id)->whereRaw('proxy_date = "'.$formattedDate.'"')->get()->toArray();
+              
+                if(!empty($get_proxy)){
+                    return "1"; 
+                }
+            }elseif(session()->get('user_profile_name') == "Admin" || session()->get('user_profile_name') == "Super Admin"){
+                    return  "1"; 
+                }
+    }
+    public function create(Request $request)
+    {
+            // echo "<pre>";print_r($request->all());exit;
+        $term_id = session()->get('term_id');
+        $sub_institute_id = session()->get('sub_institute_id');
+        $syear = session()->get('syear');
+
+        $type = $request->input('type');
+        $date = $request->input('from_date');
+        $marking_period_id = session()->get('term_id');
+        $res['show'] = $this->get_proxy($request);
+
+        if ($type == "API") {
+            $term_id = $request->input('term_id');
+            $syear = $request->input('syear');
+            $sub_institute_id = $request->input('sub_institute_id');
+        } else {
+            $term_id = $request->session()->get('term_id');
+            $syear = $request->session()->get('syear');
+            $sub_institute_id = $request->session()->get('sub_institute_id');
+        }
+
+        $standard = $request->standard;
+        $division = $request->division;
+
+        $sundays = getCountDays($date, $date);
+
+        $holidays = DB::table("calendar_events")
+            ->where('school_date', '=', $date)
+            ->whereIn('event_type', ['holiday', 'vacation'])
+            ->where('sub_institute_id', '=', $sub_institute_id)
+            ->where('syear', '=', $syear)
+            ->whereRaw('FIND_IN_SET(?, standard)', [$standard])
+            ->get()
+            ->toArray();
+
+
+        if (!empty($sundays)) {
+            $sundays = array_map(function ($value) {
+                return (int)date('d', strtotime($value));
+            }, $sundays['S']);
+        }
+
+        // ... (The rest of your code)
+        unset($sundays['S']);
+
+        // $student_data = SearchStudent($grade, $standard, $division, $sub_institute_id, $syear);
+        $extraSearchArray = [];
+        $extraSearchArray['tblstudent.sub_institute_id'] = $sub_institute_id;
+        $extraSearchArray['tblstudent_enrollment.syear'] = $syear;
+        $extraSearchArray['tblstudent.status'] = 1;
+        if ($standard != '') {
+            $extraSearchArray['tblstudent_enrollment.standard_id'] = $standard;
+        }
+        if ($division != '') {
+            $extraSearchArray['tblstudent_enrollment.section_id'] = $division;
+        }
+
+        $extraRaw = " 1 = 1 AND tblstudent_enrollment.end_date IS NULL ";
+        // search by batch 
+        if($request->has('batch') && $request->get('batch') !=''){
+            // echo "batch";exit;
+            $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'standard_id'=>$standard,'division_id'=>$division])->get()->toArray();
+            $res['batchs']=$batchs;    
+            
+            $extraRaw.=" AND batch.id='".$request->batch."'";
+        }
+            $res['batch_id'] = $request->get('batch') ?? '-';    
+
+        //START Check for class teacher assigned standards
+
+        $classTeacherStdArr = session()->get('classTeacherStdArr');
+        if (isset($classTeacherStdArr)) {
+            if (count($classTeacherStdArr) > 0) {
+                $extraRaw = "standard.id IN (" . implode(",", $classTeacherStdArr) . ")";
+            } else {
+                $extraRaw = "standard.id IN (' ')";
+            }
+        }
+
+        $classTeacherDivArr = session()->get('classTeacherDivArr');
+        if (isset($classTeacherStdArr)) {
+            if (count($classTeacherDivArr) > 0) {
+                $extraRaw .= " and division.id IN (" . implode(",", $classTeacherDivArr) . ")";
+            }
+        }
+        //END Check for class teacher assigned standards
+
+        $student_data = tblstudentModel::select('tblstudent_enrollment.*', 'tblstudent.*', 'standard.name as standard',
+            'division.name as division', 'academic_section.title as grade','batch.id as batch_id','batch.title as batch_title')
+            ->join("tblstudent_enrollment", function ($join) {
+                $join->on("tblstudent_enrollment.student_id", "=", "tblstudent.id")
+                    ->on("tblstudent_enrollment.sub_institute_id", "=", "tblstudent.sub_institute_id")
+                    ->whereNull('tblstudent_enrollment.end_date');
+            })
+            ->join("academic_section", function ($join) {
+                $join->on("academic_section.id", "=", "tblstudent_enrollment.grade_id")
+                    ->on("academic_section.sub_institute_id", "=", "tblstudent_enrollment.sub_institute_id");
+            })
+            ->join("standard", function ($join) use($marking_period_id) {
+                $join->on("standard.id", "=", "tblstudent_enrollment.standard_id")
+                ->on("standard.sub_institute_id", "=", "tblstudent_enrollment.sub_institute_id");
+            })
+            ->join("division", function ($join) {
+                $join->on("division.id", "=", "tblstudent_enrollment.section_id")
+                    ->on("division.sub_institute_id", "=", "tblstudent_enrollment.sub_institute_id");
+            })
+            ->leftJoin('batch','batch.id','=','tblstudent.studentbatch')
+            ->where($extraSearchArray)
+            ->whereRaw($extraRaw)
+            ->orderby('tblstudent.enrollment_no')
+            ->get()->toArray();
+
+            $single_standard = DB::table('standard')->where('id',$standard)->first();
+            $single_division =DB::table('division')->where('id',$division)->first();
+
+        if (count($student_data) == 0) {
+            $res['status_code'] = 0;
+            $res['message'] = "No Student Data Found";
+        }
+
+        $attendanceArray = [
+            'syear' => $syear,
+            'sub_institute_id' => $sub_institute_id,
+            'attendance_date' => $date,
+            'standard_id' => $standard,
+            'section_id' => $division,
+        ];
+        $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+
+         $attendanceData = [];
+        if (count($data) > 0) {
+            foreach ($data as $key => $value) {
+                $attendanceData[$value->student_id] = $value->attendance_code;
+            }
+        }
+        $err = 0;
+        if (!empty($holidays) && $holidays[0]->event_type === "holiday") 
+        {
+        $err = 1;
+            $res['status_code'] = 0;
+            $res['message'] = "$date is a holiday, so you can't take attendance for " . $single_standard->name . '/' . $single_division->name;
+
+        } 
+        else if (!empty($sundays)) 
+        {
+        $err = 1;
+            $res['status_code'] = 0;
+            $res['message'] = "$date is sunday, so you can't take attendance for " . $single_standard->name . '/' . $single_division->name;
+        } 
+        else 
+        {
+            $res['status_code'] = 1;
+            $res['message'] = "Success";
+            $res['student_data'] = $student_data;
+        }
+
+            // use ajax controller function 
+            $ajaxController = new AJAXController;
+
+            // get subjects 
+            $sub_req = new Request(['standard_id' => $standard]);
+            $res['all_subject'] = json_decode(json_encode($ajaxController->getSubjectList($sub_req)),true);
+
+            // get lectures 
+            $lect_req = new Request([
+                'standard_id' => $standard,
+                'division_id'=>$division,
+                'subject_id'=>$request->get('subject'),
+                'date'=>$request->get('from_date')
+            ]);
+            $res['all_lecture'] = $ajaxController->getLectureList($lect_req);
+            // echo "<pre>";print_r($res['all_lecture']);exit;
+            $res['exampleRadios'] =$request->get('exampleRadios');
+            $res['attendance_type'] =$request->get('attendance_type');
+            $res['from_date'] =$request->get('from_date');
+            $res['grade_id'] =$request->get('grade');
+            $res['standard_id'] =$request->get('standard');
+            $res['division_id'] =$request->get('division');
+            $res['subject'] =$request->get('subject');
+            $res['lecture'] =$request->get('lecture');
+            $res['subject_name'] =$request->get('subject_name') ?? '-';
+            $res['lecture_name'] =$request->get('lecture_name') ?? '-';
+            $res['timetable_id'] =$request->get('timetable_id');
+            $res['period_id'] =$request->get('period_id');
+            $res['batch_name'] =$request->get('batch_name');
+
+
+            // echo "<pre>";print_r($res);exit;
+            if($err==1){
+                return is_mobile($type, "students_attendance.index", $res);
+            }else{
+                return is_mobile($type, 'attendance/show', $res, 'view');
+            }
+        }
+
+        public function store(Request $request){
+        $type = $request->input('type');
+        $date = $request->input('date');
+        $periods_id = $request->input('periods_id');
+        $subjects_id = $request->input('subjects_id');
+        $batchs_id = $request->input('batchs_id');
+        $timetables_id = $request->input('timetables_id');
+        $att_type = $request->input('att_type');
+        $att_for = $request->input('att_for');
+        // echo "<pre>";print_r($subjects_id);die;
+
+        $students = $request->input('student');
+
+        if ($type != "API") {
+            $syear = $request->session()->get('syear');
+            $term_id = $request->session()->get('term_id');
+            $user_id = $request->session()->get('user_id');
+            $user_profile_id = $request->session()->get('user_profile_id');
+            $sub_institute_id = $request->session()->get('sub_institute_id');
+        } else {
+            try {
+                if (!$this->jwtToken()->validate()) {
+                    $response = ['status' => '2', 'message' => 'Token Auth Failed', 'data' => []];
+                    return response()->json($response, 401);
+                }
+            } catch (\Exception $e) {
+                $response = ['status' => '2', 'message' => $e->getMessage(), 'data' => []];
+                return response()->json($response, 401);
+            }
+
+            $syear = $request->input('syear');
+            $user_id = $request->input('teacher_id');
+            $user_profile_id = $request->input('user_profile_id');
+            $sub_institute_id = $request->input('sub_institute_id');
+            if ($syear == '' || $date == '' || $students == '' || $user_id == '' || $user_profile_id == '' || $sub_institute_id == '') {
+                $res['status_code'] = 0;
+                $res['message'] = "Parameter Missing.";
+
+                return is_mobile($type, "student_attendance.index", $res);
+            }
+        }
+
+        $standard_division_orignal = $request->input('standard_division');
+        $standard_division = explode("||", $standard_division_orignal);
+        $standard = $standard_division[0];
+        $division = $standard_division[1];
+
+        foreach ($students as $student_id => $attendance) {
+            $attendanceArray = [];
+            $attendanceArray['syear'] = $syear;
+            $attendanceArray['sub_institute_id'] = $sub_institute_id;
+            $attendanceArray['student_id'] = $student_id;
+            //$attendanceArray['term_id'] = $term_id;
+            $attendanceArray['attendance_date'] = $date;
+            $attendanceArray['standard_id'] = $standard;
+            $attendanceArray['section_id'] = $division;
+
+
+            $attendanceArray['attendance_code'] = $attendance;
+            $attendanceArray['teacher_id'] = $user_id;
+            $attendanceArray['user_group_id'] = $user_profile_id;
+            $attendanceArray['created_by'] = $user_id;
+
+            // new fields added like sasit 
+            $attendanceArray['term_id'] = $term_id;
+            $attendanceArray['period_id'] = $periods_id;
+            $attendanceArray['subject_id'] = $subjects_id;
+            $attendanceArray['timetable_id'] = $timetables_id;
+            $attendanceArray['attendance_type'] = $att_type;
+            $attendanceArray['attendance_teacher_code'] = $attendance;
+            $attendanceArray['attendance_for'] = $att_for;
+            $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+            // echo "<pre>";print_r($data);
+            if (count($data) > 0) {
+                $attendanceArray['updated_at'] = now();
+                DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
+            } else {
+                $attendanceArray['created_at'] = now();
+                DB::table("attendance_student")->insert($attendanceArray);
+            }
+        }
+        // exit;
+        $res['status_code'] = 1;
+        $res['message'] = "Attendance successfully taken";
+
+        return is_mobile($type, "students_attendance.index", $res);
+        }
+
+}
