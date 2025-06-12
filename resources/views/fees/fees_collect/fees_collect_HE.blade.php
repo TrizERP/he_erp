@@ -18,9 +18,6 @@
 					<strong>{{ $sessionData['message'] }}</strong>
 				</div>
 				@endif
-				<div class="no_heads" id="no_heads" style="visibility: hidden">
-				<h5>No heads</h5>
-				</div>
 				<div class="row">
 					<div class="col-md-4 col-lg-4 col-sm-4 col-xs-4">
 						<div class="box-title">
@@ -30,39 +27,28 @@
 							<table class="table table-stripped" style="color:#000 !important;">
 								<tr>
 									<th>Month</th>
-									@if(session()->get('sub_institute_id')==61)
-									<th>Bus Amount</th>
-									@endif
 									<th>Fees</th>
 									<th>Paid</th>
-									<th>Discount</th>
 									<th>Remaining</th>
 								</tr>
 								@php
-                  					$remainFees = $paidFees = 0;
-
-									$feesDetails= [];
-									$bk=$paid=$remain=$discount=$Paid_and_discount=$busAmount=array();
-
-									foreach ($data['total_fees'] as $id => $arr) {
-									$feesDetails[$arr['month']] = $arr['remain'];
-									if(isset($arr['bk'])){
+                                        $remainFees = 0;
+                                        $feesDetails= [];
+                                        $bk=$paid=$remain =array();
+                                        foreach ($data['total_fees'] as $id => $arr) {
+										$feesDetails[$arr['month']] = $arr['remain'];
+										if(isset($arr['bk'])){
                                 @endphp
 								<tr>
 									<td>
 										{{ $arr['month'] }}
 									</td>
-									@if(session()->get('sub_institute_id')==61)
-									<td>@php $busAmount[] = $arr['bus_amount']; echo isset($arr['bus_amount']) ? $arr['bus_amount'] : 0  @endphp</td>
-									@endif
 									<td>
 										@php $bk[] = $arr['bk']; echo $arr['bk'];  @endphp
 									</td>
-									@php $Paid_and_discount[] = $arr['paid'] + $arr['discount']; @endphp
 									<td>
-										@php echo $arr['paid'] + $arr['discount']; @endphp
+										@php $paid[] = $arr['paid']; echo $arr['paid']; @endphp
 									</td>
-									<td>@php $discount[] = $arr['discount']; echo $arr['discount']; @endphp</td>
 									<td>
 										@php $remain[] = $arr['remain'];echo $arr['remain'];  @endphp
 									</td>
@@ -72,29 +58,14 @@
                                         $remainFees += $arr['remain'];
                                         } 
 								@endphp
-								<!-- hills previous pending fees Previous Year Fees Not Display in Current Year - Rajesh 01-07-2024  -->
-								@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['stu_data']['previous_fees'] > 0)
-								<tr>
-									<td>Previous Fees</td>
-									<td>@php $bk[]= $data['stu_data']['previous_fees']; echo $data['stu_data']['previous_fees'] @endphp</td>
-									<td>0</td>
-									<td>0</td>
-									<td>@php $remain[] = $data['stu_data']['previous_fees']; echo $data['stu_data']['previous_fees'] @endphp</td>
-								</tr>
-								@endif
-								<!-- end previous fees  -->
 								<tr>
 									<td>Total</td>
-									@if(session()->get('sub_institute_id')==61)
-									<td>{{ array_sum($busAmount) }}</td>
-									@endif
 									<td>
 										{{ array_sum($bk) }}
 									</td>
 									<td>
-										{{ array_sum($Paid_and_discount) }}
+										{{array_sum($paid) }}
 									</td>
-									<td>{{array_sum($discount) }}</td>
 									<td>
 										{{array_sum($remain) }}
 									</td>
@@ -102,24 +73,14 @@
 
 							</table>
 						</div>
-						
 						<div class="row">
 							<div class="col-md-12 text-center mt-4">
-								<button type="button" class="btn btn-info" data-toggle="modal" id="add_data" onclick="javascript:add_data('{{ $data['stu_data']['enrollment']}}',{{$data['stu_data']['student_id']}});">
+								<button type="button" class="btn btn-info" data-toggle="modal" id="add_data" onclick="javascript:add_data({{ $data['stu_data']['enrollment']}},{{$data['stu_data']['student_id']}});">
 									Paid History
 								</button>
 							</div>
 						</div>
 					</div>
-
-					<!-- 08-01-2025 -->
-					@php 
-					$class="";
-					if(session()->get('sub_institute_id')==76){
-						$class = "hide";
-					}
-					@endphp
-					<!-- 08-01-2025 -->
 
 					<div class="col-md-8 col-lg-8 col-sm-8 col-xs-8">
 						<div class="box-title">
@@ -129,18 +90,17 @@
 							<div class="col-md-6">
 								<div class="table-responsive">
 									<table class="table table-stripped">
-										<tr class="{{$class}}">
+										<tr>
 											<td>{{ App\Helpers\get_string('uniqueid')}}</td>
 											<td>
 												{{ $data['stu_data']['uniqueid']; }}
 											</td>
 										</tr>
-										
+										<tr>
 										<tr>
 											<td>{{ App\Helpers\get_string('studentname')}}</td>
 											<td>
-												{{App\Helpers\sortStudentName($data['stu_data']['name'])}}
-												{{-- {{ $data['stu_data']['name']; }} --}}
+												{{ $data['stu_data']['name']; }}
 											</td>
 										</tr>
 										<tr>
@@ -161,17 +121,6 @@
 												{{ $data['stu_data']['student_quota']; }}
 											</td>
 										</tr>
-										<!-- ssmission pan card  -->
-										@if(session()->get('sub_institute_id')==76)
-										<tr>
-											<td>Pan Card No</td>
-											<td>
-											<input type="text" class="form-control" name="pan_card" id="inputPan" @if(isset($data['stu_data']['pan_card'])) value="{{ $data['stu_data']['pan_card']; }}" @endif onkeyup="addInputPan()";> 
-											</td>
-										</tr>
-										@else
-										<input type="hidden" id="inputPan" value="{{ $data['stu_data']['pan_card']; }}" >
-										@endif
 									</table>
 								</div>
 							</div>
@@ -205,12 +154,7 @@
 										<tr>
 											<td style="color: red;">Pending Fees</td>
 											<td style="color: red;">
-											<!-- for hills  previous fees  -->
-											@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['stu_data']['previous_fees'] > 0)
-											 	{{($data['stu_data']['previous_fees'] + $data['stu_data']['pending']) }}
-											@else
-												{{$data['stu_data']['pending']}}
-											@endif
+												{{ $data['stu_data']['pending']; }}
 											</td>
 										</tr>
 										@if (Session::get('sub_institute_id') == '181')
@@ -231,7 +175,7 @@
 							<input type="hidden" name="grade_id" value="{{ $data['stu_data']['grade_id']; }}">
 							<input type="hidden" name="standard_id" value="{{ $data['stu_data']['std_id']; }}">
 							<input type="hidden" name="div_id" value="{{ $data['stu_data']['div_id']; }}">
-							<input type="hidden" name="student_id" id="student_id" value="{{ $data['stu_data']['student_id']; }}">
+							<input type="hidden" name="student_id" value="{{ $data['stu_data']['student_id']; }}">
 							<input type="hidden" name="std_div" value="{{ $data['stu_data']['stddiv']; }}">
 							<input type="hidden" name="full_name" value="{{ $data['stu_data']['name']; }}">
 							<input type="hidden" name="mobile" value="{{ $data['stu_data']['mobile']; }}">
@@ -240,13 +184,10 @@
 							<input type="hidden" name="roll_no" value="{{ $data['stu_data']['roll_no']; }}">
 							<input type="hidden" name="medium" value="{{ $data['stu_data']['medium']; }}">
 							<input type="hidden" name="standard_short_name" value="{{ $data['stu_data']['standard_short_name']; }}">
-							<input type="hidden" name="standard_medium" value="{{ $data['stu_data']['standard_medium']; }}">							
+							<input type="hidden" name="standard_medium" value="{{ $data['stu_data']['standard_medium']; }}">
 							<input type="hidden" name="father_name" value="{{ $data['stu_data']['father_name']; }}">
 							<input type="hidden" name="mother_name" value="{{ $data['stu_data']['mother_name']; }}">
-							<!-- // 2024-06-24 by uma -->
-							<input type="hidden" name="student_batch" value="{{ $data['stu_data']['student_batch']; }}">
-							<input type="hidden" name="pan_card" id="pan_card">
-							
+
 							<div class="table-responsive col-md-12" style="border-top: 2px solid black;">
 								<table class="table table-stripped">
 									<tr>
@@ -257,38 +198,15 @@
                                                     echo "<tr>";
                                                 }
                                                 $slected = "";
-												// list($month, $year) = explode('/', $val); // commented on 08-01-2025
-
-												// added on 08-01-2025 get year and month from $id
-												$valueStr = (string)$id;
-												$year = substr($valueStr, -4);
-												$month = substr($valueStr, 0, strlen($valueStr) - 4);
-												// added on 08-01-2025
-
+                                                list($month, $year) = explode('/', $val);
                                                 $monthDate = $year . '-' . date('m', strtotime($month)) . '-01';
                                                 $date_now = time();
-												// added on 18-01-2025 ssmission
-                                                if(session()->get('sub_institute_id')==76){
-													foreach($data['header_month'] as $mapId=>$mapMonth){
-														$valueStr1 = (string)$mapMonth;
-														$year1 = substr($valueStr1, -4);
-														$month1 = substr($valueStr1, 0, strlen($valueStr1) - 4);
-														if($month1 <= date('n') && date('Y')>=$year1 && $month == $month1){
-															$slected = "checked";
-														}
-													}
-													if($slected=='' && isset($data['header_month'][0]) && $data['header_month'][0]==$id){
-														$slected = "checked ".date('n');
-													}
-												}
-												// added on 18-01-2025 ssmission
-
-												elseif (in_array($id, $data['search_ids']) && $date_now >= strtotime($monthDate)) {
+                                                if (in_array($id, $data['search_ids']) && $date_now >= strtotime($monthDate)) {
                                                     $slected = "checked";
                                                 }
 
                                                 $disabled = '';
-                                                if (isset($feesDetails[$val]) && $feesDetails[$val] <= 0) {
+                                                if (isset($feesDetails[$val]) && $feesDetails[$val] == 0) {
                                                     $disabled = 'disabled="disabled"';
                                                 }
                                         @endphp
@@ -347,11 +265,11 @@
 													</td>
 													@php
                                                         $auto_head_counting = $data['fees_config_data']['auto_head_counting'];
-														$total_disable =  $individual_enable = "";
+
                                                         if ($auto_head_counting == 1) {
                                                             $individual_enable = "readonly";
                                                             $total_disable = "";
-                                                        } elseif ($auto_head_counting == 0) {
+                                                        } else {
                                                             $individual_enable = "";
                                                             $total_disable = "readonly";
                                                         }
@@ -406,52 +324,21 @@
 											<input type="text" class="form-control" name="remarks" id="remarks" autocomplete="off">
 										</td>
 									</tr>
+									@php $cheque_return_charges0 = $data['cheque_return_charges'][0]; $cheque_return_charges = $data['fees_config_data']['late_fees_amount'];
+									$sub_institute_id=[257]; @endphp
 									<tr>
-										<td></td>
-										<td>{{ App\Helpers\get_string('discount')}}</td>
-										<td></td>
-										<td>
-											<input type='number' min="0" id='totalDis' name='totalDis' value='0' class='form-control directdiscount'>
-										</td>
-									</tr>
-									@php 
-										if(session()->get('sub_institute_id')==254 && !empty($data['hillsFine'])){
-											$cheque_return_charges0 = $data['hillsFine']['total'];
-											$cheque_return_charges=$data['hillsFine']['total'];
-											$readable='';
-											$inputId="cheque_return_charges1";
-										}else{
-											$cheque_return_charges0 = $data['cheque_return_charges'][0];
-											$cheque_return_charges = $data['fees_config_data']->late_fees_amount;
-											$readable='readonly="readonly"';
-											$inputId="cheque_return_charges";
-										}
-										$sub_institute_id=[257]; 
-									@endphp
-									<tr  class="{{$class}}">
 										<td></td>
 										<td>Fine(Include Cheque return charges)</td>
 										<td></td>
 										<td>
 											@if(in_array(session()->get('sub_institute_id'),$sub_institute_id) )
-												<input type="text" name="fees_data[fine]" id="cheque_return_charges1" class="form-control cheque_return_charges1" value="@if(date('d') >= 3 && $total_amt!=0) {{$data['fees_config_data']['late_fees_amount']}} @else {{$cheque_return_charges0}} @endif" >
-											
-												<input type="hidden" name="hidden_cheque_return_charges" id="hidden_cheque_return_charges" class="form-control cheque_return_charges1" value="{{$data['fees_config_data']['late_fees_amount']}}"> 
 
-												<input type="hidden" name="for_cn_only" id="hidden_cheque_return_charges2" value="{{$data['fees_config_data']['late_fees_amount']}}"> 
-										 <!-- fees late master implement finr_type wise start 04-02-2025 -->
-											@elseif(isset($data['config_late_fine']) && $data['config_late_fine']>0)
-												<input type="text" name="fees_data[fine]" id="cheque_return_charges1" class="form-control cheque_return_charges0" value="{{$data['config_late_fine']}}" >
-											
-												<input type="hidden" name="hidden_cheque_return_charges" id="hidden_cheque_return_charges" class="form-control cheque_return_charges0" value="{{$data['config_late_fine']}}"> 
-
-												<input type="hidden" name="for_cn_only" id="cheque_return_charges0" value="{{$data['config_late_fine']}}"> 
-										 <!-- fees late master implement finr_type wise end 04-02-2025 -->
-
-											@else
-												<input type="text" name="fees_data[fine]" id="{{$inputId}}" class="form-control hillsFine" value="@php if(isset($cheque_return_charges0)) echo $cheque_return_charges0; @endphp">
-												<input type="hidden" name="hidden_cheque_return_charges" id="hidden_cheque_return_charges" class="form-control" value="@if(isset($cheque_return_charges0)){{$cheque_return_charges0}}@endif">
-											@endif
+											<input type="text" name="fees_data[fine]" id="cheque_return_charges1" class="form-control cheque_return_charges1" value="@if(date('d') >= 5 && $total_amt!=0) {{$data['fees_config_data']['late_fees_amount']}} @else {{$cheque_return_charges0}} @endif" >
+										
+											<input type="hidden" name="hidden_cheque_return_charges" id="hidden_cheque_return_charges" class="form-control cheque_return_charges1" value="{{$data['fees_config_data']['late_fees_amount']}}"> @else
+											<input type="text" name="fees_data[fine]" id="cheque_return_charges" class="form-control" value="@php if(isset($cheque_return_charges0)) echo $cheque_return_charges0; @endphp"
+											 readonly="readonly">
+											<input type="hidden" name="hidden_cheque_return_charges" id="hidden_cheque_return_charges" class="form-control" value="@if(isset($cheque_return_charges0)){{$cheque_return_charges0}}@endif"> @endif
 										</td>
 									</tr>
 
@@ -480,10 +367,7 @@
 										<td>
 											<select class="form-control" required="required" name="PAYMENT_MODE" id="payment_mode" onchange="sh_bankDetail(this.value);">
 												<option value="">Select Payment Mode</option>
-												@foreach($data['payment_modes'] as $key=>$value)
-												<option value="{{$key}}">{{$value}}</option>
-												@endforeach
-												<!-- <option value="Cash">Cash</option>
+												<option value="Cash">Cash</option>
 												<option value="Cheque">Cheque</option>
 												<option value="DD">DD</option>
 												<option value="Online">Online</option>
@@ -492,7 +376,6 @@
 												<option value="Swipe1">Swipe1</option>
 												<option value="Swipe2">Swipe2</option>
 												<option value="Swipe3">Swipe3</option>
-												<option value="POS">POS</option> -->
 											</select>
 										</td>
 										<td>Receipt Date</td>
@@ -501,8 +384,8 @@
 										</td>
 									</tr>
 									<tr class="bnakDetail">
-										<td class="{{$class}}">Cheque/DD Date</td>
-										<td  class="{{$class}}">
+										<td>Cheque/DD Date</td>
+										<td>
 											<input type="text" name="cheque_date" id="cheque_date" class="form-control mydatepicker" autocomplete="off" value="{{date('Y-m-d'); }}">
 										</td>
 										<td>Cheque/DD No/Transaction No</td>
@@ -521,8 +404,8 @@
 												@endforeach @endif
 											</select>
 										</td>
-										<td class="{{$class}}">Bank Branch</td>
-										<td class="{{$class}}">
+										<td>Bank Branch</td>
+										<td>
 											<input type="text" name="bank_branch" id="bank_branch" class="form-control" value="N/A">
 										</td>
 									</tr>
@@ -563,7 +446,6 @@
 						<div class="row">
 							<div class="card">
 								<div class="table-responsive">
-								<h6><b>Paid History</b></h6>
 									<table id="example" class="table table-striped">
 										<thead>
 											<tr>
@@ -577,41 +459,11 @@
 												<th>Payment Mode</th>
 												<th>Bank Details</th>
 												<th>Receipt Date</th>
-												<th>{{App\Helpers\get_string('feesBankName')}}</th>
-												<th>Receipt Type</th>
-												<th>Remark</th>
-												<th>Discount</th>
+												<th>Collected By</th>
 												<th>Amount</th>
-												<th class="text-left">Action</th>
 											</tr>
 										</thead>
 										<tbody id="table_data">
-										</tbody>
-									</table>
-								</div>
-								<br>
-								<br>
-								<div class="table-responsive"  id="cancelTableDiv">
-									<h6><b>Cancelled History</b></h6>
-									<table id="cancelTable" class="table table-striped">
-										<thead>
-											<tr>
-												<th>Sr No.</th>
-												<th>GR No.</th>
-												<th>{{App\Helpers\get_string('StudentName')}}</th>
-												<th>Std-Div</th>
-												<th>Uniqueid</th>
-												<th>Month</th>
-												<th>Receipt No</th>
-												<th>Payment Mode</th>
-												<th>Bank Details</th>
-												<th>Received Date</th>
-												<th>Cancelled Date</th>
-												<th>Cancelled By</th>
-												<th class="text-left">Amount</th>
-											</tr>
-										</thead>
-										<tbody id="cancel_data">
 										</tbody>
 									</table>
 								</div>
@@ -621,7 +473,7 @@
 				</div>
 			</div>
 		</div>
-		
+
 		@include('includes.footerJs')
 		<script>
 			document.body.className = document.body.className.replace("fix-header", "fix-header show-sidebar hide-sidebar");
@@ -633,129 +485,46 @@
 				});
 			}
 
-			// 01-02-2025
-			function addInputPan(){
-				var panNo = $('#inputPan').val();
-				$('#pan_card').val(panNo);
-			}
-			// 01-02-2025 end
+
 			$(document).ready(function() {
-				// 01-02-2025
-				addInputPan();
-				// 01-02-2025 end
+
+				console.log("hello");
 				monthCheck();
-				$('#cancelTableDiv').hide();
-					var sub = 0;
-					var full_bk = @json($data['final_fee']);
-					// console.log(full_bk);
-					$.each(full_bk, function(index, value) {
-						if (value !== 0 && index!=='Total' && index!=='Previous Fees') {
-							$.ajax({
-								url : '{{route("check_reciept_book")}}',
-								data: {fees_title : index,standard_id:{{ $data['stu_data']['std_id'] }}},
-								type: 'GET',
-								success : function(result) {
-									if(result[0] == 0){
-										$('#no_heads').append(`<p>`+result[1]+`</p>`);
-										$('#no_heads').css('visibility', 'visible');
-										return false;
-									}
-								},
-							})
-						}
-					});
-				});
-
-			// function checkForm() {
-			// if ($('#payment_mode').val() == '') {
-			// 	alert("Please select Payment Mode.");
-			// 	return false;
-			// }
-			// if ($('#receiptdate').val() == '') {
-			// 	alert("Please select Receipt Date.");
-			// 	return false;
-			// }
-			// if ($('#payment_mode').val() != 'Cash') {
-			// 	if ($('#cheque_date').val() == '') {
-			// 	alert("Please select Cheque Date.");
-			// 	return false;
-			// 	}
-			// 	if ($('#cheque_no').val() == '') {
-			// 	alert("Please select Cheque Number.");
-			// 	return false;
-			// 	}
-			// 	if ($('#bank_name').val() == '') {
-			// 	alert("Please select Bank Name.");
-			// 	return false;
-			// 	}
-			// 	if ($('#bank_branch').val() == '') {
-			// 	alert("Please select Bank Branch.");
-			// 	return false;
-			// 	}
-			// }
-			// $('input[name="fees_data[]"]').each(function() {
-			// 	var feesTitle = $(this).attr('id');
-			// 	console.log(feesTitle);
-			// 	// Do something with feesTitle
-			// });
-	
-			// $('#formId').submit();
-
-			// // Prevent the default form submission
-			//return true;
-			// // return false;
-			
-			// }
-
-function checkForm() {
-
-    if ($('#no_heads').length != 0) {
-        var paragraphs = $('#no_heads').find('p');
-		if (paragraphs.length != 0) {		
-			paragraphs.each(function(index, element) {
-			alert('Head not added in Receipt Book Master : ' + $(element).text());
 			});
-			return false;	
-		}	
-    }
 
-    if ($('#payment_mode').val() == '') {
-        alert("Please select Payment Mode.");
-        return false;
-    }
-    if ($('#receiptdate').val() == '') {
-        alert("Please select Receipt Date.");
-        return false;
-    }
-    if ($('#payment_mode').val() != 'Cash') {
-        if ($('#cheque_date').val() == '') {
-            alert("Please select Cheque Date.");
-            return false;
-        }
-        if ($('#cheque_no').val() == '') {
-            alert("Please select Cheque Number.");
-            return false;
-        }
-        if ($('#bank_name').val() == '') {
-            alert("Please select Bank Name.");
-            return false;
-        }
-        if ($('#bank_branch').val() == '') {
-            alert("Please select Bank Branch.");
-            return false;
-        }
-    }
-	
-    // Submit the form
-	if(sub==0){
-    $('#formId').submit();
-    // Prevent the default form submission
-    return true;
-	}else{
-		return false;
-	}
-}
+			function checkForm() {
+			if ($('#payment_mode').val() == '') {
+				alert("Please select Payment Mode.");
+				return false;
+			}
+			if ($('#receiptdate').val() == '') {
+				alert("Please select Receipt Date.");
+				return false;
+			}
+			if ($('#payment_mode').val() != 'Cash') {
+				if ($('#cheque_date').val() == '') {
+				alert("Please select Cheque Date.");
+				return false;
+				}
+				if ($('#cheque_no').val() == '') {
+				alert("Please select Cheque Number.");
+				return false;
+				}
+				if ($('#bank_name').val() == '') {
+				alert("Please select Bank Name.");
+				return false;
+				}
+				if ($('#bank_branch').val() == '') {
+				alert("Please select Bank Branch.");
+				return false;
+				}
+			}
 
+			$('#formId').submit();
+
+			// Prevent the default form submission
+			return true;
+			}
 
 			$('#fees_head').on('change', '.allField1', function() {
 				var sum = 0;
@@ -822,14 +591,6 @@ function checkForm() {
 				calculateTotal();
 			});
 
-			$(document).on('change', '.hillsFine', function() {
-				var amount = parseFloat($(this).val());
-				var grandTotal = parseFloat($('#totalVal').val());
-				// subtract totalFin from grandTotal
-				var TotVal = (grandTotal + amount);
-				$("#grandTotal").val(TotVal);
-			});
-
 			// END 30-12-2021 Added for total fine in grandtotal
 
 			function calculateTotal() {
@@ -838,8 +599,6 @@ function checkForm() {
 				dis = parseFloat($("#totalDis").val());
 				if({{session()->get('sub_institute_id')}} == 257){
 					cheque_return_charges = $("#cheque_return_charges1").val();
-				}else if({{session()->get('sub_institute_id')}} == 254){
-					cheque_return_charges = $(".hillsFine").val();
 				}else{
 					cheque_return_charges = $("#hidden_cheque_return_charges").val();
 				}
@@ -870,7 +629,7 @@ function checkForm() {
 			}
 
 
-			$('.months').click(function() {
+$('.months').click(function() {
 				var currentCheckedIndex = $('.months').index(this); 
 
 				$('.months').each(function(index) {
@@ -886,27 +645,14 @@ function checkForm() {
 
 			function monthCheck() {
 				var checkedMonths = new Array();
-
 					var j = 0;
-					var TotalFin = 0;
-					for (var i = 0; i < document.getElementsByClassName('months').length; i++) {
-						if (document.getElementsByClassName('months')[i].checked) {
-							checkedMonths[j] = document.getElementsByClassName('months')[i].value;
-							@if(session()->get('sub_institute_id')==254 && !empty($data['hillsFine']) )
-								@if($data['hillsFine']!=0)
-									var hillsFine = @json($data['hillsFine']);
-									if(!isNaN(hillsFine[checkedMonths[j]])){
-										var fineVal = hillsFine[checkedMonths[j]];
-										TotalFin += fineVal;
-									}
-								@endif
-							@endif
-							j = j + 1;
-						}
+				for (var i = 0; i < document.getElementsByClassName('months').length; i++) {
+					if (document.getElementsByClassName('months')[i].checked) {
+						checkedMonths[j] = document.getElementsByClassName('months')[i].value;
+						j = j + 1;
 					}
-				
+				}
 
-				$('#cheque_return_charges').val(TotalFin);
 				$.ajax({
 					type: "POST",
 					url: "{{route('get-fees-list')}}",
@@ -919,17 +665,27 @@ function checkForm() {
 						$("#fees_head").empty();
 						$("#fees_head").html(data);
 
-						var auto_head_counting = "{{ (isset($auto_head_counting) && $auto_head_counting!='') ? $auto_head_counting : '-' }}";
-						if (auto_head_counting == "1") {
+						var auto_head_counting = {{ (($auto_head_counting == '1') ? ($auto_head_counting) : ('0')); }} ;
+						if (auto_head_counting == 1) {
 							$('.allField1').attr('readonly', true);
 							$('#totalVal').attr('readonly', false);
-						} else if (auto_head_counting == "0") {
+						} else {
 							$('.allField1').attr('readonly', false);
 							$('#totalVal').attr('readonly', true);
 							$('#previous_fees').attr('readonly', true);
+
 						}
 
 						tot = $("#totalVal").val();
+
+						// START 30-12-2021 Added for total fine box value display wrong
+						fin = parseFloat($("#totalFin").val());
+						cheque_return_charges = $("#hidden_cheque_return_charges").val();
+						sum = fin + parseFloat(cheque_return_charges);
+						$("#cheque_return_charges").val(sum);
+						calculateTotal();
+						// $("#grandTotal").val(tot);
+						// END 30-12-2021 Added for total fine box value display wrong
 
 						// 26/08/2021 Start Added for The Millennium School for Advanced Imprest Collection payment
 						$('.allField1').each(function() {
@@ -939,71 +695,20 @@ function checkForm() {
 								$(this).attr('readonly', true);
 							}
 						});
-
-						@if(session()->get('sub_institute_id') == 257)
-							var k = 0;
-							var checkedTitle = new Array();
-
-								$('.allField1').each(function() {
-									checkedTitle[k] = $(this).attr('id');
-									k= k+1;
-								});
-								console.log(checkedTitle);
-								var validValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-
-								// when only other fees remain for payment make fees fine 0   
-								if (checkedTitle.length > 0 && !checkedTitle.includes('tution_fee') && validValues.some(value => checkedTitle.includes(value)))
-								{
-									// console.log('if');
-									fineZero(0);
-								}
-								// for advance months fees rather than current month
-								else if(checkedMonths.length > 0 && checkedTitle.length > 0){
-									lastMonth = checkedMonths[checkedMonths.length - 1];
-									var currentMonth = "{{date('n')}}{{date('Y')}}";
-									
-									let greaterMonths = checkedMonths.filter(month => month > currentMonth);
-
-									if (!greaterMonths.includes(currentMonth) && greaterMonths.length > 0) {
-									// console.log(greaterMonths);
-										fineZero(0);
-									}
-								}
-								else{
-									var charge = $('#hidden_cheque_return_charges2').val();
-									var fine = parseFloat(charge);
-									fineZero(fine);
-								}
-							@endif
-							// START 30-12-2021 Added for total fine box value display wrong
-								fin = parseFloat($("#totalFin").val());
-								cheque_return_charges = $("#hidden_cheque_return_charges").val();
-								// 16-08-2024
-								$('.hillsFine').val(cheque_return_charges);
-								sum = fin + parseFloat(cheque_return_charges);
-								$("#cheque_return_charges").val(sum);
-								calculateTotal();
-							// $("#grandTotal").val(tot);
-						
+						// 26/08/2021 END Added for The Millennium School for Advanced Imprest Collection payment
 					}
 				});
-			}
-
-			function fineZero(cheque_return_charges){
-				$('#cheque_return_charges1').val(cheque_return_charges);
-				$('#hidden_cheque_return_charges').val(cheque_return_charges);
 			}
 
 			$(document).on('blur', '#totalVal', function() {
 				var new_total_amount = parseFloat(this.value);
 				var new_copy_total_amount = parseFloat(this.value);
 				var orginial_tot = parseFloat($("#hid_totalVal").val());
-				var all_total = $('#all_total').text();				
 
-				if (all_total < new_total_amount) {
-					alert("Amount Cannot be greater than total amount - "+all_total);
-					$('#totalVal').val(all_total);
-					$('#grandTotal').val(all_total);
+				if (new_total_amount > orginial_tot) {
+					alert("Amount Cannot be greater than total amount");
+					$('#totalVal').val(orginial_tot);
+					$('#grandTotal').val(orginial_tot);
 				} else {
 					$('.allField1').each(function() {
 						var new_name = "hid_" + $(this).attr('name');
@@ -1034,21 +739,15 @@ function checkForm() {
 		<script>
 			function add_data(grno, student_id) {
 				$("#table_data").empty();
-				$('#cancelTableDiv').hide();
-				$('#cancel_data').empty();
-
 				$(document).ready(function() {
 					$.ajax({
 						url: '/fees/feesDetails/getDetails/' + grno + "/" + student_id,
 						type: 'GET',
 						dataType: 'json',
 						success: function(data) {
-							$("#table_data").empty();
-							$('#cancelTableDiv').hide();
-							$('#cancel_data').empty();
 							const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-							var paperSize = data.config_data.fees_receipt_template ? data.config_data.fees_receipt_template : "A5";
-							$.each(data.fees_data, function(index, value) {
+
+							$.each(data, function(index, value) {
 								index++;
 								const term_ids = value['term_ids'].split(','); // Split the term_ids string into an array
 								let monthyear = [];
@@ -1067,38 +766,12 @@ function checkForm() {
 								} else {
 									valueuni = '';
 								}
-								var sub_institute_id = "{{session()->get('sub_institute_id')}}";
-								var hideEdit = "";
-								if(sub_institute_id!=76){
-									hideEdit = "display:none";
-								}
-								var hrefReciept = "#";
-								if(value['receipt_no'] && value['receipt_no']!==null){
-									hrefReciept = `/ajax_PDF_FeesReceipt?action=fees_re_receipt&student_id=${value['student_id']}&receipt_id_html=${value['receipt_no']}&paper_size=${paperSize}`;
-								}
 								// console.log(value['student_name']);
-								$('#table_data').append(`
-								<tr>
-									<td>${index}</td>
-									<td>${value['enrollment_no']}</td>
-									<td>${value['student_name']}</td>
-									<td>${value['standard_name']} - ${value['division_name']}</td>
-									<td>${value['uniqueid']}</td>
-									<td>${monthyear}</td>
-									<td>${value['receipt_no']}</td>
-									<td>${value['payment_mode']}</td>
-									<td>${value['cheque_no']} ${value['cheque_bank_name']} ${value['bank_branch']}</td>
-									<td>${value['receiptdate']}</td>
-									<td>${value['user_name']}</td>
-									<td>${value['bank_name'] ? value['bank_name'] : '' }</td>
-									<td>${value['remarks']}</td>
-									<td>${value['discount']}</td>
-									<td id='total_amt'>${value['actual_amountpaid']}</td>
-									<td style="display:flex;">	
-										<a class='btn btn btn-outline-warning mr-2' onclick="downloadReceipt('${value['receipt_no']}','${paperSize}');" target='_blank'><span class='mdi mdi-printer'></span></a>
-										<a class='btn btn-outline-info' style='${hideEdit}' href="/fees/fees_modification/create?enrollment_no=${value['enrollment_no']}&receipt_no=${value['receipt_no']}" target="_blank"><span class='mdi mdi-pencil'></span></a>
-									</td>
-								</tr>`);
+								$('#table_data').append("<tr><td>" + index + "</td><td>" + value['enrollment_no'] + "</td><td>" + value[
+										'student_name'] + "</td><td>" + value['division_name'] + "</td><td>" + valueuni + "</td><td>" +
+										monthyear + "</td><td>" + value['receipt_no'] + "</td><td>" + value['payment_mode'] + "</td><td>" +
+									value['cheque_no'] + ' ' + value['cheque_bank_name'] + ' ' + value['bank_branch'] + "</td><td>" + value['receiptdate'] + "</td><td>" + value['user_name'] +
+									"</td><td id='total_amt'>" + value['actual_amountpaid'] + "</td></tr>");
 							});
 
 							var total = 0;
@@ -1110,82 +783,12 @@ function checkForm() {
 								}
 								// console.log(total);
 							});
-							$('#table_data').append("<tr><td colspan=14>Total</td><td colspan='2'>" + total + "</td></tr>");
 
-							// cancell data start
-							var cancelData = data.cancelData;
-
-							// Check if cancelData is an array and contains items
-							if (Array.isArray(cancelData) && cancelData.length > 0) {
-								$('#cancelTableDiv').show();
-								// $('#cancel_data').empty();
-								cancelData.forEach(function(item, index) {
-									// Ensure month_ids exists and is a string
-									if (item.month_ids && typeof item.month_ids === 'string') {
-										var term_ids = item.month_ids.split(','); // Split the term_ids string into an array
-										var monthyear = [];
-
-										term_ids.forEach(function(term_id) {
-											var year = term_id.slice(-4);
-											var month = term_id.substring(0, term_id.length - 4);
-											month--;
-											monthyear.push(months[month] + "/" + year); // months[month] is assumed to be an array of month names
-										});
-
-										monthyear = monthyear.join(', ');
-									} else {
-										// Handle case where month_ids is not available or invalid
-										var monthyear = "N/A"; // Set default value
-									}
-
-									// Construct the table row
-									var row = '<tr><td>' + (index+1) + '</td><td>' + item.enrollment_no + '</td><td>' + item.student_name + '</td><td>' + item.std + ' - ' + item.divi + '</td><td>' + item.uniqueid + '</td><td>' + monthyear + '</td><td>' + item.reciept_id + '</td><td>' + item.payment_mode + '</td><td>' + (item.cheque_no || '') + ' ' + (item.cheque_bank_name || '') + ' ' + (item.bank_branch || '') + '</td><td>' + item.received_date + '</td><td>' + item.cancel_date + '</td><td>' + item.cancelled_by + '</td><td id="total_cancel_amt">' + item.actual_amountpaid + '</td></tr>';
-
-									$('#cancel_data').append(row);
-								});
-							} else {
-								console.log("cancelData is either not an array or is empty.");
-							}
-
-							var cancalledTotal = 0;
-
-							$('#cancel_data tr').each(function(index) {
-								var found = $(this).find('#total_cancel_amt')
-								if (found) {
-									cancalledTotal += parseInt(found.text());
-								}
-								// console.log(total);
-							});
-							$('#cancel_data').append("<tr><td colspan=12>Total</td><td>" + cancalledTotal + "</td></tr>");
-							// cancel data end 
+							$('#table_data').append("<tr><td colspan=11>Total</td><td>" + total + "</td></tr>");
 							$('#ChapterModal').modal('show');
 
 						}
 					});
 				});
 			}
-
-	function downloadReceipt(receiptId,paperSize){
-		var action = "fees_re_receipt";
-		var student_id = $("#student_id").val();
-	
-		$.ajax({
-				url: "/ajax_PDF_FeesReceipt?action="+action+"&student_id="+student_id+"&receipt_id_html="+receiptId+"&paper_size="+paperSize,                
-				success: function(result){ 
-					let newTab = window.open(result, '_blank');
-					if (newTab) {
-						newTab.onload = function() {
-							newTab.print();  // Auto trigger the print dialog
-						};
-					} else {
-						alert("Pop-up blocked! Please allow pop-ups for this site.");
-					}
-					$("#overlay").css("display", "none");
-
-				},
-				error:function(xhr, status, error) {
-					alert('Failed to get RecieptData');
-				}
-		});
-	}
-</script>
+		</script>

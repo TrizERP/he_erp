@@ -23,7 +23,6 @@ use App\Models\school_setup\standardModel;
 use App\Models\school_setup\divisionModel;
 use App\Models\school_setup\academic_sectionModel;
 use function App\Helpers\get_string;
-//use function App\Helpers\FeeBreakoffHeadWise;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use function App\Helpers\is_mobile;
@@ -556,6 +555,13 @@ class AJAXController extends Controller
         $months = $request->checkedMonths;
         $student_id = $request->student_id;
         $last_syear = (session()->get('syear')-1);
+        $marking_period_id = session()->get('term_id');
+//ADDED BY RAJESH 12-06-2025
+$termId = session()->get('term_id');
+
+$last_marking_period_id = ($termId == 1) ? 2 :
+                          (($termId == 2) ? 1 : $termId);
+//END
 
         if (empty($months)) {
             return "";
@@ -580,21 +586,25 @@ class AJAXController extends Controller
                 $search_ids2[] = $id;
             }
         }
-        $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr,$last_syear); //for previous year
 
         $search_ids = $months;
         $reg_bk_off = FeeBreackoff($stu_arr); // for current year
         $other_bk_off = OtherBreackOff($stu_arr, $search_ids); // for current year
         $other_bk_off_month_wise = OtherBreackOfMonth($stu_arr);// for current year
         $year_arr = FeeMonthId();// for current year
-
-        $reg_bk_off2 = FeeBreackoff($stu_arr,'',$last_syear);
-        $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2,'','','',$last_syear);
-
-
-        $head_wise_fees = FeeBreakoffHeadWise($stu_arr); //for previous year
-        $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear);//for previous year
-
+        $head_wise_fees = FeeBreakoffHeadWise($stu_arr); //for current year
+//   if($student_id==95642){
+//             echo "<pre>";print_r($head_wise_fees);exit;
+//         }
+        //echo $last_syear."#".$last_marking_period_id;die();
+        $other_bk_off_month_wise2 = $reg_bk_off2 = $other_bk_off2 = $head_wise_fees2 = array();
+        if(session()->get('sub_institute_id')!=48 && session()->get('sub_institute_id')!=61){
+            $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr,$last_syear); //for previous year
+            $reg_bk_off2 = FeeBreackoff($stu_arr,'',$last_syear,$last_marking_period_id); //for previous year
+            $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2,'','','',$last_syear); //for previous year
+            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear,'',$last_marking_period_id);//for previous year
+        }
+     
         $till_now_breckoff = $till_now_breckoff2 = array();
         foreach ($search_ids as $id => $val) {
             foreach ($head_wise_fees as $temp_id => $arr) {
@@ -627,21 +637,35 @@ class AJAXController extends Controller
                     if (!isset($reg_bk_month_wise[$arr['title']])) {
                         $reg_bk_month_wise[$arr['title']] = 0;
                     }
-                    $reg_bk_month_wise[$arr['title']] += $arr['amount'];
+                    // 03-06-24 by uma for institute_id =248 // commented on 2024-07-30
+                    // if(isset($arr['disc_amount']) && $arr['disc_amount']>0 && $arr['amount']>=$arr['disc_amount']){
+                    //     $reg_bk_month_wise[$arr['title']] += ($arr['amount']-$arr['disc_amount']); 
+                    // }else{
+                        $reg_bk_month_wise[$arr['title']] += ($arr['amount']);
+                    // }
                     $final_bk_name[$arr['title']] = $head_name;
                 }
             }
         }
+      
         // return $final_bk_name;exit;
         foreach ($till_now_breckoff2 as $month_id => $fees_detail) {
             foreach ($fees_detail as $head_name => $arr) {
                 if (!isset($reg_bk_month_wise2[$arr['title']])) {
                     $reg_bk_month_wise2[$arr['title']] = 0;
                 }
-                $reg_bk_month_wise2[$arr['title']] += $arr['amount'];
+                // commented on 2024-07-30
+                // if(isset($arr['disc_amount']) && $arr['disc_amount']>0 && $arr['amount']>=$arr['disc_amount']){
+                //     $reg_bk_month_wise2[$arr['title']] += ($arr['amount']-$arr['disc_amount']); 
+                // }else{
+                    $reg_bk_month_wise2[$arr['title']] += ($arr['amount']);
+                // }
+                // $reg_bk_month_wise2[$arr['title']] += $arr['amount'];
                 $final_bk_name[$arr['title']] = $head_name;
             }
         }
+        
+        // echo "<pre>";print_r($other_bk_off);exit;
 
         $full_bk = array_merge($reg_bk_month_wise, $other_bk_off);
 
@@ -664,11 +688,12 @@ class AJAXController extends Controller
         $previous = array_sum($full_bk2);
 
         if ($previous > 0) {
+        // if ($previous > 0) {            
             $full_bk['Previous Fees'] = $previous;
             $final_bk_name["Previous Fees"] = "previous_fees";
 
         }
-
+        // echo "<pre>";print_r($full_bk);exit;
         foreach ($full_bk as $id => $val) {
             $total = $total + $val;
         }
@@ -692,29 +717,33 @@ class AJAXController extends Controller
                         <th  align="center" style="width: 30%;align-content: center;">Particular</th>
                         <th style="width: 10%;padding-left: 15px;">Amount</th>
                         <th style="width: 20%;padding-left: 15px;">Collection Amount</th>
-                        <th style="width: 20%;padding-left: 15px;">' . get_string('Discount', 'requests') . '</th>
-                        <th style="width: 20%;padding-left: 15px;">Fine</th>
-                    </tr>';
+                        <th style="width: 20%;padding-left: 15px;display:none">' . get_string('Discount', 'requests') . '</th>
+                        <th style="width: 20%;padding-left: 15px;display:none">Fine</th>
+                    </tr>'; // hide discount and fine columns 04-02-2025
         foreach ($full_bk as $id => $val) {
             if($val!=0){
+                $ids ='';
+                if($id=="Total"){
+                    $ids='id="all_total"';
+                }
             $response .= "
                  <tr>
                     <td style='width: 20%'>$id</td>
-                    <td style='width: 20%'>$val</td>
+                    <td style='width: 20%' $ids>$val</td>
             ";
             if ($id != 'Total') {
                 // $response .= "<td style='width: 20%'><input type='number' min=0 max=$val  value='" . $val . "' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1'></td>";
                 $response .= "<td style='width: 20%'><input type='number' min='0' max='$val' value='$val' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1' id=" . $final_bk_name[$id] . "></td>";
 
                 $response .= "<input type='hidden' value='" . $val . "' name='hid_fees_data[" . $final_bk_name[$id] . "]' class='hid_allField1'>";
-                $response .= "<td style='width: 20%'><input type='number' value='0' name='discount_data[" . $final_bk_name[$id] . "]' class='form-control allDisField' style='min-width:150px;'></td>"; // min=0 max=$val
-                $response .= "<td style='width: 20%'><input type='number'  min=0 value=0 name='fine_data[" . $final_bk_name[$id] . "]' class='form-control allFinField' style='min-width:150px;'></td>";
+                $response .= "<td style='width: 20%;display:none'><input type='number' value='0' name='discount_data[" . $final_bk_name[$id] . "]' class='form-control allDisField' style='min-width:150px;'></td>"; // min=0 max=$val
+                $response .= "<td style='width: 20%;display:none'><input type='number'  min=0 value=0 name='fine_data[" . $final_bk_name[$id] . "]' class='form-control allFinField' style='min-width:150px;'></td>";
             } else {
                 $response .= "<td style='width: 25%'><input type='text' id='totalVal' name='total' value='" . $total . "' class='form-control'></td>";
-                $response .= "<td style='width: 25%'><input type='text' id='totalDis' name='totalDis' value='0' class='form-control directdiscount'></td>";
-                $response .= "<td style='width: 25%'><input id='totalFin' type='text' name='totalFin' value='0' class='form-control directfine'></td>";
+                $response .= "<td style='width: 25%;display:none'><input type='text'  value='0' class='form-control directdiscount'></td>"; // id='totalDis' name='totalDis'
+                $response .= "<td style='width: 25%;display:none'><input id='totalFin' type='text' name='totalFin' value='0' class='form-control directfine'></td>";
             }
-            $response .= "</tr>";
+            $response .= "</tr>"; // hide discount and fine columns 04-02-2025
         }   
         }
 
