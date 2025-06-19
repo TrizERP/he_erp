@@ -687,7 +687,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         
         $previous = array_sum($full_bk2);
 
-        if ($previous > 0) {
+        if ($previous > 0 && !in_array(session()->get('sub_institute_id'),[133])) {
         // if ($previous > 0) {            
             $full_bk['Previous Fees'] = $previous;
             $final_bk_name["Previous Fees"] = "previous_fees";
