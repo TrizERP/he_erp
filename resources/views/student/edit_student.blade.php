@@ -1158,8 +1158,8 @@ br {
                                                     $j=1;
                                                     $amount = 0;
                                                     @endphp
-                                                    @if(isset($data['fees_data']))
-                                                    @foreach($data['fees_data'] as $key => $value)
+                                                    @if(isset($data['fees_data']['fees_data']))
+                                                    @foreach($data['fees_data']['fees_data'] as $key => $value)
                                                         @php
                                                         $month_names = [];
 

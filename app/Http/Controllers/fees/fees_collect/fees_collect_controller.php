@@ -672,8 +672,8 @@ class fees_collect_controller extends Controller
         $other_bk_off_month_head_wise = OtherBreackOfMonthHead($stu_arr, $search_ids);
 
         //  FeeBreakoffHeadWise get fees_title from helper.php
-        $head_wise_fees = FeeBreakoffHeadWise($stu_arr, null, null, null, $syear,'',$sub_institute_id);
-        
+        $head_wise_fees = FeeBreakoffHeadWise($stu_arr, null, null, null, $syear,'',$marking_period_id); // removed $sub_institute_id from here as it is not used in this function
+        // echo "<pre>";print_r($head_wise_fees);exit;
         $reg_fee_heads = $reg_fee_bk = [];
         foreach ($head_wise_fees as $student_id => $detail_arr) {
             $reg_fee_bk = $detail_arr['breakoff'];
@@ -732,7 +732,7 @@ class fees_collect_controller extends Controller
             $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr,$last_syear,$sub_institute_id);   // for previous year
             $other_bk_off_month_head_wise2 = OtherBreackOfMonthHead($stu_arr, $search_ids,$last_syear,$sub_institute_id); // for previous year
             $year_arr2 = FeeMonthId($last_syear,$sub_institute_id) ?? []; // for previous year
-            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear,$sub_institute_id); // for previous year
+            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear,$last_marking_period_id); // for previous year
             // return $head_wise_fees2;exit;
             $reg_fee_heads2 = [];
             $reg_fee_bk2 = [];
@@ -804,7 +804,6 @@ class fees_collect_controller extends Controller
                 }
             }
         }
-
         // sort other breakoff month date
        // Custom sorting function
 uksort($other_bk_off_month_head_wise, function($a, $b) {
@@ -1873,13 +1872,13 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $html_content = str_replace(htmlspecialchars("<<student_batch>>"), isset($_REQUEST['student_batch']) ? $_REQUEST['student_batch'] : '-', $html_content);
 
              // 2025-01-20 by uma
-             $checkPanNo = DB::table('tblstudent')->where('id',$_REQUEST['student_id'])->first();
-             $pan_no = isset($_REQUEST['pan_card']) ? $_REQUEST['pan_card'] : '';
-             if(!empty($checkPanNo) && $checkPanNo->pan_card=='' && $pan_no!='' && $sub_institute_id==76){
-                DB::table('tblstudent')->where('id',$_REQUEST['student_id'])->update(['pan_card'=>$_REQUEST['pan_card']]);
-             }
+            //  $checkPanNo = DB::table('tblstudent')->where('id',$_REQUEST['student_id'])->first();
+            //  $pan_no = isset($_REQUEST['pan_card']) ? $_REQUEST['pan_card'] : '';
+            //  if(!empty($checkPanNo) && $checkPanNo->pan_card=='' && $pan_no!='' && $sub_institute_id==76){
+            //     DB::table('tblstudent')->where('id',$_REQUEST['student_id'])->update(['pan_card'=>$_REQUEST['pan_card']]);
+            //  }
             
-             $html_content = str_replace(htmlspecialchars("<<parent_pan_card>>"), $pan_no, $html_content);
+            //  $html_content = str_replace(htmlspecialchars("<<parent_pan_card>>"), $pan_no, $html_content);
 
             $html_content = str_replace(htmlspecialchars("<<student_enrollment_value>>"), $enrollment, $html_content);
             $html_content = str_replace(htmlspecialchars("<<student_roll_value>>"), $roll_no, $html_content);

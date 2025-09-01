@@ -815,7 +815,9 @@ die; */
 
         $OldData = $controller->getBk($request, $id);
         $FeesData = $controller->retrieveDataByUserId($request, '', $id);
-
+//echo "<pre>";
+//print_r($FeesData['fees_data']);
+//exit();
         //transport details 
         $trans_controller = new map_student_controller;
         $request = new Request(['id' => $id]);
@@ -826,7 +828,7 @@ die; */
         $res['paid_unpaid_fees'] = $OldData['total_fees'] ?? [];
         $res['check_fees'] = $OldData['final_fee']['Total'] ?? [];
         $res['stu_data'] = $OldData['stu_data'] ?? [];
-        $res['fees_data'] = $FeesData;
+        $res['fees_data'] = $FeesData['fees_data'];
         
         $res['admission_year'] = $admission_year;        
         $res['student_quota'] = $studentQuota;

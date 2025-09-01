@@ -42,7 +42,8 @@ class other_fees_title_controller extends Controller
         return DB::table('fees_other_head as ift')
             ->selectRaw("ift.*,if(ift.status = 1,'Active','Inactive') as status,if(ift.include_imprest = 'Y','Yes','No') as include_imprest")
             ->where('ift.sub_institute_id', $sub_institute_id)
-            ->where('ift.syear', $syear)->get()->toArray();
+            //->where('ift.syear', $syear)
+            ->get()->toArray();
     }
 
     /**
@@ -122,7 +123,8 @@ class other_fees_title_controller extends Controller
         $data = DB::table('fees_other_head')
             ->where('id', $id)
             ->where('sub_institute_id', $sub_institute_id)
-            ->where('syear', $syear)->get()->toArray();
+            //->where('syear', $syear)
+            ->get()->toArray();
         $data = $data[0];
 
         return is_mobile($type, "fees/other_fees_title/add_other", $data, "view");

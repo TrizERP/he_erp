@@ -4,9 +4,14 @@
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row bg-title">
-            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">{{strtoupper($data['data']['module_name'])}}</h4>
+            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                <h4 class="page-title">{{ strtoupper($data['data']['module_name']) }}</h4>
             </div>
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 text-right">
+                    <a href="/custom-module/table?type=API&id={{$data['data']['id']}}" target="_blank" class="text-info">
+                    API <span class="mdi mdi-link-variant"> &nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    </a>
+                </div>
         </div>
         <div class="card">
              @if ($sessionData = Session::get('data'))

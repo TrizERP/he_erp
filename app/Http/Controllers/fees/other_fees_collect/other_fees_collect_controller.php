@@ -27,7 +27,7 @@ class other_fees_collect_controller extends Controller
         $res['status'] = 1;
         $res['message'] = "Success";
 
-        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'status' => '1'])->get()->toArray();
+        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'status' => '1'])->get()->toArray();//'syear' => $syear,
         $res['other_fees_title'] = $other_fees_title;
 
         return is_mobile($type, "fees/other_fees_collect/show_other_fees_collect", $res, "view");
@@ -125,9 +125,9 @@ class other_fees_collect_controller extends Controller
             ->get()
             ->toArray();
 
-        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'status' => '1'])->get()->toArray();
+        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'status' => '1'])->get()->toArray();//'syear' => $syear, 
 
-        $get_amount_of_head = other_fees_title::where(['id' => $other_fees_title_selected, 'sub_institute_id' => $sub_institute_id, 'syear' => $syear])->get()->toArray();
+        $get_amount_of_head = other_fees_title::where(['id' => $other_fees_title_selected, 'sub_institute_id' => $sub_institute_id])->get()->toArray();//'syear' => $syear
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
