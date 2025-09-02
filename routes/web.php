@@ -99,13 +99,12 @@ if (isset($_REQUEST['sub_institute_id']) && $_REQUEST['sub_institute_id'] != '')
         $user_id = $request->session()->get('user_id');
         $expire_date = $request->session()->get('expire_date');
 
-        if (!empty($user_id) ) {
-            if($expire_date == null){
+        if (!empty($user_id)) {
+            if ($expire_date == null) {
                 return redirect()->route('dashboard');
-            }else{
+            } else {
                 return redirect()->route('setup-institute-details');
             }
-           
         } else {
             return view('login');
         }
@@ -114,7 +113,7 @@ if (isset($_REQUEST['sub_institute_id']) && $_REQUEST['sub_institute_id'] != '')
 }
 
 //PAYROLL SYSTEM
-Route::group([ 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::get('/payroll-type', [PayrollController::class, 'payrollType'])->name('payroll_type.index');
     Route::get('/payroll-type/create', [PayrollController::class, 'payrollCreate'])->name('payroll_type.create');
     Route::post('/payroll-type/store', [PayrollController::class, 'payrollStore'])->name('payroll_type.store');
@@ -126,13 +125,13 @@ Route::group([ 'middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::get('/roll-over', [PayrollController::class, 'rollOver'])->name('employee_salary_structure.rollover');
     Route::post('/employee-salary-structure/store', [PayrollController::class, 'employeeSalaryStructureStore'])->name('employee_salary_structure.store');
     Route::post('/rollover-employee-salary-structure/store', [PayrollController::class, 'rolloverEmployeeSalaryStructure'])->name('rollover_employee_salary_structure.store');
-    
+
     Route::get('setup-institute-details', [dashboardController::class, 'setup_details'])->name('setup-institute-details');
 
     Route::get('/salary-structure-report', [PayrollController::class, 'salaryStructureReport'])->name('salary_structure_report.index');
     Route::post('/salary-structure-report', [PayrollController::class, 'showSalaryStructureReport']);
 
-    Route::get('/form16',[PayrollController::class, 'form16'])->name('form16.index');
+    Route::get('/form16', [PayrollController::class, 'form16'])->name('form16.index');
     Route::post('/form16', [PayrollController::class, 'form16Report']);
 
     /*Route::get('/payroll-deduction', [PayrollController::class, 'payrollDeduction']);
@@ -154,58 +153,58 @@ Route::group([ 'middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::get('/payroll-bank-wise-report', [PayrollController::class, 'payrollBankWiseReport'])->name('payroll_bankwise_report.index');
     Route::post('/payroll-bank-wise-report', [PayrollController::class, 'payrollBankWiseReport'])->name('payroll.show_payroll_bankwise_report');
 
-    Route::get('hrms-job-title',[HrmsController::Class,'hrmsJobTitle']);
+    Route::get('hrms-job-title', [HrmsController::Class, 'hrmsJobTitle']);
     Route::get('/hrms-job-title/create', [HrmsController::class, 'hrmsCreate'])->name('hrms_job_title.create');
     Route::get('/hrms-job-title/create/{id}', [HrmsController::class, 'hrmsCreate']);
     Route::post('/hrms-job-title/store', [HrmsController::class, 'hrmsStore'])->name('hrms_job_title.store');
     Route::delete('/hrms-job-title/destroy/{id}', [HrmsController::class, 'hrmsDestroy'])->name('hrms_job_title.destroy');
-    Route::get('departmentwise-emplist',[AJAXController::Class,'getDepEmployeeLists'])->name('departmentwise-emplist');
-    Route::get('hrms-inout-time',[HrmsController::Class,'hrmsInOutTime'])->name('hrms_inout_time.index');
-    Route::post('hrms-in-time/store',[HrmsController::Class,'hrmsInTimeStore'])->name('hrms_in_time.store');
-    Route::post('hrms-out-time/store',[HrmsController::Class,'hrmsOutTimeStore'])->name('hrms_out_time.store');
+    Route::get('departmentwise-emplist', [AJAXController::Class, 'getDepEmployeeLists'])->name('departmentwise-emplist');
+    Route::get('hrms-inout-time', [HrmsController::Class, 'hrmsInOutTime'])->name('hrms_inout_time.index');
+    Route::post('hrms-in-time/store', [HrmsController::Class, 'hrmsInTimeStore'])->name('hrms_in_time.store');
+    Route::post('hrms-out-time/store', [HrmsController::Class, 'hrmsOutTimeStore'])->name('hrms_out_time.store');
 
-    Route::get('hrms-attendance',[HrmsController::Class,'hrmsAttendance'])->name('hrms_attendance.index');
-    Route::post('hrms-attendance-in-time/store',[HrmsController::Class,'hrmsAttendanceInTimeStore'])->name('hrms_attendance_in_time.store');
-    Route::post('hrms-attendance-out-time/store',[HrmsController::Class,'hrmsAttendanceOutTimeStore'])->name('hrms_attendance_out_time.store');
+    Route::get('hrms-attendance', [HrmsController::Class, 'hrmsAttendance'])->name('hrms_attendance.index');
+    Route::post('hrms-attendance-in-time/store', [HrmsController::Class, 'hrmsAttendanceInTimeStore'])->name('hrms_attendance_in_time.store');
+    Route::post('hrms-attendance-out-time/store', [HrmsController::Class, 'hrmsAttendanceOutTimeStore'])->name('hrms_attendance_out_time.store');
 
-    Route::get('hrms-attendance-report',[HrmsController::Class,'hrmsAttendanceReport'])->name('hrms_attendance_report.index');
+    Route::get('hrms-attendance-report', [HrmsController::Class, 'hrmsAttendanceReport'])->name('hrms_attendance_report.index');
     Route::post('/hrms-attendance-report', [HrmsController::class, 'hrmsAttendanceReport'])->name('hrms.show_hrms_attendance_report');
 
-    Route::get('early-going-hrms-attendance-report',[HrmsController::Class,'earlyGoingHrmsAttendanceReport'])->name('hrms_attendance_report.early_going_report');
+    Route::get('early-going-hrms-attendance-report', [HrmsController::Class, 'earlyGoingHrmsAttendanceReport'])->name('hrms_attendance_report.early_going_report');
     Route::post('/early-going-hrms-attendance-report', [HrmsController::class, 'earlyGoingHrmsAttendanceReport'])->name('hrms.show_early_going_hrms_attendance_report');
-    
-    Route::resource('naac_master', sqaa_controller::class);
-    
-    Route::get('insert_naac_master', [sqaa_controller::class,'InsertNaccMasterView'])->name('insert_naac_master.index');
-    Route::post('insert_naac_master_store',[sqaa_controller::class,'InsertNaccMaster'])->name('insert_naac_master.store');
-    Route::get('naac_details', [sqaa_controller::class,'naac_details'])->name('naac_details.index');
 
-    Route::get('naac_doc_master', [sqaa_controller::class,'DocTitleMasterView'])->name('naac_doc_master.index');
-    Route::post('naac_doc_master_store',[sqaa_controller::class,'DocTitleMaster'])->name('naac_doc_master.store');
-    
+    Route::resource('naac_master', sqaa_controller::class);
+
+    Route::get('insert_naac_master', [sqaa_controller::class, 'InsertNaccMasterView'])->name('insert_naac_master.index');
+    Route::post('insert_naac_master_store', [sqaa_controller::class, 'InsertNaccMaster'])->name('insert_naac_master.store');
+    Route::get('naac_details', [sqaa_controller::class, 'naac_details'])->name('naac_details.index');
+
+    Route::get('naac_doc_master', [sqaa_controller::class, 'DocTitleMasterView'])->name('naac_doc_master.index');
+    Route::post('naac_doc_master_store', [sqaa_controller::class, 'DocTitleMaster'])->name('naac_doc_master.store');
+
     Route::resource('naac_parts', sqaaPartsController::class);
-    Route::post('naac_partA2',[sqaaPartsController::class,'naacPartA2'])->name('naac_parts2.store');
-    Route::put('naac_partA2_update/{id}',[sqaaPartsController::class,'naacPartA2Update'])->name('naac_parts2.update');   
-    
-    Route::get('naac_partA3',[sqaaPartsController::class,'naacPartA3'])->name('naac_parts3.index');    
-    Route::post('naac_partA3_store',[sqaaPartsController::class,'naacPartA3Store'])->name('naac_parts3.store');
-    Route::put('naac_partA3_update/{id}',[sqaaPartsController::class,'naacPartA3Update'])->name('naac_parts3.update');   
+    Route::post('naac_partA2', [sqaaPartsController::class, 'naacPartA2'])->name('naac_parts2.store');
+    Route::put('naac_partA2_update/{id}', [sqaaPartsController::class, 'naacPartA2Update'])->name('naac_parts2.update');
+
+    Route::get('naac_partA3', [sqaaPartsController::class, 'naacPartA3'])->name('naac_parts3.index');
+    Route::post('naac_partA3_store', [sqaaPartsController::class, 'naacPartA3Store'])->name('naac_parts3.store');
+    Route::put('naac_partA3_update/{id}', [sqaaPartsController::class, 'naacPartA3Update'])->name('naac_parts3.update');
 
     Route::resource('naac_score_report', sqaaScoreReportController::class);
     Route::resource('naac_report_master', sqaaReportController::class);
-    Route::post('naac_detail_update',[sqaaReportController::class,'naacDetailUpdate'])->name('naac_detail_update.update');
+    Route::post('naac_detail_update', [sqaaReportController::class, 'naacDetailUpdate'])->name('naac_detail_update.update');
     Route::get('naac_report_master/{id}/edit', 'sqaaReportController@edit')->name('naac_report_master.edit');
     Route::put('naac_report_master/{id}', 'sqaaReportController@update')->name('naac_report_master.update');
 
-    Route::get('get-level', [sqaa_controller::class,'get_level'])->name('get-level'); 
-    Route::get('gen-pdf', [sqaa_controller::class,'edit_gen_pdf'])->name('gen-pdf');
-    Route::post('gen-pdf-down', [sqaa_controller::class,'edit_gen_pdf'])->name('gen-pdf-down');    
-    Route::post('unlink-file', [sqaa_controller::class,'unlink_file'])->name('unlink-file');
-    
-    Route::POST('download-pdf', [sqaa_controller::class,'generatePdf'])->name('download-pdf');     
+    Route::get('get-level', [sqaa_controller::class, 'get_level'])->name('get-level');
+    Route::get('gen-pdf', [sqaa_controller::class, 'edit_gen_pdf'])->name('gen-pdf');
+    Route::post('gen-pdf-down', [sqaa_controller::class, 'edit_gen_pdf'])->name('gen-pdf-down');
+    Route::post('unlink-file', [sqaa_controller::class, 'unlink_file'])->name('unlink-file');
+
+    Route::POST('download-pdf', [sqaa_controller::class, 'generatePdf'])->name('download-pdf');
 
     Route::resource('questionExcelDownload', questionExcelDownloadController::class);
-    
+
     Route::get('/whatsapp-user-details', [WhatsappController::class, 'whatsapp_user_details'])->name('whatsapp_user_details.index');
     Route::get('/whatsapp-user-details/create', [WhatsappController::class, 'whatsappUserDetailsCreate'])->name('whatsapp_user_details.create');
     Route::get('/whatsapp-user-details/create/{id}', [WhatsappController::class, 'whatsappUserDetailsCreate']);
@@ -223,16 +222,15 @@ Route::group([ 'middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::delete('/whatsapp-send-messages/destroy/{id}', [WhatsappController::class, 'whatsappSendMessageDestroy'])->name('whatsapp_send_message.destroy');
     Route::get('/whatsapp-sent-generate-report', [WhatsappController::class, 'whatsappSentGenerateReport'])->name('whatsapp_send_messages.generate_report');
     Route::post('/whatsapp-sent-generate-show-report', [WhatsappController::class, 'whatsappSentGenerateReportDetails'])->name('whatsapp_sent_generate_report_details');
-Route::get('/whatsapp-show-reply/{wid}', [WhatsappController::class, 'whatsappShowReply'])->name('whatsapp_show_reply');
-
+    Route::get('/whatsapp-show-reply/{wid}', [WhatsappController::class, 'whatsappShowReply'])->name('whatsapp_show_reply');
 });
 
-Route::get('/import-data',[ImportController::class,'getImport'])->name('import.data');
-Route::get('/marks-import',[ImportController::class,'Import']);
-Route::post('/custom_import_parse', [ImportController::class,'customParseImport'])->name('custom_import_parse');
-Route::post('/import_parse', [ImportController::class,'parseImport'])->name('import_parse');
-Route::post('/import_parse_fields', [ImportController::class,'matchFields'])->name('update.match_fields');
-Route::post('/import_process', [ImportController::class,'processImport'])->name('import_process');
+Route::get('/import-data', [ImportController::class, 'getImport'])->name('import.data');
+Route::get('/marks-import', [ImportController::class, 'Import']);
+Route::post('/custom_import_parse', [ImportController::class, 'customParseImport'])->name('custom_import_parse');
+Route::post('/import_parse', [ImportController::class, 'parseImport'])->name('import_parse');
+Route::post('/import_parse_fields', [ImportController::class, 'matchFields'])->name('update.match_fields');
+Route::post('/import_process', [ImportController::class, 'processImport'])->name('import_process');
 
 Route::any('/knowledge-base', [dashboardController::class, 'knowledge_base'])->name('knowledge_base')->middleware('session', 'menu');
 
@@ -369,7 +367,6 @@ Route::group(['prefix' => 'school_setup', 'middleware' => ['session', 'menu', 'l
     Route::get('google-analytics-summary', array('as' => 'google-analytics-summary', 'uses' => 'school_setup\HomeController@getAnalyticsSummary'));
 
     Route::resource('used_storage_graph', used_storage_graphController::class);
-
 });
 Route::post('get_proxy_master', [proxyController::class, 'getproxydata']);
 Route::get('school_setup/ajax_getTeacherDailyDetailsReport', [teacherdailyReportController::class, 'getTeacherDailyDetailsReport'])->name("ajax_getTeacherDailyDetailsReport");
@@ -419,13 +416,17 @@ Route::post('get_search_url', [AJAXController::class, 'get_search_url'])->name("
 
 
 // send birthday notification
-Route::get('send_birthday_notification',
-    [send_birthday_notification_controller::class, 'send_birthday_notification'])->name('send_birthday_notification');
+Route::get(
+    'send_birthday_notification',
+    [send_birthday_notification_controller::class, 'send_birthday_notification']
+)->name('send_birthday_notification');
 
 // Question Wise Report
 Route::get('/questionReport', [questionWiseReportController::class, 'index'])->name('question_wise_report');
-Route::post('/show_question_wise_report',
-    [questionWiseReportController::class, 'show_question_wise_report'])->name('show_question_wise_report');
+Route::post(
+    '/show_question_wise_report',
+    [questionWiseReportController::class, 'show_question_wise_report']
+)->name('show_question_wise_report');
 
 // Admin Authorization (Show Result)
 Route::GET('result_admin_permission', 'result\result_admin_permission\ResultAdminPermissionController@index')->name('result_admin_permission');
@@ -446,61 +447,82 @@ Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::resource('leave-type', LeaveTypeController::class);
     Route::resource('holiday', HolidayController::class);
     Route::resource('leave-apply', ApplyLeaveController::class);
-    Route::get('my-leave', [ApplyLeaveController::class,'myLeave'])->name('my-leave');
-    Route::get('import-leave', [ApplyLeaveController::class,'importLeave'])->name('import-leave');
-    Route::post('import-leave', [ApplyLeaveController::class,'importOldLeave'])->name('import-leave');
-    Route::get('holiday.weekdays', [HolidayController::class,'getWeekdays'])->name('holiday.weekdays');
-    Route::post('holiday.weekdays', [HolidayController::class,'storeWeekdays'])->name('holiday.weekdays');
+    Route::get('my-leave', [ApplyLeaveController::class, 'myLeave'])->name('my-leave');
+    Route::get('import-leave', [ApplyLeaveController::class, 'importLeave'])->name('import-leave');
+    Route::post('import-leave', [ApplyLeaveController::class, 'importOldLeave'])->name('import-leave');
+    Route::get('holiday.weekdays', [HolidayController::class, 'getWeekdays'])->name('holiday.weekdays');
+    Route::post('holiday.weekdays', [HolidayController::class, 'storeWeekdays'])->name('holiday.weekdays');
 
     Route::resource('books', BookController::class);
-    Route::resource('item_verification_status', itemVerificationController::class); 
-    Route::resource('scan_books', itemScanController::class); 
-    Route::get('scan_books_remarks', [itemScanController::class,'remarksIndex'])->name('scan_books_remarks.index');
-    Route::post('scan_books_remarks/store', [itemScanController::class,'remarksStore'])->name('scan_books_remarks.store');
-    Route::get('verified_book_report', [itemScanController::class,'verifiedReport'])->name('verified_report.index');
-    Route::get('verified_book_report_pending', [itemScanController::class,'verifyPendingReport'])->name('verifiyPending_report.index');
+    Route::resource('item_verification_status', itemVerificationController::class);
+    Route::resource('scan_books', itemScanController::class);
+    Route::get('scan_books_remarks', [itemScanController::class, 'remarksIndex'])->name('scan_books_remarks.index');
+    Route::post('scan_books_remarks/store', [itemScanController::class, 'remarksStore'])->name('scan_books_remarks.store');
+    Route::get('verified_book_report', [itemScanController::class, 'verifiedReport'])->name('verified_report.index');
+    Route::get('verified_book_report_pending', [itemScanController::class, 'verifyPendingReport'])->name('verifiyPending_report.index');
 
-    Route::get('books/{id}/barcode', [BookController::class,'generateBarcode'])->name('books.barcode');
-    Route::get('books/{id}/reutrn', [BookController::class,'returnBook'])->name('books.return');
-    Route::post('books/issue', [BookController::class,'issueBook'])->name('books.issue');
-    Route::get('books.circulation', [BookController::class,'circulation'])->name('books.circulation');
-    Route::get('books/{id}/item', [BookController::class,'item'])->name('books.item');
-    Route::delete('books/{id}/item/delete', [BookController::class,'deleteItem'])->name('books.items.destroy');
-    Route::get('quick_return', [BookController::class,'QuickReturn'])->name('quick_return.index');
-    Route::post('quick_return', [BookController::class,'QuickReturnSearch'])->name('quick_return.create');    
-    Route::get('check_issue', [BookController::class,'checkIssue'])->name('check_issue');
+    Route::get('books/{id}/barcode', [BookController::class, 'generateBarcode'])->name('books.barcode');
+    Route::get('books/{id}/reutrn', [BookController::class, 'returnBook'])->name('books.return');
+    Route::post('books/issue', [BookController::class, 'issueBook'])->name('books.issue');
+    Route::get('books.circulation', [BookController::class, 'circulation'])->name('books.circulation');
+    Route::get('books/{id}/item', [BookController::class, 'item'])->name('books.item');
+    Route::delete('books/{id}/item/delete', [BookController::class, 'deleteItem'])->name('books.items.destroy');
+    Route::get('quick_return', [BookController::class, 'QuickReturn'])->name('quick_return.index');
+    Route::post('quick_return', [BookController::class, 'QuickReturnSearch'])->name('quick_return.create');
+    Route::get('check_issue', [BookController::class, 'checkIssue'])->name('check_issue');
     // api 
-    Route::get('all_book_lists', [BookController::class,'allBookLists'])->name('allBookLists.index');
+    Route::get('all_book_lists', [BookController::class, 'allBookLists'])->name('allBookLists.index');
 
     Route::resource('library_report', LibraryReportController::class);
     Route::post('show_library_report', [LibraryReportController::class, 'show_library_report'])->name('show_library_report');
 
     Route::get('book_issue_report', [LibraryReportController::class, 'bookIssueDueReport'])->name('book_issue_report.index');
-    Route::post('book_issue_report', [LibraryReportController::class, 'bookIssueDueReportCreate'])->name('book_issue_report.create');    
-    
+    Route::post('book_issue_report', [LibraryReportController::class, 'bookIssueDueReportCreate'])->name('book_issue_report.create');
+
     Route::get('print_barcode', [LibraryReportController::class, 'PrintBarcode'])->name('print_barcode.index');
     Route::post('print_barcode', [LibraryReportController::class, 'PrintBarcodeCreate'])->name('print_barcode.create');
     Route::post('generateBarcodePdf', [LibraryReportController::class, 'generateBarcodePdf'])->name('generateBarcodePdf');
-    
 });
 
 Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'logRoute']], function () {
-// attendanceController
+    // attendanceController
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
 });
-    Route::get('get-lecture-list', [AJAXController::class, 'getLectureList']);
-    Route::get('get-batch', [AJAXController::class, 'get_batch']);
+Route::get('get-lecture-list', [AJAXController::class, 'getLectureList']);
+Route::get('get-batch', [AJAXController::class, 'get_batch']);
 
-    // 2024-12-09
+Route::get('api/get-standard-list', [AJAXController::class, 'getStandardList']);
+Route::get('api/get-division-list', [AJAXController::class, 'getDivisionList']);
+Route::get('api/get-subject-list', [AJAXController::class, 'getSubjectList']);
+Route::get('api/get-subject-list-timetable', [AJAXController::class, 'getSubjectListTimetable']);
+Route::get('api/get-batch-list-timetable', [AJAXController::class, 'getBatchTimetable']);
+/** get exam list */
+Route::get('api/get-exam-name-list', [AJAXController::class, 'getExamsList']);
+Route::get('api/get-exam-master-list', [AJAXController::class, 'getExamsMasterList']);
+
+/** get subjec by create exam list */
+Route::get('api/get-subject-by-create-exam', [AJAXController::class, 'getSubjectByCreateExam']);
+/** get Exam by create exam list */
+Route::get('api/get-exam-name-by-create-exam', [AJAXController::class, 'getExamByCreateExam']);
+Route::get('api/get-chapter-list', [AJAXController::class, 'getChapterList']);
+Route::get('api/get-topic-list', [AJAXController::class, 'getTopicList']);
+Route::get('api/get-exam-list', [AJAXController::class, 'getExamList']);
+Route::get('api/get-co-scholastic-parent-list', [AJAXController::class, 'getCoScholasticParentList']);
+Route::get('api/get-co-scholastic-list', [AJAXController::class, 'getCoScholasticList']);
+
+Route::GET('ajax_sendEmailFeesReceipt', [AJAXController::class, 'ajax_sendEmailFeesReceipt'])->name('ajax_sendEmailFeesReceipt');
+Route::GET('ajax_sendBulkEmailFeesReceipt', [AJAXController::class, 'ajax_sendBulkEmailFeesReceipt'])->name('ajax_sendBulkEmailFeesReceipt');
+
+// 2024-12-09
 Route::post('transferDocs', [oldDocumentTransfer::class, 'storeImagesToDigitalOcean']);
-Route::get('convertDoc',[oldDocumentTransfer::class, 'ConvertBinaryData']);
+Route::get('convertDoc', [oldDocumentTransfer::class, 'ConvertBinaryData']);
 
 Route::get('privacyPolicy', [dashboardController::class, 'privacyPolicy'])->name('privacyPolicy');
 Route::get('termAndCondition', [dashboardController::class, 'termAndCondition'])->name('termAndCondition');
 Route::get('otherPolicy', [dashboardController::class, 'otherPolicy'])->name('otherPolicy');
-Route::any('check_permissions',[AJAXController::class, 'check_access'])->name('check_permissions');
-Route::any('check_access',[AJAXController::class, 'check_access'])->name('check_access');
+Route::any('check_permissions', [AJAXController::class, 'check_access'])->name('check_permissions');
+Route::any('check_access', [AJAXController::class, 'check_access'])->name('check_access');
 
-Route::any('chat',[AJAXController::class, 'chat'])->name('chat');
+Route::any('chat', [AJAXController::class, 'chat'])->name('chat');
 Route::get('studentLists', [AJAXController::class, 'studentLists'])->name('studentLists');
