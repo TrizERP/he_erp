@@ -166,10 +166,10 @@ class AJAXController extends Controller
 
         if ($path) {
             $parsedUrl = parse_url($path);
-            
+
             if (isset($parsedUrl['path'])) {
                 $pathParts = pathinfo($parsedUrl['path']);
-                
+
                 if (isset($pathParts['filename'])) {
                     $module_name = $pathParts['filename'];
                 }
@@ -210,10 +210,9 @@ class AJAXController extends Controller
                 $query->whereIn('id', $subjectTeacherStdArr);
             }
             //END Check for subject teacher assigned
-            $query->where('marking_period_id',session()->get('term_id')); // added for sem wise on 03-03-2025 by uma
+            $query->where('marking_period_id', session()->get('term_id')); // added for sem wise on 03-03-2025 by uma
 
             $standard = $query->pluck("name", "id");
-
         } else {
             $query = DB::table('standard');
             $query->where("grade_id", $request->grade_id);
@@ -235,7 +234,7 @@ class AJAXController extends Controller
             if ($subjectTeacherStdArr != "" && ($classTeacherStdArr == "" || in_array($module_name, $module_array))) {
                 $query->whereIn('id', $subjectTeacherStdArr);
             }
-            $query->where('marking_period_id',session()->get('term_id')); // added for sem wise on 03-03-2025 by uma
+            $query->where('marking_period_id', session()->get('term_id')); // added for sem wise on 03-03-2025 by uma
             //END Check for subject teacher assigned
             $standard = $query->pluck("name", "id");
         }
@@ -250,10 +249,10 @@ class AJAXController extends Controller
 
         if ($path) {
             $parsedUrl = parse_url($path);
-            
+
             if (isset($parsedUrl['path'])) {
                 $pathParts = pathinfo($parsedUrl['path']);
-                
+
                 if (isset($pathParts['filename'])) {
                     $module_name = $pathParts['filename'];
                 }
@@ -297,7 +296,6 @@ class AJAXController extends Controller
             //END Check for subject teacher assigned
 
             $std_div_map = $query->pluck('division.name', 'division.id');
-
         } else {
             // DB::enableQueryLog();
             $query = DB::table('std_div_map');
@@ -388,6 +386,245 @@ class AJAXController extends Controller
         return response()->json($std_sub_map);
     }
 
+    public function getSubjectListTimetable(Request $request)
+    {
+        $standard_id = $request->standard_id;
+        $division_id = $request->division_id;
+
+        $explode = explode(',', $request->standard_id);
+
+        $arr = $request->server;
+        $HTTP_REFERER = "";
+        foreach ($arr as $id => $val) {
+            if ($id == 'HTTP_REFERER') {
+                $HTTP_REFERER = $val;
+            }
+        }
+        $refer_arr = explode('/', $HTTP_REFERER);
+
+        if (count($refer_arr) >= 2 && $refer_arr[count($refer_arr) - 2] == 'exam_creation' || in_array('marks_entry', $refer_arr)) {
+            $where = array(
+                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+                "sub_std_map.allow_grades" => "Yes",
+            );
+        } else {
+            $where = array(
+                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+            );
+        }
+        if (count($explode) > 1) {
+            $std_sub_map = DB::table('subject')
+                ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
+                ->whereIn("sub_std_map.standard_id", $explode)
+                ->where($where)
+                ->orderBy('sub_std_map.sort_order')
+                ->pluck('sub_std_map.display_name', 'subject.id');
+        } else {
+            // if (session()->get('user_profile_name') == 'Lecturer') {
+            $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
+            if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
+                $fullDay = strtolower(date('l', strtotime($request->date)));
+                $todayDay = ($fullDay == 'thursday') ? 'H' : 'T';
+            }
+            
+            // return strtoupper($todayDay);
+            # Get subjects by teacher, standard and division
+            $std_sub_mapArr = DB::table('subject as sub')
+                ->join('timetable as t', 't.subject_id', '=', 'sub.id')
+                ->join('period as p', 'p.id', '=', 't.period_id')
+                ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
+                    $query->where('t.teacher_id', session()->get('user_id'));
+                })
+                ->where('t.standard_id', $request->standard_id)
+                ->where('t.division_id', $request->division_id)
+                ->where('t.syear', session()->get('syear'))
+                ->where('t.week_day', strtoupper($todayDay))
+                ->select(
+                    'sub.id',
+                    'sub.subject_name as display_name',
+                    't.extend_lab',
+                    't.type',
+                    't.id as timetable_id',
+                    't.period_id',
+                    'p.title as lecture',
+                    'p.short_name'
+                )
+                ->get();
+                // return $std_sub_mapArr;
+            $merged = [];
+
+            // Step 1: Group by display_name + extend_lab
+            foreach ($std_sub_mapArr as $value) {
+                $key = $value->display_name . "###" . $value->extend_lab; // unique group key
+
+                if (!isset($merged[$key])) {
+                    $merged[$key] = [
+                        'ids' => [],
+                        'shorts' => [],
+                        'display_name' => $value->display_name,
+                        'extend_lab' => $value->extend_lab,
+                        'timetable_id' => $value->timetable_id,
+                    ];
+                }
+
+                // store ids and shorts
+                $merged[$key]['ids'][] = $value->id;
+                $merged[$key]['shorts'][] = $value->short_name;
+            }
+
+            // Step 2: Build final output
+            $merged = [];
+
+            // Step 1: Group by display_name + extend_lab
+            foreach ($std_sub_mapArr as $value) {
+                $key = $value->display_name . "###" . $value->extend_lab; // unique group key
+
+                if (!isset($merged[$key])) {
+                    $merged[$key] = [
+                        'subject_ids' => [],
+                        'period_ids' => [],
+                        'timetable_ids' => [],
+                        'shorts' => [],
+                        'display_name' => $value->display_name,
+                        'extend_lab' => $value->extend_lab,
+                        'type' => $value->type
+                    ];
+                }
+
+                $merged[$key]['subject_ids'][] = $value->id;
+                $merged[$key]['period_ids'][] = $value->period_id;
+                $merged[$key]['timetable_ids'][] = $value->timetable_id;
+                $merged[$key]['shorts'][] = $value->short_name;
+            }
+
+            // Step 2: Build final output
+            $std_sub_map = [];
+            foreach ($merged as $item) {
+                // unique + sorted
+                $subject_ids = array_values(array_unique($item['subject_ids']));
+                $period_ids  = array_values(array_unique($item['period_ids']));
+                $timetable_ids  = array_values(array_unique($item['timetable_ids']));
+                $shorts      = array_values(array_unique($item['shorts']));
+
+                natsort($subject_ids);
+                natsort($period_ids);
+                natsort($timetable_ids);
+                natsort($shorts);
+
+                // If multiple shorts → create "range" L1-L3
+                if (count($shorts) > 1) {
+                    $subject_prefix = reset($shorts) . '-' . end($shorts);
+
+                    // 👇 ensure "double ###" when multiple shorts
+                    $subject_id = implode('###', $subject_ids);
+                    $period_id  = implode('###', $period_ids);
+                    $timetable_id  = implode('###', $timetable_ids);
+                } else {
+                    $subject_prefix = reset($shorts);
+                    $subject_id = implode('###', $subject_ids);
+                    $period_id  = implode('###', $period_ids);
+                    $timetable_id  = implode('###', $timetable_ids);
+                }
+
+                // final subject text
+                $subject = $subject_prefix . ' - ' . $item['display_name'];
+
+                $std_sub_map[] = [
+                    'subject_id' => $subject_id,
+                    'period_id'  => $period_id,
+                    'subject'    => $subject,
+                    'timetable'    => $timetable_id,
+                    'extend_lab' => $item['extend_lab'],
+                    'type'       => $item['type']
+                ];
+            }
+            // } else {
+            //     $where['sub_std_map.standard_id'] = $request->standard_id;
+
+            //     $std_sub_map = DB::table('subject')
+            //         ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
+            //         ->where($where)
+            //         ->orderBy('sub_std_map.sort_order')
+            //         ->pluck('sub_std_map.display_name', 'subject.id');
+            // }
+        }
+
+        return response()->json($std_sub_map);
+    }
+
+    public function getBatchTimetable (Request $request)
+    {
+        // return $request->all();
+        $standard_id = $request->standard_id;
+        $division_id = $request->division_id;
+
+        $explode = explode(',', $request->standard_id);
+
+        $arr = $request->server;
+        $HTTP_REFERER = "";
+        foreach ($arr as $id => $val) {
+            if ($id == 'HTTP_REFERER') {
+                $HTTP_REFERER = $val;
+            }
+        }
+        $refer_arr = explode('/', $HTTP_REFERER);
+
+        if (count($refer_arr) >= 2 && $refer_arr[count($refer_arr) - 2] == 'exam_creation' || in_array('marks_entry', $refer_arr)) {
+            $where = array(
+                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+                "sub_std_map.allow_grades" => "Yes",
+            );
+        } else {
+            $where = array(
+                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+            );
+        }
+        if (count($explode) > 1) {
+            $std_sub_map = DB::table('subject')
+                ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
+                ->whereIn("sub_std_map.standard_id", $explode)
+                ->where($where)
+                ->orderBy('sub_std_map.sort_order')
+                ->pluck('sub_std_map.display_name', 'subject.id');
+        } else {
+            // if (session()->get('user_profile_name') == 'Lecturer') {
+            $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
+            if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
+                $fullDay = strtolower(date('l', strtotime($request->date)));
+                $todayDay = ($fullDay == 'thursday') ? 'H' : 'T';
+            }
+            
+            // return strtoupper($todayDay);
+            # Get subjects by teacher, standard and division
+            $explodeSubject = explode('|||', $request->subject_id);
+            $subject = $explodeSubject[0] ?? 0;
+            $explodePeriod = explode('###',$explodeSubject[1] ?? '');
+
+            $batch = DB::table('batch as b')
+                ->join('timetable as t', 't.batch_id', '=', 'b.id')
+                ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
+                    $query->where('t.teacher_id', session()->get('user_id'));
+                })
+                ->where('t.standard_id', $request->standard_id)
+                ->where('t.division_id', $request->division_id)
+                ->where('t.subject_id', $subject)
+                ->whereIn('t.period_id', $explodePeriod)
+                ->where('t.syear', session()->get('syear'))
+                ->where('t.week_day', strtoupper($todayDay))
+                ->select(
+                    'b.id',
+                    'b.title as batch',
+                    't.id as timetable_id',
+                    't.extend_lab',
+                    't.type',
+                    't.period_id',
+                )
+                ->get();
+          
+                }
+        return response()->json($batch);
+    }
+    
     public function getChapterList(Request $request)
     {
         $explode = explode(',', $request->subject_id);
@@ -401,7 +638,8 @@ class AJAXController extends Controller
         } else {
             $chapter_list = DB::table('chapter_master')
                 ->where([
-                    'sub_institute_id' => session()->get('sub_institute_id'), 'subject_id' => $request->subject_id,
+                    'sub_institute_id' => session()->get('sub_institute_id'),
+                    'subject_id' => $request->subject_id,
                     "standard_id" => $standard_id,
                 ])
                 ->pluck('chapter_name', 'id');
@@ -422,7 +660,8 @@ class AJAXController extends Controller
         } else {
             $topic_list = DB::table('topic_master')
                 ->where([
-                    'sub_institute_id' => session()->get('sub_institute_id'), 'chapter_id' => $request->chapter_id,
+                    'sub_institute_id' => session()->get('sub_institute_id'),
+                    'chapter_id' => $request->chapter_id,
                 ])
                 ->pluck('name', 'id');
         }
@@ -439,34 +678,34 @@ class AJAXController extends Controller
             "re.standard_id" => $request->standard_id,
             "re.subject_id" => $request->subject_id,
         );
-        if(isset($request->exam_id) && $request->exam_id != ''){
+        if (isset($request->exam_id) && $request->exam_id != '') {
             $where = [
                 "re.sub_institute_id" => session()->get('sub_institute_id'),
                 "re.syear" => session()->get('syear'),
-                "re.standard_id"=>$request->standard_id,
-                "re.exam_id"=>$request->exam_id
+                "re.standard_id" => $request->standard_id,
+                "re.exam_id" => $request->exam_id
             ];
             $group = "re.title";
         }
 
-            if($request->has('searchType') && $request->searchType == 'co'){
-                return DB::table('result_create_exam as re')
+        if ($request->has('searchType') && $request->searchType == 'co') {
+            return DB::table('result_create_exam as re')
                 ->join('lo_category as lc', 'lc.id', '=', 're.co_id')
                 ->where($where)
                 ->pluck('lc.title', 're.id');
-            }
+        }
 
-            $std_sub_map = DB::table('result_create_exam as re')
+        $std_sub_map = DB::table('result_create_exam as re')
             ->where($where);
-            if(isset($group)){
-                $std_sub_map->groupBy($group);
-            }
-            $std_sub_map->where('re.exam_id', $request->exam_id);
-            $std_sub_map = $std_sub_map->pluck('re.title', 're.id');
-        
+        if (isset($group)) {
+            $std_sub_map->groupBy($group);
+        }
+        $std_sub_map->where('re.exam_id', $request->exam_id);
+        $std_sub_map = $std_sub_map->pluck('re.title', 're.id');
+
         return response()->json($std_sub_map);
     }
-    
+
     public function getExamsMasterList(Request $request)
     {
         $where = array(
@@ -506,7 +745,7 @@ class AJAXController extends Controller
 
         $co_scholastic_parent = DB::table('result_co_scholastic as re')
             ->where($where)
-            ->where('re.standard_id',$request->standard_id)
+            ->where('re.standard_id', $request->standard_id)
             ->pluck('re.title', 're.id');
 
         return response()->json($co_scholastic_parent);
@@ -554,14 +793,13 @@ class AJAXController extends Controller
     {
         $months = $request->checkedMonths;
         $student_id = $request->student_id;
-        $last_syear = (session()->get('syear')-1);
+        $last_syear = (session()->get('syear') - 1);
         $marking_period_id = session()->get('term_id');
-//ADDED BY RAJESH 12-06-2025
-$termId = session()->get('term_id');
+        //ADDED BY RAJESH 12-06-2025
+        $termId = session()->get('term_id');
 
-$last_marking_period_id = ($termId == 1) ? 2 :
-                          (($termId == 2) ? 1 : $termId);
-//END
+        $last_marking_period_id = ($termId == 1) ? 2 : (($termId == 2) ? 1 : $termId);
+        //END
 
         if (empty($months)) {
             return "";
@@ -590,21 +828,21 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         $search_ids = $months;
         $reg_bk_off = FeeBreackoff($stu_arr); // for current year
         $other_bk_off = OtherBreackOff($stu_arr, $search_ids); // for current year
-        $other_bk_off_month_wise = OtherBreackOfMonth($stu_arr);// for current year
-        $year_arr = FeeMonthId();// for current year
+        $other_bk_off_month_wise = OtherBreackOfMonth($stu_arr); // for current year
+        $year_arr = FeeMonthId(); // for current year
         $head_wise_fees = FeeBreakoffHeadWise($stu_arr); //for current year
-//   if($student_id==95642){
-//             echo "<pre>";print_r($head_wise_fees);exit;
-//         }
+        //   if($student_id==95642){
+        //             echo "<pre>";print_r($head_wise_fees);exit;
+        //         }
         //echo $last_syear."#".$last_marking_period_id;die();
         $other_bk_off_month_wise2 = $reg_bk_off2 = $other_bk_off2 = $head_wise_fees2 = array();
-        if(session()->get('sub_institute_id')!=48 && session()->get('sub_institute_id')!=61){
-            $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr,$last_syear); //for previous year
-            $reg_bk_off2 = FeeBreackoff($stu_arr,'',$last_syear,$last_marking_period_id); //for previous year
-            $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2,'','','',$last_syear); //for previous year
-            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear,'',$last_marking_period_id);//for previous year
+        if (session()->get('sub_institute_id') != 48 && session()->get('sub_institute_id') != 61) {
+            $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr, $last_syear); //for previous year
+            $reg_bk_off2 = FeeBreackoff($stu_arr, '', $last_syear, $last_marking_period_id); //for previous year
+            $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2, '', '', '', $last_syear); //for previous year
+            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr, '', '', '', $last_syear, '', $last_marking_period_id); //for previous year
         }
-     
+
         $till_now_breckoff = $till_now_breckoff2 = array();
         foreach ($search_ids as $id => $val) {
             foreach ($head_wise_fees as $temp_id => $arr) {
@@ -641,13 +879,13 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                     // if(isset($arr['disc_amount']) && $arr['disc_amount']>0 && $arr['amount']>=$arr['disc_amount']){
                     //     $reg_bk_month_wise[$arr['title']] += ($arr['amount']-$arr['disc_amount']); 
                     // }else{
-                        $reg_bk_month_wise[$arr['title']] += ($arr['amount']);
+                    $reg_bk_month_wise[$arr['title']] += ($arr['amount']);
                     // }
                     $final_bk_name[$arr['title']] = $head_name;
                 }
             }
         }
-      
+
         // return $final_bk_name;exit;
         foreach ($till_now_breckoff2 as $month_id => $fees_detail) {
             foreach ($fees_detail as $head_name => $arr) {
@@ -658,40 +896,39 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                 // if(isset($arr['disc_amount']) && $arr['disc_amount']>0 && $arr['amount']>=$arr['disc_amount']){
                 //     $reg_bk_month_wise2[$arr['title']] += ($arr['amount']-$arr['disc_amount']); 
                 // }else{
-                    $reg_bk_month_wise2[$arr['title']] += ($arr['amount']);
+                $reg_bk_month_wise2[$arr['title']] += ($arr['amount']);
                 // }
                 // $reg_bk_month_wise2[$arr['title']] += $arr['amount'];
                 $final_bk_name[$arr['title']] = $head_name;
             }
         }
-        
+
         // echo "<pre>";print_r($other_bk_off);exit;
 
         $full_bk = array_merge($reg_bk_month_wise, $other_bk_off);
 
         $full_bk2 = array_merge($reg_bk_month_wise2, $other_bk_off2);
-        
+
         $feeTitles = array_keys($full_bk);
         $feeTitlesIn = implode("','", $feeTitles);
-        
-        $sortOrders = DB::table('fees_title')
-            ->whereRaw("display_name IN ('".$feeTitlesIn."')")
-            ->where(['sub_institute_id'=>session()->get('sub_institute_id'),'syear'=>session()->get('syear')])
-            ->orderBy('sort_order')
-            ->pluck('sort_order','display_name');
 
-            uksort($full_bk, function($a, $b) use ($sortOrders) {
-                return $sortOrders[$a] <=> $sortOrders[$b];
-            });
-         
-        
+        $sortOrders = DB::table('fees_title')
+            ->whereRaw("display_name IN ('" . $feeTitlesIn . "')")
+            ->where(['sub_institute_id' => session()->get('sub_institute_id'), 'syear' => session()->get('syear')])
+            ->orderBy('sort_order')
+            ->pluck('sort_order', 'display_name');
+
+        uksort($full_bk, function ($a, $b) use ($sortOrders) {
+            return $sortOrders[$a] <=> $sortOrders[$b];
+        });
+
+
         $previous = array_sum($full_bk2);
 
-        if ($previous > 0 && !in_array(session()->get('sub_institute_id'),[133])) {
-        // if ($previous > 0) {            
+        if ($previous > 0 && !in_array(session()->get('sub_institute_id'), [133])) {
+            // if ($previous > 0) {            
             $full_bk['Previous Fees'] = $previous;
             $final_bk_name["Previous Fees"] = "previous_fees";
-
         }
         // echo "<pre>";print_r($full_bk);exit;
         foreach ($full_bk as $id => $val) {
@@ -705,9 +942,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                 if ($title == $arr->display_name) {
                     $final_bk_name[$title] = $arr->other_fee_id;
                 }
-
             }
-
         }
 
         $full_bk["Total"] = $total;
@@ -721,30 +956,30 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                         <th style="width: 20%;padding-left: 15px;display:none">Fine</th>
                     </tr>'; // hide discount and fine columns 04-02-2025
         foreach ($full_bk as $id => $val) {
-            if($val!=0){
-                $ids ='';
-                if($id=="Total"){
-                    $ids='id="all_total"';
+            if ($val != 0) {
+                $ids = '';
+                if ($id == "Total") {
+                    $ids = 'id="all_total"';
                 }
-            $response .= "
+                $response .= "
                  <tr>
                     <td style='width: 20%'>$id</td>
                     <td style='width: 20%' $ids>$val</td>
             ";
-            if ($id != 'Total') {
-                // $response .= "<td style='width: 20%'><input type='number' min=0 max=$val  value='" . $val . "' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1'></td>";
-                $response .= "<td style='width: 20%'><input type='number' min='0' max='$val' value='$val' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1' id=" . $final_bk_name[$id] . "></td>";
+                if ($id != 'Total') {
+                    // $response .= "<td style='width: 20%'><input type='number' min=0 max=$val  value='" . $val . "' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1'></td>";
+                    $response .= "<td style='width: 20%'><input type='number' min='0' max='$val' value='$val' name='fees_data[" . $final_bk_name[$id] . "]' class='form-control allField1' id=" . $final_bk_name[$id] . "></td>";
 
-                $response .= "<input type='hidden' value='" . $val . "' name='hid_fees_data[" . $final_bk_name[$id] . "]' class='hid_allField1'>";
-                $response .= "<td style='width: 20%;display:none'><input type='number' value='0' name='discount_data[" . $final_bk_name[$id] . "]' class='form-control allDisField' style='min-width:150px;'></td>"; // min=0 max=$val
-                $response .= "<td style='width: 20%;display:none'><input type='number'  min=0 value=0 name='fine_data[" . $final_bk_name[$id] . "]' class='form-control allFinField' style='min-width:150px;'></td>";
-            } else {
-                $response .= "<td style='width: 25%'><input type='text' id='totalVal' name='total' value='" . $total . "' class='form-control'></td>";
-                $response .= "<td style='width: 25%;display:none'><input type='text'  value='0' class='form-control directdiscount'></td>"; // id='totalDis' name='totalDis'
-                $response .= "<td style='width: 25%;display:none'><input id='totalFin' type='text' name='totalFin' value='0' class='form-control directfine'></td>";
+                    $response .= "<input type='hidden' value='" . $val . "' name='hid_fees_data[" . $final_bk_name[$id] . "]' class='hid_allField1'>";
+                    $response .= "<td style='width: 20%;display:none'><input type='number' value='0' name='discount_data[" . $final_bk_name[$id] . "]' class='form-control allDisField' style='min-width:150px;'></td>"; // min=0 max=$val
+                    $response .= "<td style='width: 20%;display:none'><input type='number'  min=0 value=0 name='fine_data[" . $final_bk_name[$id] . "]' class='form-control allFinField' style='min-width:150px;'></td>";
+                } else {
+                    $response .= "<td style='width: 25%'><input type='text' id='totalVal' name='total' value='" . $total . "' class='form-control'></td>";
+                    $response .= "<td style='width: 25%;display:none'><input type='text'  value='0' class='form-control directdiscount'></td>"; // id='totalDis' name='totalDis'
+                    $response .= "<td style='width: 25%;display:none'><input id='totalFin' type='text' name='totalFin' value='0' class='form-control directfine'></td>";
+                }
+                $response .= "</tr>"; // hide discount and fine columns 04-02-2025
             }
-            $response .= "</tr>"; // hide discount and fine columns 04-02-2025
-        }   
         }
 
         return $response;
@@ -832,7 +1067,6 @@ $last_marking_period_id = ($termId == 1) ? 2 :
             }
 
             $response .= "</tr>";
-
         }
 
         return $response;
@@ -1062,8 +1296,8 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                 $main_menu .= '<li class="nav-item" role="presentation" data-toggle="tooltip" data-placement="top"
                 title="' . $val['name'] . '"><a class="nav-link ' . $active . '" data-toggle="tab" href="#right-tab-' . $i . '"
                 role="tab" aria-controls="right-tab-' . $i . '" aria-selected="false"><img class="icon-nrml"
-                src="'.env('APP_URL') . '/admin_dep/images/side-' . $val['icon'] . '.png" alt="">
-                <img class="icon-hvr" src="'.env('APP_URL') . '/admin_dep/images/side-' . $val['icon'] . '-white.png"
+                src="' . env('APP_URL') . '/admin_dep/images/side-' . $val['icon'] . '.png" alt="">
+                <img class="icon-hvr" src="' . env('APP_URL') . '/admin_dep/images/side-' . $val['icon'] . '-white.png"
                 alt=""></a></li>';
 
                 $child_arr = $RS_ChildMenu[$val['id']];
@@ -1166,7 +1400,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
 
     public function ajax_sendEmailFeesReceipt(Request $request)
     {
-    //    return $this->ajax_sendmail($request);exit;
+        //    return $this->ajax_sendmail($request);exit;
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
         $student_id = $request->input('student_id');
@@ -1476,7 +1710,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
             $html_data = $this->get_FeesHtmlForBulk($action, $value);
             $student_id = $html_data['student_id'];
             $fees_receipt_html = $html_data['fees_receipt_html'];
-           // dd($html_data);
+            // dd($html_data);
 
             if ($fees_receipt_html != '') {
                 $dom = '<!DOCTYPE html>
@@ -1492,15 +1726,15 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                             }
                             </style>
                             <body>';
-                            if($action == 'other_fees_collect_receipt' ){
-                                $dom .= $this->get_PageSetup($paper_size);
-                            }else{
-                                $dom .= '  <div style="page-break-inside: avoid">
+                if ($action == 'other_fees_collect_receipt') {
+                    $dom .= $this->get_PageSetup($paper_size);
+                } else {
+                    $dom .= '  <div style="page-break-inside: avoid">
                                 ##HTML_SEC##
                             </div>';
-                            }
-                           
-                            $dom .= '  </body>
+                }
+
+                $dom .= '  </body>
                         </html>';
 
                 $save_path = $_SERVER['DOCUMENT_ROOT'] . '/storage/print_receipt_pdf';
@@ -1510,7 +1744,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                 $pdf_filename = $student_id . '_' . $CUR_TIME . ".pdf";
 
                 // $html = '';
-                $html .= $fees_receipt_html;//.'<div class="last_page" style="page-break-before: always !important;"></div>';
+                $html .= $fees_receipt_html; //.'<div class="last_page" style="page-break-before: always !important;"></div>';
                 $html = str_replace('##HTML_SEC##', $html, $dom);
 
                 $html_file_path = $save_path . '/' . $html_filename;
@@ -1519,7 +1753,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
 
                 if ($action == 'Bonafide' || $action == 'Character Certificate' || $action == 'imprest_fees_cancel_refund_receipt') {
                     htmlToPDFLandscapeCertificate($html_file_path, $pdf_file_path);
-                }else if($action == 'other_fees_collect_receipt' ){
+                } else if ($action == 'other_fees_collect_receipt') {
                     $this->htmlToPDF_making($paper_size, $html_file_path, $pdf_file_path);
                 } else {
                     htmlToPDF($html_file_path, $pdf_file_path);
@@ -1531,7 +1765,6 @@ $last_marking_period_id = ($termId == 1) ? 2 :
             }
         }
         return $PDF_path_for_open;
-
     }
 
     public function get_FeesHtml($student_id, $action, $receipt_id)
@@ -1603,42 +1836,42 @@ $last_marking_period_id = ($termId == 1) ? 2 :
             //     ->groupBy('fc.fees_html')
             //     ->union($unionQuery)->groupBy('fees_html')->get()->toArray();
 
-    // 04-10-23 by uma lions double fees_recipt
-    $get_data = DB::table(function ($query) use ($sub_institute_id, $syear, $student_id, $receipt_id) {
-    $query->selectRaw('fc.id, fc.student_id, fc.receipt_no, fc.fees_html')
-        ->from('fees_collect as fc')
-        ->join('fees_receipt as fr', function ($join) {
-            $join->whereRaw('FIND_IN_SET(fc.id, fr.FEES_ID) AND fr.SUB_INSTITUTE_ID = fc.sub_institute_id');
-        })
-        ->where('fc.sub_institute_id', $sub_institute_id)
-        ->where('fc.syear', $syear)
-        ->where('fc.student_id', $student_id)
-        ->where('fc.receipt_no', $receipt_id)
-        ->whereRaw("(fr.RECEIPT_ID_1 = '" . $receipt_id . "' OR fr.RECEIPT_ID_2 = '" . $receipt_id . "' OR fr.RECEIPT_ID_3 = '" . $receipt_id . "'
+            // 04-10-23 by uma lions double fees_recipt
+            $get_data = DB::table(function ($query) use ($sub_institute_id, $syear, $student_id, $receipt_id) {
+                $query->selectRaw('fc.id, fc.student_id, fc.receipt_no, fc.fees_html')
+                    ->from('fees_collect as fc')
+                    ->join('fees_receipt as fr', function ($join) {
+                        $join->whereRaw('FIND_IN_SET(fc.id, fr.FEES_ID) AND fr.SUB_INSTITUTE_ID = fc.sub_institute_id');
+                    })
+                    ->where('fc.sub_institute_id', $sub_institute_id)
+                    ->where('fc.syear', $syear)
+                    ->where('fc.student_id', $student_id)
+                    ->where('fc.receipt_no', $receipt_id)
+                    ->whereRaw("(fr.RECEIPT_ID_1 = '" . $receipt_id . "' OR fr.RECEIPT_ID_2 = '" . $receipt_id . "' OR fr.RECEIPT_ID_3 = '" . $receipt_id . "'
             OR fr.RECEIPT_ID_4 = '" . $receipt_id . "' OR fr.RECEIPT_ID_5 = '" . $receipt_id . "' OR fr.RECEIPT_ID_6 = '" . $receipt_id . "' OR fr.RECEIPT_ID_7 = '" . $receipt_id . "' OR fr.RECEIPT_ID_8 = '" . $receipt_id . "'
             OR fr.RECEIPT_ID_9 = '" . $receipt_id . "' OR fr.RECEIPT_ID_10 = '" . $receipt_id . "')")
-        ->groupBy('fc.fees_html')
-        ->unionAll(
-            DB::table('fees_paid_other as fo')
-                ->selectRaw('fo.id, fo.student_id, fo.reciept_id AS receipt_no, fo.paid_fees_html AS fees_html')
-                ->join('fees_receipt as fro', function ($join) {
-                    $join->whereRaw('FIND_IN_SET(fo.id, fro.OTHER_FEES_ID) AND fro.SUB_INSTITUTE_ID = fo.sub_institute_id');
-                })
-                ->where('fo.sub_institute_id', $sub_institute_id)
-                ->where('fo.syear', $syear)
-                ->where('fo.student_id', $student_id)
-                ->where('fo.reciept_id', $receipt_id)
-                ->whereRaw("(fro.RECEIPT_ID_1 = '" . $receipt_id . "' OR fro.RECEIPT_ID_2 = '" . $receipt_id . "' OR fro.RECEIPT_ID_3 = '" . $receipt_id . "' OR fro.RECEIPT_ID_4 = '" . $receipt_id . "' OR fro.RECEIPT_ID_5 = '" . $receipt_id . "' OR fro.RECEIPT_ID_6 = '" . $receipt_id . "' OR fro.RECEIPT_ID_7 = '" . $receipt_id . "' OR fro.RECEIPT_ID_8 = '" . $receipt_id . "'
+                    ->groupBy('fc.fees_html')
+                    ->unionAll(
+                        DB::table('fees_paid_other as fo')
+                            ->selectRaw('fo.id, fo.student_id, fo.reciept_id AS receipt_no, fo.paid_fees_html AS fees_html')
+                            ->join('fees_receipt as fro', function ($join) {
+                                $join->whereRaw('FIND_IN_SET(fo.id, fro.OTHER_FEES_ID) AND fro.SUB_INSTITUTE_ID = fo.sub_institute_id');
+                            })
+                            ->where('fo.sub_institute_id', $sub_institute_id)
+                            ->where('fo.syear', $syear)
+                            ->where('fo.student_id', $student_id)
+                            ->where('fo.reciept_id', $receipt_id)
+                            ->whereRaw("(fro.RECEIPT_ID_1 = '" . $receipt_id . "' OR fro.RECEIPT_ID_2 = '" . $receipt_id . "' OR fro.RECEIPT_ID_3 = '" . $receipt_id . "' OR fro.RECEIPT_ID_4 = '" . $receipt_id . "' OR fro.RECEIPT_ID_5 = '" . $receipt_id . "' OR fro.RECEIPT_ID_6 = '" . $receipt_id . "' OR fro.RECEIPT_ID_7 = '" . $receipt_id . "' OR fro.RECEIPT_ID_8 = '" . $receipt_id . "'
                     OR fro.RECEIPT_ID_9 = '" . $receipt_id . "' OR fro.RECEIPT_ID_10 = '" . $receipt_id . "')")
-                ->groupBy('fo.paid_fees_html')
-        );
-})
-->selectRaw('student_id, receipt_no, fees_html')
-->groupBy('student_id')
-->get()
-->toArray();
+                            ->groupBy('fo.paid_fees_html')
+                    );
+            })
+                ->selectRaw('student_id, receipt_no, fees_html')
+                ->groupBy('student_id')
+                ->get()
+                ->toArray();
 
-         $fees_collection_data = json_decode(json_encode($get_data), true);
+            $fees_collection_data = json_decode(json_encode($get_data), true);
             if (count($fees_collection_data) > 1) {
                 $fees_receipt_html = $fees_collection_data;
             } else {
@@ -1703,7 +1936,7 @@ $last_marking_period_id = ($termId == 1) ? 2 :
             ->toArray(); // Convert the collection to an array
 
         if (in_array($action, $certificate_type)) {
-           $get_data = DB::table('certificate_history')
+            $get_data = DB::table('certificate_history')
                 ->where('sub_institute_id', $sub_institute_id)
                 ->where('syear', $syear)
                 ->where('id', $inserted_id)->get()->toArray();
@@ -1809,7 +2042,6 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                                 </page>
                             </div>';
             }
-
         } else {
             $extra_html = '<div>
                                 ##HTML_SEC##
@@ -1932,22 +2164,22 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         $permissions = [];
 
         $individual = DB::table('tblindividual_rights')->where('menu_id', $menu_id)
-        ->where('profile_id', $userProfileId)
-        ->where('user_id',$user_id)
-        ->where('sub_institute_id', session()->get('sub_institute_id'))
-        ->first();
+            ->where('profile_id', $userProfileId)
+            ->where('user_id', $user_id)
+            ->where('sub_institute_id', session()->get('sub_institute_id'))
+            ->first();
 
         $group = DB::table('tblgroupwise_rights')->where('menu_id', $menu_id)
             ->where('profile_id', $userProfileId)
             ->where('sub_institute_id', session()->get('sub_institute_id'))
             ->first();
 
-            if(!empty($individual) ){
-                $permissions=$individual;
-            }else{
-                $permissions=$group;
-            }
-            
+        if (!empty($individual)) {
+            $permissions = $individual;
+        } else {
+            $permissions = $group;
+        }
+
         if ($permissions) {
             return response()->json([
                 'can_view' => $permissions->can_view,
@@ -1955,7 +2187,6 @@ $last_marking_period_id = ($termId == 1) ? 2 :
                 'can_add' => $permissions->can_add,
                 'can_delete' => $permissions->can_delete,
             ]);
-
         }
     }
 
@@ -1967,37 +2198,39 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         $type_name = $request->type_depth;
         $type_bloom = $request->type_bloom;
         $type_learning = $request->type_learning;
-        
-        if($request->has('question') && $question!==''){
-            if($request->type_depth){
-                $options = DB::table('lms_mapping_type')->select(DB::raw('group_concat(name) as type_name'))->where('parent_id',$request->type_depth)->first();                
-                $depth = "'".$question."' give answer from given options in one word this question for standard '".$standard."' student from these options $options->type_name ";
+
+        if ($request->has('question') && $question !== '') {
+            if ($request->type_depth) {
+                $options = DB::table('lms_mapping_type')->select(DB::raw('group_concat(name) as type_name'))->where('parent_id', $request->type_depth)->first();
+                $depth = "'" . $question . "' give answer from given options in one word this question for standard '" . $standard . "' student from these options $options->type_name ";
                 $reason_depth = "if its one of $options->type_name then why it is give reason";
             }
-             if ($request->type_bloom){
-                $options = DB::table('lms_mapping_type')->select(DB::raw('group_concat(name) as type_name'))->where('parent_id',$request->type_bloom)->first();
-                $bloom = "'".$question."' give answer from given options in one word this question for Blooms Taxonomy? from these options $options->type_name";
-                $reason_bloom = "if its one of $options->type_name then why it is give reason from this reasons 'factual','conceptual','procedural','metacoganitive'";                
+            if ($request->type_bloom) {
+                $options = DB::table('lms_mapping_type')->select(DB::raw('group_concat(name) as type_name'))->where('parent_id', $request->type_bloom)->first();
+                $bloom = "'" . $question . "' give answer from given options in one word this question for Blooms Taxonomy? from these options $options->type_name";
+                $reason_bloom = "if its one of $options->type_name then why it is give reason from this reasons 'factual','conceptual','procedural','metacoganitive'";
             }
-            if ($request->type_learning){
+            if ($request->type_learning) {
                 // $options = DB::table('lms_mapping_type')->select(DB::raw('group_concat(name) as type_name'))->where('parent_id',$request->type_learning)->first();
-                $learning = "'".$question."' according to this question What will be the learning outcome for standard '".$standard."' student ?";
+                $learning = "'" . $question . "' according to this question What will be the learning outcome for standard '" . $standard . "' student ?";
                 // $reason_learning = "if its one of $options->type_name then why it is give reason";                
             }
             $message = array(
-                array("question_depth"=>$depth,
-                "reason_depth"=>$reason_depth,                
-                "question_bloom"=>$bloom,
-                "reason_bloom"=>$reason_bloom,                
-                "question_learning"=>$learning), 
+                array(
+                    "question_depth" => $depth,
+                    "reason_depth" => $reason_depth,
+                    "question_bloom" => $bloom,
+                    "reason_bloom" => $reason_bloom,
+                    "question_learning" => $learning
+                ),
                 // array("reason_learning"=>$reason_learning),                                 
                 // array("always give  questions answer in one array with vlaue only")               
             );
-        }else{
-            $message = array($request->message);            
+        } else {
+            $message = array($request->message);
         }
-        $apiKey ='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';
-      
+        $apiKey = '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';
+
         $endpoint = "https://api.openai.com/v1/chat/completions";
 
         $data = [
@@ -2022,15 +2255,15 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         ])->post($endpoint, $data)->json();
 
         if (isset($response['choices'][0]['message']['content'])) {
-          
+
             $res['answer'] = $response['choices'][0]['message']['content'];
-        }else{
+        } else {
             $res['answer'] = $response;
         }
-       return $res['answer'];
+        return $res['answer'];
     }
 
-   public function getLectureList(Request $request)
+    public function getLectureList(Request $request)
     {
         $subject_id = $request->subject_id;
         $standard_id = $request->standard_id;
@@ -2041,21 +2274,21 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         $syear = session()->get('syear');
         $entered_day = date('l', strtotime($date));
 
-        $week_day =["Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"H","Friday"=>"F","Saturday"=>"S"];
+        $week_day = ["Monday" => "M", "Tuesday" => "T", "Wednesday" => "W", "Thursday" => "H", "Friday" => "F", "Saturday" => "S"];
 
         $timetable = DB::table('timetable as tt')
-        ->select('tt.id as timetable_id', 'tt.academic_section_id as grade_id', 'tt.standard_id', 'tt.division_id', 'tt.subject_id', 'tt.period_id', 'tt.batch_id','tt.teacher_id', 'tt.week_day', 'tt.type', 'grd.title as grade_name', 'std.name as std_name', 'd.name as div_name', DB::raw('GROUP_CONCAT(ifnull(b.title, "-")) as batch_name'),DB::raw('GROUP_CONCAT(b.id) as batch_ids'),'p.title as period_name')
-        ->join('academic_section as grd', 'grd.id', '=', 'tt.academic_section_id')
-        ->join('standard as std', 'std.id', '=', 'tt.standard_id')
-        ->join('division as d', 'd.id', '=', 'tt.division_id')
-        ->join('period as p', 'p.id', '=', 'tt.period_id')
-        ->leftJoin('batch as b', 'b.id', '=', 'tt.batch_id')
-        ->where('tt.sub_institute_id', $sub_institute_id)
-        ->where('tt.syear', $syear)
-        ->where('tt.subject_id', $subject_id)
-        ->where('tt.standard_id', $standard_id)
-        ->where('tt.division_id', $division_id)
-        ->where('tt.week_day', $week_day[$entered_day]);
+            ->select('tt.id as timetable_id', 'tt.academic_section_id as grade_id', 'tt.standard_id', 'tt.division_id', 'tt.subject_id', 'tt.period_id', 'tt.batch_id', 'tt.teacher_id', 'tt.week_day', 'tt.type', 'grd.title as grade_name', 'std.name as std_name', 'd.name as div_name', DB::raw('GROUP_CONCAT(ifnull(b.title, "-")) as batch_name'), DB::raw('GROUP_CONCAT(b.id) as batch_ids'), 'p.title as period_name')
+            ->join('academic_section as grd', 'grd.id', '=', 'tt.academic_section_id')
+            ->join('standard as std', 'std.id', '=', 'tt.standard_id')
+            ->join('division as d', 'd.id', '=', 'tt.division_id')
+            ->join('period as p', 'p.id', '=', 'tt.period_id')
+            ->leftJoin('batch as b', 'b.id', '=', 'tt.batch_id')
+            ->where('tt.sub_institute_id', $sub_institute_id)
+            ->where('tt.syear', $syear)
+            ->where('tt.subject_id', $subject_id)
+            ->where('tt.standard_id', $standard_id)
+            ->where('tt.division_id', $division_id)
+            ->where('tt.week_day', $week_day[$entered_day]);
         // echo $entered_day;exit;
 
         if (session()->get('user_profile_name') == "Lecturer") {
@@ -2067,51 +2300,53 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         return $timetable;
     }
 
-    public function get_batch(Request $request){
+    public function get_batch(Request $request)
+    {
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
         $standard = $request->get('standard');
         $division = $request->get('division');
 
-        $batch_data=DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])->where('standard_id',$standard)->where('division_id',$division)->get()->toArray();
+        $batch_data = DB::table('batch')->where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear])->where('standard_id', $standard)->where('division_id', $division)->get()->toArray();
 
         return $batch_data;
     }
 
-     // department wise emp 
-     public function getDepEmployeeLists(Request $request)
-     {
-         $sub_institute_id = $request->session()->get('sub_institute_id');
-         $department_id = explode(',',$request->get('department_id'));
-         // 02-08-2024 
-         $userId= session()->get('user_id');
-         $userProfileName= session()->get('user_profile_name');
-         $SubCordinates =[];
-         $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
-         if(!in_array($userProfileName,$profileArr)){
-             $SubCordinates = getSubCordinates($sub_institute_id,$userId);
-         }
-         // end 02-08-2024
-         $employees = DB::table('tbluser')->join('tbluserprofilemaster as upm', 'upm.id', '=', 'tbluser.user_profile_id')
-         ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.first_name, "-"),COALESCE(tbluser.last_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
-         ->where('tbluser.sub_institute_id', $sub_institute_id)
-         ->whereRaw('tbluser.department_id in ('.implode(',',$department_id).') ')
-         ->where('tbluser.status', 1)
-         ->when(!empty($SubCordinates),function($q) use($SubCordinates){
-             $q->whereIn('tbluser.id', $SubCordinates);
-         })
-         ->orderBy('tbluser.first_name')
-         ->groupBy('tbluser.id')
-         ->get()
-         ->toArray();   
- 
-         return $employees;
-     }
-     public function studentLists(Request $request){
+    // department wise emp 
+    public function getDepEmployeeLists(Request $request)
+    {
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+        $department_id = explode(',', $request->get('department_id'));
+        // 02-08-2024 
+        $userId = session()->get('user_id');
+        $userProfileName = session()->get('user_profile_name');
+        $SubCordinates = [];
+        $profileArr = ["Admin", "Super Admin", "School Admin", "Assistant Admin"];
+        if (!in_array($userProfileName, $profileArr)) {
+            $SubCordinates = getSubCordinates($sub_institute_id, $userId);
+        }
+        // end 02-08-2024
+        $employees = DB::table('tbluser')->join('tbluserprofilemaster as upm', 'upm.id', '=', 'tbluser.user_profile_id')
+            ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.first_name, "-"),COALESCE(tbluser.last_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
+            ->where('tbluser.sub_institute_id', $sub_institute_id)
+            ->whereRaw('tbluser.department_id in (' . implode(',', $department_id) . ') ')
+            ->where('tbluser.status', 1)
+            ->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
+                $q->whereIn('tbluser.id', $SubCordinates);
+            })
+            ->orderBy('tbluser.first_name')
+            ->groupBy('tbluser.id')
+            ->get()
+            ->toArray();
+
+        return $employees;
+    }
+    public function studentLists(Request $request)
+    {
         $grade = $request->grade;
         $standard = $request->standard;
 
-        $div ="";
+        $div = "";
         $sub_institute_id = "";
         $syear = "";
         $roll_no = $request->roll_no;
@@ -2123,41 +2358,41 @@ $last_marking_period_id = ($termId == 1) ? 2 :
         $batch = $request->batch;
         $status = $request->status;
 
-        if(isset($request->division)){
+        if (isset($request->division)) {
             $div = $request->division;
         }
-        if(isset($request->module) && $request->module=='admission_enquiry'){
-        	$sub_institute_id= isset($request->sub_institute_id) ? $request->sub_institute_id : session()->get('sub_institute_id') ;
+        if (isset($request->module) && $request->module == 'admission_enquiry') {
+            $sub_institute_id = isset($request->sub_institute_id) ? $request->sub_institute_id : session()->get('sub_institute_id');
 
-        	$dataList = DB::table('tblstudent as ts')
-        	->Join('tblstudent_enrollment as se',function($q) use($sub_institute_id){
-        		$q->on('se.student_id','=','ts.id')
-        		->where('se.sub_institute_id',$sub_institute_id);
-        	})
-        	->selectRaw('ts.*')
-        	->where('ts.sub_institute_id',$sub_institute_id)
-        	->where(function ($query) use ($stu_name) {
-                $query->where('ts.first_name', 'like', '%' . $stu_name . '%')
-                    ->orWhere('ts.middle_name', 'like', '%' . $stu_name . '%')
-                    ->orWhere('ts.last_name', 'like', '%' . $stu_name . '%');
-            })
-            ->whereNull('se.end_date')
-            ->groupBy('ts.id')
-            ->get()->toArray();
-
-        }else{
-        	$dataList = SearchStudent($grade, $standard, $div,$sub_institute_id, $syear,$roll_no,$stu_name,$uniqueid,$mobile,$grno,$stud_id, $batch,$status);
-    	}
+            $dataList = DB::table('tblstudent as ts')
+                ->Join('tblstudent_enrollment as se', function ($q) use ($sub_institute_id) {
+                    $q->on('se.student_id', '=', 'ts.id')
+                        ->where('se.sub_institute_id', $sub_institute_id);
+                })
+                ->selectRaw('ts.*')
+                ->where('ts.sub_institute_id', $sub_institute_id)
+                ->where(function ($query) use ($stu_name) {
+                    $query->where('ts.first_name', 'like', '%' . $stu_name . '%')
+                        ->orWhere('ts.middle_name', 'like', '%' . $stu_name . '%')
+                        ->orWhere('ts.last_name', 'like', '%' . $stu_name . '%');
+                })
+                ->whereNull('se.end_date')
+                ->groupBy('ts.id')
+                ->get()->toArray();
+        } else {
+            $dataList = SearchStudent($grade, $standard, $div, $sub_institute_id, $syear, $roll_no, $stu_name, $uniqueid, $mobile, $grno, $stud_id, $batch, $status);
+        }
 
         return $dataList;
     }
 
-    public function getCOData(Request $request){
+    public function getCOData(Request $request)
+    {
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
 
-        $data = DB::table('lo_category')->where(['sub_institute_id'=>$sub_institute_id,'grade_id'=>$request->grade_id,'standard_id'=>$request->standard_id,'subject_id'=>$request->subject_id,'show_hide'=>1])->orderBy('sort_order')->get()->toArray();
+        $data = DB::table('lo_category')->where(['sub_institute_id' => $sub_institute_id, 'grade_id' => $request->grade_id, 'standard_id' => $request->standard_id, 'subject_id' => $request->subject_id, 'show_hide' => 1])->orderBy('sort_order')->get()->toArray();
 
         return $data;
-    } 
+    }
 }
