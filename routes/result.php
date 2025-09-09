@@ -102,25 +102,7 @@ Route::POST('/uploadResultAPI', [upload_result_controller::class, 'uploadResultA
 
 //Route::get('api/dependent-dropdown', 'AJAXController@index');
 // Route::get('api/get-grade-list', 'AJAXController@getGradeList');
-Route::get('api/get-standard-list', [AJAXController::class, 'getStandardList']);
-Route::get('api/get-division-list', [AJAXController::class, 'getDivisionList']);
-Route::get('api/get-subject-list', [AJAXController::class, 'getSubjectList']);
-/** get exam list */
-Route::get('api/get-exam-name-list', [AJAXController::class, 'getExamsList']);
-Route::get('api/get-exam-master-list', [AJAXController::class, 'getExamsMasterList']);
 
-/** get subjec by create exam list */
-Route::get('api/get-subject-by-create-exam', [AJAXController::class, 'getSubjectByCreateExam']);
-/** get Exam by create exam list */
-Route::get('api/get-exam-name-by-create-exam', [AJAXController::class, 'getExamByCreateExam']);
-Route::get('api/get-chapter-list', [AJAXController::class, 'getChapterList']);
-Route::get('api/get-topic-list', [AJAXController::class, 'getTopicList']);
-Route::get('api/get-exam-list', [AJAXController::class, 'getExamList']);
-Route::get('api/get-co-scholastic-parent-list', [AJAXController::class, 'getCoScholasticParentList']);
-Route::get('api/get-co-scholastic-list', [AJAXController::class, 'getCoScholasticList']);
-
-Route::GET('ajax_sendEmailFeesReceipt', [AJAXController::class, 'ajax_sendEmailFeesReceipt'])->name('ajax_sendEmailFeesReceipt');
-Route::GET('ajax_sendBulkEmailFeesReceipt', [AJAXController::class, 'ajax_sendBulkEmailFeesReceipt'])->name('ajax_sendBulkEmailFeesReceipt');
 
 // Route::group(['prefix' => 'easy_com', 'middleware' => ['session', 'mastersetup_menu']], function () {
 Route::group(['prefix' => 'easy_com', 'middleware' => ['session', 'menu', 'logRoute']], function () {

@@ -37,7 +37,7 @@ class other_fees_cancel_controller extends Controller
         $res['status'] = 1;
         $res['message'] = "Success";
 
-        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'status' => '1'])->get()->toArray();
+        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'status' => '1'])->get()->toArray();//'syear' => $syear,
         $res['other_fees_title'] = $other_fees_title;
 
         return is_mobile($type, "fees/other_fees_cancel/show_other_fees_cancel", $res, "view");
@@ -132,7 +132,7 @@ tblstudent.enrollment_no,tblstudent.mobile,standard.name AS std_name,division.na
             ->get()
             ->toArray();
 
-        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'status' => '1'])->get()->toArray();
+        $other_fees_title = other_fees_title::where(['sub_institute_id' => $sub_institute_id, 'status' => '1'])->get()->toArray();//'syear' => $syear, 
 
         $res['status_code'] = 1;
         $res['message'] = "Success";

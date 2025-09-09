@@ -26,7 +26,9 @@ class attendanceController extends Controller
         $res['show'] = $this->get_proxy($request);
         // echo "<pre>";print_r($res);exit;
 
-        return is_mobile($type, 'attendance/show', $res, 'view');
+        // return is_mobile($type, 'attendance/show', $res, 'view');
+        return is_mobile($type, 'attendance/takeAttendance', $res, 'view');
+
     }
 
     public function get_proxy($request){
@@ -102,13 +104,12 @@ class attendanceController extends Controller
         // search by batch 
         if($request->has('batch') && $request->get('batch') !=''){
             // echo "batch";exit;
-            $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'standard_id'=>$standard,'division_id'=>$division])->get()->toArray();
-            $res['batchs']=$batchs;    
+            // $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'id'=>$request->batch])->get()->toArray();
+            // $res['batchs']=$batchs;    
             
             $extraRaw.=" AND batch.id='".$request->batch."'";
         }
-            $res['batch_id'] = $request->get('batch') ?? '-';    
-
+        //     $res['batch_id'] = $request->get('batch') ?? '-';    
         //START Check for class teacher assigned standards
 
         $classTeacherStdArr = session()->get('classTeacherStdArr');
@@ -152,6 +153,7 @@ class attendanceController extends Controller
             ->whereRaw($extraRaw)
             ->orderby('tblstudent.enrollment_no')
             ->get()->toArray();
+            // echo "<pre>";print_r($student_data);exit;
 
             $single_standard = DB::table('standard')->where('id',$standard)->first();
             $single_division =DB::table('division')->where('id',$division)->first();
@@ -201,9 +203,22 @@ class attendanceController extends Controller
             $ajaxController = new AJAXController;
 
             // get subjects 
-            $sub_req = new Request(['standard_id' => $standard]);
-            $res['all_subject'] = json_decode(json_encode($ajaxController->getSubjectList($sub_req)),true);
-
+            $sub_req = new Request(['standard_id' => $standard,'division_id'=>$division,'sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'date'=>$request->get('from_date')]);
+            $res['all_subject'] = json_decode(json_encode($ajaxController->getSubjectListTimetable($sub_req)),true);
+            if($request->has('batch') && $request->get('batch') !=''){
+                // echo "batch";exit;
+                $batch_req = new Request([
+                    'standard_id' => $standard,
+                    'division_id' => $division,
+                    'subject_id' => $request->subject,
+                    'sub_institute_id' => $sub_institute_id,
+                    'syear' => $syear,
+                    'date' => $request->get('from_date')
+                ]);
+                $res['batchs'] = json_decode(json_encode($ajaxController->getBatchTimetable($batch_req)),true);  
+                
+            }
+                $res['batch_id'] = $request->get('batch') ?? '-'; 
             // get lectures 
             $lect_req = new Request([
                 'standard_id' => $standard,
@@ -227,101 +242,189 @@ class attendanceController extends Controller
             $res['period_id'] =$request->get('period_id');
             $res['batch_name'] =$request->get('batch_name');
 
-
             // echo "<pre>";print_r($res);exit;
             if($err==1){
                 return is_mobile($type, "students_attendance.index", $res);
             }else{
-                return is_mobile($type, 'attendance/show', $res, 'view');
+                // return is_mobile($type, 'attendance/show', $res, 'view');
+                return is_mobile($type, 'attendance/takeAttendance', $res, 'view');
             }
         }
 
         public function store(Request $request){
-        $type = $request->input('type');
-        $date = $request->input('date');
-        $periods_id = $request->input('periods_id');
-        $subjects_id = $request->input('subjects_id');
-        $batchs_id = $request->input('batchs_id');
-        $timetables_id = $request->input('timetables_id');
-        $att_type = $request->input('att_type');
-        $att_for = $request->input('att_for');
-        // echo "<pre>";print_r($subjects_id);die;
+            // echo "<pre>";print_r($request->all());die;
 
-        $students = $request->input('student');
+            $type = $request->input('type');
 
-        if ($type != "API") {
-            $syear = $request->session()->get('syear');
-            $term_id = $request->session()->get('term_id');
-            $user_id = $request->session()->get('user_id');
-            $user_profile_id = $request->session()->get('user_profile_id');
-            $sub_institute_id = $request->session()->get('sub_institute_id');
-        } else {
-            try {
-                if (!$this->jwtToken()->validate()) {
-                    $response = ['status' => '2', 'message' => 'Token Auth Failed', 'data' => []];
+            $students = $request->input('student');
+
+            if ($type != "API") {
+                $syear = $request->session()->get('syear');
+                $term_id = $request->session()->get('term_id');
+                $user_id = $request->session()->get('user_id');
+                $user_profile_id = $request->session()->get('user_profile_id');
+                $sub_institute_id = $request->session()->get('sub_institute_id');
+            } else {
+                try {
+                    if (!$this->jwtToken()->validate()) {
+                        $response = ['status' => '2', 'message' => 'Token Auth Failed', 'data' => []];
+                        return response()->json($response, 401);
+                    }
+                } catch (\Exception $e) {
+                    $response = ['status' => '2', 'message' => $e->getMessage(), 'data' => []];
                     return response()->json($response, 401);
                 }
-            } catch (\Exception $e) {
-                $response = ['status' => '2', 'message' => $e->getMessage(), 'data' => []];
-                return response()->json($response, 401);
+
+                $syear = $request->input('syear');
+                $user_id = $request->input('teacher_id');
+                $user_profile_id = $request->input('user_profile_id');
+                $sub_institute_id = $request->input('sub_institute_id');
+                if ($syear == '' || $date == '' || $students == '' || $user_id == '' || $user_profile_id == '' || $sub_institute_id == '') {
+                    $res['status_code'] = 0;
+                    $res['message'] = "Parameter Missing.";
+
+                    return is_mobile($type, "student_attendance.index", $res);
+                }
             }
 
-            $syear = $request->input('syear');
-            $user_id = $request->input('teacher_id');
-            $user_profile_id = $request->input('user_profile_id');
-            $sub_institute_id = $request->input('sub_institute_id');
-            if ($syear == '' || $date == '' || $students == '' || $user_id == '' || $user_profile_id == '' || $sub_institute_id == '') {
-                $res['status_code'] = 0;
-                $res['message'] = "Parameter Missing.";
+            $standard_division_orignal = $request->input('standard_division');
+            $standard_division = explode("||", $standard_division_orignal);
+            $standard = $standard_division[0] ?? 0;
+            $division = $standard_division[1] ?? 0;
+            $date = $request->input('date');
+            $periods_id = $request->has('periods_id') ? explode('###',$request->input('periods_id') ?? '') : [];
+            $subjects_id = $request->input('subjects_id');
+            $batchs_id = $request->input('batchs_id');
+            $timetables_id = $request->input('timetables_id');
+            $att_type = $request->input('att_type');
+            $att_for = $request->input('att_for');
+            // foreach ($students as $student_id => $attendance) {
+            //     $attendanceArray = [];
+            //     $attendanceArray['syear'] = $syear;
+            //     $attendanceArray['sub_institute_id'] = $sub_institute_id;
+            //     $attendanceArray['student_id'] = $student_id;
+            //     //$attendanceArray['term_id'] = $term_id;
+            //     $attendanceArray['attendance_date'] = $date;
+            //     $attendanceArray['standard_id'] = $standard;
+            //     $attendanceArray['section_id'] = $division;
 
-                return is_mobile($type, "student_attendance.index", $res);
+
+            //     $attendanceArray['attendance_code'] = $attendance;
+            //     $attendanceArray['teacher_id'] = $user_id;
+            //     $attendanceArray['user_group_id'] = $user_profile_id;
+            //     $attendanceArray['created_by'] = $user_id;
+
+            //     // new fields added like sasit 
+            //     $attendanceArray['term_id'] = $term_id;
+            //     $attendanceArray['period_id'] = $periods_id;
+            //     $attendanceArray['subject_id'] = $subjects_id;
+            //     $attendanceArray['timetable_id'] = $timetables_id;
+            //     $attendanceArray['attendance_type'] = $att_type;
+            //     $attendanceArray['attendance_teacher_code'] = $attendance;
+            //     $attendanceArray['attendance_for'] = $att_for;
+            //     $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+            //     // echo "<pre>";print_r($data);
+            //     if (count($data) > 0) {
+            //         $attendanceArray['updated_at'] = now();
+            //         DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
+            //     } else {
+            //         $attendanceArray['created_at'] = now();
+            //         DB::table("attendance_student")->insert($attendanceArray);
+            //     }
+            // }
+            // exit;
+            if($batchs_id!="" && is_numeric($batchs_id)){
+                $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
+                if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
+                    $fullDay = strtolower(date('l', strtotime($request->date)));
+                    $todayDay = ($fullDay == 'thursday') ? 'H' : 'T';
+                }
+                $getTimetable = DB::table('timetable')->where(['syear'=>$syear,'sub_institute_id'=>$sub_institute_id,'standard_id'=>$standard,'division_id'=>$division,'batch_id'=>$batchs_id,'subject_id'=>$subjects_id,'week_day'=>$todayDay])->whereIn('period_id',$periods_id)->get()->toArray();
+            // return $getTimetable;
+                if(!empty($getTimetable)){
+                    foreach ($getTimetable as $key => $timetable) {
+                        foreach ($students as $student_id => $attendance) {
+                            $attendanceArray = [];
+                            $attendanceArray['syear'] = $syear;
+                            $attendanceArray['sub_institute_id'] = $sub_institute_id;
+                            $attendanceArray['student_id'] = $student_id;
+                            //$attendanceArray['term_id'] = $term_id;
+                            $attendanceArray['attendance_date'] = $date;
+                            $attendanceArray['standard_id'] = $standard;
+                            $attendanceArray['section_id'] = $division;
+
+
+                            $attendanceArray['attendance_code'] = $attendance;
+                            $attendanceArray['teacher_id'] = $user_id;
+                            $attendanceArray['user_group_id'] = $user_profile_id;
+                            $attendanceArray['created_by'] = $user_id;
+
+                            // new fields added like sasit 
+                            $attendanceArray['term_id'] = $term_id;
+                            $attendanceArray['period_id'] = $timetable->period_id ?? 0;
+                            $attendanceArray['subject_id'] = $timetable->subject_id ?? 0;
+                            $attendanceArray['timetable_id'] = $timetable->id ?? 0;
+                            $attendanceArray['attendance_type'] = $att_type;
+                            $attendanceArray['attendance_teacher_code'] = $attendance;
+                            $attendanceArray['attendance_for'] = $att_for;
+                            // echo "<pre>";print_r($attendanceArray);
+                            $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+                            // echo "<pre>";print_r($data);
+                            if (count($data) > 0) {
+                                $attendanceArray['updated_at'] = now();
+                                DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
+                            } else {
+                                $attendanceArray['created_at'] = now();
+                                DB::table("attendance_student")->insert($attendanceArray);
+                            }
+                        }
+                    }
+                }
+                // exit;
             }
-        }
-
-        $standard_division_orignal = $request->input('standard_division');
-        $standard_division = explode("||", $standard_division_orignal);
-        $standard = $standard_division[0];
-        $division = $standard_division[1];
-
-        foreach ($students as $student_id => $attendance) {
-            $attendanceArray = [];
-            $attendanceArray['syear'] = $syear;
-            $attendanceArray['sub_institute_id'] = $sub_institute_id;
-            $attendanceArray['student_id'] = $student_id;
-            //$attendanceArray['term_id'] = $term_id;
-            $attendanceArray['attendance_date'] = $date;
-            $attendanceArray['standard_id'] = $standard;
-            $attendanceArray['section_id'] = $division;
+            else{
+                foreach ($students as $student_id => $attendance) {
+                    $attendanceArray = [];
+                    $attendanceArray['syear'] = $syear;
+                    $attendanceArray['sub_institute_id'] = $sub_institute_id;
+                    $attendanceArray['student_id'] = $student_id;
+                    //$attendanceArray['term_id'] = $term_id;
+                    $attendanceArray['attendance_date'] = $date;
+                    $attendanceArray['standard_id'] = $standard;
+                    $attendanceArray['section_id'] = $division;
 
 
-            $attendanceArray['attendance_code'] = $attendance;
-            $attendanceArray['teacher_id'] = $user_id;
-            $attendanceArray['user_group_id'] = $user_profile_id;
-            $attendanceArray['created_by'] = $user_id;
+                    $attendanceArray['attendance_code'] = $attendance;
+                    $attendanceArray['teacher_id'] = $user_id;
+                    $attendanceArray['user_group_id'] = $user_profile_id;
+                    $attendanceArray['created_by'] = $user_id;
 
-            // new fields added like sasit 
-            $attendanceArray['term_id'] = $term_id;
-            $attendanceArray['period_id'] = $periods_id;
-            $attendanceArray['subject_id'] = $subjects_id;
-            $attendanceArray['timetable_id'] = $timetables_id;
-            $attendanceArray['attendance_type'] = $att_type;
-            $attendanceArray['attendance_teacher_code'] = $attendance;
-            $attendanceArray['attendance_for'] = $att_for;
-            $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
-            // echo "<pre>";print_r($data);
-            if (count($data) > 0) {
-                $attendanceArray['updated_at'] = now();
-                DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
-            } else {
-                $attendanceArray['created_at'] = now();
-                DB::table("attendance_student")->insert($attendanceArray);
+                    // new fields added like sasit 
+                    $attendanceArray['term_id'] = $term_id;
+                    $attendanceArray['period_id'] = $periods_id[0] ?? 0;
+                    $attendanceArray['subject_id'] = $subjects_id;
+                    $attendanceArray['timetable_id'] = $timetables_id;
+                    $attendanceArray['attendance_type'] = $att_type;
+                    $attendanceArray['attendance_teacher_code'] = $attendance;
+                    $attendanceArray['attendance_for'] = $att_for;
+                    $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+                    // echo "<pre>";print_r($attendanceArray);exit;
+                    if (count($data) > 0) {
+                        $attendanceArray['updated_at'] = now();
+                        DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
+                    } else {
+                        $attendanceArray['created_at'] = now();
+                        DB::table("attendance_student")->insert($attendanceArray);
+                    }
+                }
             }
-        }
-        // exit;
-        $res['status_code'] = 1;
-        $res['message'] = "Attendance successfully taken";
+            // exit;
+            // return $request;
 
-        return is_mobile($type, "students_attendance.index", $res);
+            $res['status_code'] = 1;
+            $res['message'] = "Attendance successfully taken";
+
+            return is_mobile($type, "students_attendance.index", $res);
         }
 
 }

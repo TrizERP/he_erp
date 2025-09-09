@@ -203,6 +203,7 @@ class createTimetableController extends Controller
             $html .= "<a class='fas fa-minus-square' href='#' onclick=removeNewRow('".$id."','normal');></a>";
             $html .= "<a class='mdi mdi-source-merge fa-fw text-danger' href='#' onclick=addNewStdandardDiv('".$id."');></a>";
             $html .= "<a class='fas fa-window-close text-danger' href='#'></a>";
+            $html .= "<input type='checkbox' name='extend_lab[".$arr['1']."][".$arr['0']."][0]'>";
             $html .= "</div>";
         } else {
             if ($mode == 'normal') {
@@ -294,309 +295,457 @@ class createTimetableController extends Controller
         return response()->json($res);
     }
 
-     public function store(Request $request)
-    {
-        // echo "<pre>";print_r($request->all());exit;
-        $finalArray = [];
-        $period_arr = $request->subjects;
-        $teacher_arr = $request->teachers;
-        $types_arr = $request->types;
-        $extend_lab_arr = $request->extend_lab;
-        $standard_id = $request->standard_id;
-        $division_id = $request->division_id;
-        $grade_id = $request->grade_id;
-        // echo "<pre>";print_r($request->all());exit; 
+//      public function store(Request $request)
+//     {
+//         // echo "<pre>";print_r($request->all());exit;
+//         $finalArray = [];
+//         $period_arr = $request->subjects;
+//         $teacher_arr = $request->teachers;
+//         $types_arr = $request->types;
+//         $extend_lab_arr = $request->extend_lab;
+//         $standard_id = $request->standard_id;
+//         $division_id = $request->division_id;
+//         $grade_id = $request->grade_id;
+//         // echo "<pre>";print_r($request->all());exit; 
         
-        if (isset($request->batches)) {
-            $batch_arr = $request->batches;
-        }
+//         if (isset($request->batches)) {
+//             $batch_arr = $request->batches;
+//         }
+//         $sub_institute_id = $request->session()->get('sub_institute_id');
+//         $syear = $request->session()->get('syear');
+//         $marking_period_id = session()->get('term_id');
+//         $res['status_code']=0;
+//         $res['message'] = 'Timetable Failed Successfully';
+
+//         foreach ($period_arr as $period_id => $pval) {
+//             if (array_filter($period_arr[$period_id])) {
+//                 $week_data_arr = array_filter($period_arr[$period_id]);
+//                 foreach ($week_data_arr as $week_day => $subject_id) {
+//                     if ($subject_id != "" && $teacher_arr[$period_id][$week_day] != "") {
+//                         $check_exist_data = DB::table('timetable')
+//                             ->selectRaw('count(*) as total_data')
+//                             ->where('sub_institute_id', $sub_institute_id)
+//                             ->where('syear', $syear)
+//                             ->where('academic_section_id', $grade_id)
+//                             ->where('standard_id', $standard_id)
+//                             ->where('division_id', $division_id)
+//                             ->where('period_id', $period_id)
+//                             ->where('week_day', $week_day)                          
+//                             ->get()->toArray();
+
+//                         if (is_array($pval[$week_day])) {
+//                             foreach ($pval[$week_day] as $key => $val) {
+//                                 $batch_id = isset($batch_arr[$period_id][$week_day][$key]) ? $batch_arr[$period_id][$week_day][$key] : '';
+//                                 $subject_id = isset($period_arr[$period_id][$week_day][$key]) ? $period_arr[$period_id][$week_day][$key] : 0;
+//                                 $teacher_id = isset($teacher_arr[$period_id][$week_day][$key]) ? $teacher_arr[$period_id][$week_day][$key] : 0;
+//                                 $types = $types_arr[$period_id][$week_day][$key] ?? null;
+//                                 $extend_lab = $extend_lab_arr[$period_id][$week_day][$key] ?? null;
+//                                 if($subject_id !="--Subject--" && $teacher_id!="--Teacher--"){
+
+//                                 if($types=="--Types--"){
+//                                     $types=null;
+//                                 }
+                               
+//                                 if($extend_lab=='on'){
+                                
+//                                 $extend_lab='Y';
+//                                 if(in_array($types,["Lab","Tutorail"])){
+                                
+//                                   $period_sort_order = DB::table('period')->where('id', $period_id)->first();
+//                                   $sort_order = $period_sort_order ? ($period_sort_order->sort_order + 1) : 0;
+
+//                                   $period_id_lab = DB::table('period')->where('sort_order', $sort_order)->where('sub_institute_id',$sub_institute_id)->first();
+
+//                                     $getTimeTable = DB::table('timetable')->where([
+//                                         'sub_institute_id'    => $sub_institute_id,
+//                                         'syear'               => $syear,
+//                                         'academic_section_id' => $grade_id,
+//                                         'standard_id'         => $standard_id,
+//                                         'division_id'         => $division_id,
+//                                         'period_id'           => $period_id,
+//                                         'week_day'            => $week_day
+//                                         ])->get()->toArray();
+                                   
+//                                         if(empty($getTimeTable)){
+                                      
+//                                             $finalArray = [
+//                                                 'sub_institute_id'    => $sub_institute_id,
+//                                                 'syear'               => $syear,
+//                                                 'academic_section_id' => $grade_id,
+//                                                 'standard_id'         => $standard_id,
+//                                                 'division_id'         => $division_id,
+//                                                 'period_id'           => $period_id,
+//                                                 'batch_id'            => $batch_id,
+//                                                 'subject_id'          => $subject_id,
+//                                                 'teacher_id'          => $teacher_id,
+//                                                 'week_day'            => $week_day,
+//                                                 'created_at'          => now(),
+//                                                 'extend_lab'          => $extend_lab,
+//                                                 'type'                => $types,
+//                                             ];
+//                                             timetableModel::insert($finalArray);
+//                                             $labExt = $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types);
+//                                     //               echo "<pre>";print_r($types_arr[$period_id][$week_day][$key]);
+//                                     // echo "<pre>";print_r($labExt);exit;
+//                                         }
+//                                         else{
+// // echo "<pre>";print_r($week_day);exit;
+//                                             foreach ($getTimeTable as $ktt => $vtt) {
+//                                                 $finalArray = [
+//                                                     'sub_institute_id'    => $sub_institute_id,
+//                                                     'syear'               => $syear,
+//                                                     'academic_section_id' => $grade_id,
+//                                                     'standard_id'         => $standard_id,
+//                                                     'division_id'         => $division_id,
+//                                                     'period_id'           => $period_id_lab ? $period_id_lab->id : null,
+//                                                     'batch_id'            => $vtt->batch_id,
+//                                                     'subject_id'          => $vtt->subject_id,
+//                                                     'teacher_id'          => $vtt->teacher_id,
+//                                                     'week_day'            => $week_day,
+//                                                     'type'                => $types,
+//                                                 ]; 
+
+                                                
+//                                                 $check = DB::table('timetable')->where($finalArray)->get()->toArray();
+//                                                 // echo "<pre>";print_r($period_id);
+            
+//                                                 if(empty($check)){
+//                                                     $finalArray['extend_lab'] = 'N';
+//                                                     $finalArray['created_at'] = now();
+//                                                     timetableModel::insert($finalArray);
+//                                                 }
+//                                                 if($extend_lab=='Y'){
+//                                                     $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types);
+//                                                 }
+//                                             }
+//                                         }
+                                        
+                                    
+//                                 }
+
+//                                 }
+//                                 else{
+//                                      if(!in_array($types,["Lab","Tutorail"])){
+//                                         $extend_lab=='N';
+//                                      }
+//                                 }
+
+//                                 if ($batch_id != "--Batch--" && $batch_id != "" && $subject_id != "" && $teacher_id != "") {
+//                                     $check_exist_data_batch = DB::table('timetable')
+//                                         ->selectRaw('count(*) as total_data')
+//                                         ->where('sub_institute_id', $sub_institute_id)
+//                                         ->where('syear', $syear)
+//                                         ->where('academic_section_id', $grade_id)
+//                                         ->where('standard_id', $standard_id)
+//                                         ->where('division_id', $division_id)
+//                                         ->where('period_id', $period_id)
+//                                         ->where('teacher_id', $teacher_id)
+//                                         ->where('batch_id', $batch_id)
+//                                         ->where('week_day', $week_day)
+//                                         ->get()->toArray();
+//                                     if ($check_exist_data_batch[0]->total_data != 0) {
+//                                         // echo "<pre>";print_r($check_exist_data_batch);
+//                                             // }
+//                                         $finalArray = [
+//                                             'batch_id'   => $batch_id,
+//                                             'subject_id' => $subject_id,
+//                                             'teacher_id' => $teacher_id,
+//                                             'updated_at' => now(),
+//                                             'extend_lab' => $extend_lab,
+//                                             'type'       => $types,
+//                                         ];
+
+//                                         timetableModel::where([
+//                                             "sub_institute_id"    => $sub_institute_id, "syear" => $syear,
+//                                             "academic_section_id" => $grade_id,
+//                                             "standard_id"         => $standard_id,
+//                                             "division_id"         => $division_id, 
+//                                             "period_id"           => $period_id,
+//                                             "week_day"            => $week_day, 
+//                                             "batch_id"            => $batch_id,
+//                                         ])->update($finalArray);
+
+//                                         if($extend_lab=='Y'){
+//                                             $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types,$batch_id);
+//                                         }
+                                        
+//                                         $res['message'] = 'Timetable batch Updated Successfully';
+
+//                                     } 
+//                                     else {
+
+//                                         $finalArray = [
+//                                             'sub_institute_id'    => $sub_institute_id,
+//                                             'syear'               => $syear,
+//                                             'academic_section_id' => $grade_id,
+//                                             'standard_id'         => $standard_id,
+//                                             'division_id'         => $division_id,
+//                                             'period_id'           => $period_id,
+//                                             'batch_id'            => $batch_id,
+//                                             'subject_id'          => $subject_id,
+//                                             'teacher_id'          => $teacher_id,
+//                                             'week_day'            => $week_day,
+//                                             'created_at'          => now(),
+//                                             'extend_lab'          => $extend_lab,
+//                                             'type'                => $types,
+//                                         ];
+//                                         timetableModel::insert($finalArray);
+
+//                                          if($extend_lab=='Y'){
+//                                             $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types,$batch_id);
+//                                         }
+//                                         $res['message'] = 'Timetable batch add Successfully';
+
+//                                     }
+//                                 }
+//                                 else{
+//                                     $check_data = DB::table('timetable')
+//                                     ->where('sub_institute_id', $sub_institute_id)
+//                                     ->where('syear', $syear)
+//                                     ->where('academic_section_id', $grade_id)
+//                                     ->where('standard_id', $standard_id)
+//                                     ->where('division_id', $division_id)
+//                                     ->where('period_id', $period_id)
+//                                     ->where('subject_id', $subject_id)
+//                                     ->where('teacher_id', $teacher_id)
+//                                     ->where('week_day', $week_day)
+//                                     ->first();
+                                    
+//                                     $finalArray = [
+//                                         'sub_institute_id'    => $sub_institute_id,
+//                                         'syear'               => $syear,
+//                                         'academic_section_id' => $grade_id,
+//                                         'standard_id'         => $standard_id,
+//                                         'division_id'         => $division_id,
+//                                         'period_id'           => $period_id,
+//                                         'subject_id'          => $subject_id,
+//                                         'teacher_id'          => $teacher_id,
+//                                         'week_day'            => $week_day,
+//                                         'extend_lab'          => $extend_lab,
+//                                         'type'                => $types,
+//                                     ];
+
+//                                     if(empty($check_data) && !isset($check_data->id)){
+//                                         $finalArray['created_at']=now();
+//                                         timetableModel::insert($finalArray);
+//                                     } else{
+//                                         timetableModel::where('id',$check_data->id)->update($finalArray); 
+//                                     }
+
+//                                      if($extend_lab=='Y'){
+//                                             $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types);
+//                                         }
+//                                     $res['message'] = 'Timetable add ok Successfully';
+//                                 }
+//                             }
+//                          }
+//                         } else {
+//                             $merge = '';
+//                             if (isset($standard_arr[$period_id]) && isset($division_arr[$period_id])) {
+//                                 $merge = 1;
+//                             }
+
+//                             if ($check_exist_data[0]->total_data > 0) {
+//                                 $finalArray = [
+//                                     'subject_id' => $subject_id,
+//                                     'teacher_id' => $teacher_arr[$period_id][$week_day],
+//                                     'merge'      => $merge,
+//                                     'updated_at' => now(),
+//                                     'extend_lab' => $extend_lab,
+//                                     'type'       => $types,
+//                                 ];
+
+//                                 timetableModel::where([
+//                                     "sub_institute_id"    => $sub_institute_id, "syear" => $syear,
+//                                     "academic_section_id" => $grade_id,
+//                                     "standard_id"         => $standard_id, "division_id" => $division_id,
+//                                     "period_id"           => $period_id, "week_day" => $week_day,
+//                                 ])->update($finalArray);
+//                                    if($extend_lab=='Y'){
+//                                             $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types);
+//                                         }
+//                             $res['message'] = 'Timetable Updated Successfully';
+//                             } else {
+//                                 $finalArray = [
+//                                     'sub_institute_id'    => $sub_institute_id,
+//                                     'syear'               => $syear,
+//                                     'academic_section_id' => $grade_id,
+//                                     'standard_id'         => $standard_id,
+//                                     'division_id'         => $division_id,
+//                                     'period_id'           => $period_id,
+//                                     'batch_id'            => null,
+//                                     'subject_id'          => $subject_id,
+//                                     'teacher_id'          => $teacher_arr[$period_id][$week_day],
+//                                     'week_day'            => $week_day,
+//                                     'merge'               => $merge,
+//                                     'created_at'          => now(),
+//                                     'extend_lab'          => $extend_lab,
+//                                     'type'                => $types,
+//                                 ];
+//                                 timetableModel::insert($finalArray);
+//                                    if($extend_lab=='Y'){
+//                                             $this->extendLabs($sub_institute_id,$syear,$grade_id,$standard_id,$division_id,$week_day,$period_id,$extend_lab,$types);
+//                                         }
+
+//                             $res['message'] = 'Timetable Add Successfully';
+//                             }
+
+                            
+//                         }
+//                     }
+//                 }
+//             }
+//         $res['status_code'] = '1';
+//         }
+// // exit;
+
+//         $type = $request->input('type');
+//         // $res = $this->create($request, $grade_id, $standard_id, $division_id, $sub_institute_id, $syear);
+//         $res['grade_id']= $grade_id ;
+//         $res['standard_id']=$standard_id;
+//         $res['division_id']=$division_id;
+//         return is_mobile($type, "create-timetable.index", $res, "redirect");
+//     }
+
+   public function store(Request $request)
+    {
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
-        $marking_period_id = session()->get('term_id');
-        $res['status_code']=0;
-        $res['message'] = 'Timetable Failed Successfully';
+        $grade_id = $request->grade_id;
+        $standard_id = $request->standard_id;
+        $division_id = $request->division_id;
 
-        foreach ($period_arr as $period_id => $pval) {
-            if (array_filter($period_arr[$period_id])) {
-                $week_data_arr = array_filter($period_arr[$period_id]);
-                foreach ($week_data_arr as $week_day => $subject_id) {
-                    if ($subject_id != "" && $teacher_arr[$period_id][$week_day] != "") {
-                        $check_exist_data = DB::table('timetable')
-                            ->selectRaw('count(*) as total_data')
-                            ->where('sub_institute_id', $sub_institute_id)
-                            ->where('syear', $syear)
-                            ->where('academic_section_id', $grade_id)
-                            ->where('standard_id', $standard_id)
-                            ->where('division_id', $division_id)
-                            ->where('period_id', $period_id)
-                            ->where('week_day', $week_day)                          
-                            ->get()->toArray();
+        $response = [
+            'status_code' => 0,
+            'message' => 'Timetable operation failed',
+            'grade_id' => $grade_id,
+            'standard_id' => $standard_id,
+            'division_id' => $division_id
+        ];
 
-                        if (is_array($pval[$week_day])) {
-                            foreach ($pval[$week_day] as $key => $val) {
-                                $batch_id = isset($batch_arr[$period_id][$week_day][$key]) ? $batch_arr[$period_id][$week_day][$key] : '';
-                                $subject_id = isset($period_arr[$period_id][$week_day][$key]) ? $period_arr[$period_id][$week_day][$key] : 0;
-                                $teacher_id = isset($teacher_arr[$period_id][$week_day][$key]) ? $teacher_arr[$period_id][$week_day][$key] : 0;
-                                $types = $types_arr[$period_id][$week_day][$key] ?? null;
-                                $extend_lab = $extend_lab_arr[$period_id][$week_day][$key] ?? null;
-                                if($subject_id !="--Subject--" && $teacher_id!="--Teacher--"){
+        $period_arr = $request->subjects;
+        $teacher_arr = $request->teachers;
+        $batch_arr = $request->batches;
+        $types_arr = $request->types;
 
-                                if($types=="--Types--"){
-                                    $types=null;
-                                }
-                                if($extend_lab!=''){
+        foreach ($period_arr as $period_id => $periodData) {
+            foreach ($periodData as $week_day => $subjectDataArr) {
+                if (!is_array($subjectDataArr)) continue;
 
-                                $extend_lab='Y';
-                                if(in_array($types,["Lab","Tutorail"])){
-                                  $period_sort_order = DB::table('period')->where('id', $period_id)->first();
-                                  $sort_order = $period_sort_order ? ($period_sort_order->sort_order + 1) : 0;
+                $hasExtendLab = $this->checkAnyExtendLab($request, $period_id, $week_day);
 
-                                  $period_id_lab = DB::table('period')->where('sort_order', $sort_order)->where('sub_institute_id',$sub_institute_id)->first();
+                foreach ($subjectDataArr as $key => $subject_id) {
+                    if (empty($subject_id) || $subject_id === '--Subject--') continue;
 
+                    $teacher_id = $teacher_arr[$period_id][$week_day][$key] ?? 0;
+                    $batch_id = $batch_arr[$period_id][$week_day][$key] ?? null;
+                    $types = $types_arr[$period_id][$week_day][$key] ?? null;
+                    $extend_lab_flag = $request->extend_lab[$period_id][$week_day][$key] ?? '';
 
-                                    $getTimeTable = DB::table('timetable')->where([
-                                        'sub_institute_id'    => $sub_institute_id,
-                                        'syear'               => $syear,
-                                        'academic_section_id' => $grade_id,
-                                        'standard_id'         => $standard_id,
-                                        'division_id'         => $division_id,
-                                        'period_id'           => $period_id,
-                                        'week_day'            => $week_day
-                                        ])->get()->toArray();
-                                        // echo "<pre>";print_r($week_day);exit;
-                                    foreach ($getTimeTable as $ktt => $vtt) {
-                                        $finalArray = [
-                                            'sub_institute_id'    => $sub_institute_id,
-                                            'syear'               => $syear,
-                                            'academic_section_id' => $grade_id,
-                                            'standard_id'         => $standard_id,
-                                            'division_id'         => $division_id,
-                                            'period_id'           => $period_id_lab ? $period_id_lab->id : null,
-                                            'batch_id'            => $vtt->batch_id,
-                                            'subject_id'          => $vtt->subject_id,
-                                            'teacher_id'          => $vtt->teacher_id,
-                                            'week_day'            => $week_day,
-                                            'type'                => $types,
-                                        ]; 
+                    $extend_lab = (($extend_lab_flag === 'on' || $hasExtendLab) && (in_array($types,["Tutorail","Lab"]))) ? 'Y' : 'N';
 
-                                        
-                                        $check = DB::table('timetable')->where($finalArray)->get()->toArray();
-                                        // echo "<pre>";print_r($period_id);
-    
-                                        if(empty($check)){
-                                            $finalArray['extend_lab'] = 'N';
-                                            $finalArray['created_at'] = now();
-                                            timetableModel::insert($finalArray);
-                                        }
-                                    }
-                                    
-                                }
+                    $types = ($types === '--Types--') ? null : $types;
+                    $teacher_id = ($teacher_id === '--Teacher--') ? 0 : $teacher_id;
+                    $batch_id = ($batch_id === '--Batch--') ? null : $batch_id;
 
-                                }elseif(in_array($types,["Lab","Tutorail"]) && $extend_lab==''){
-                                    $extend_lab='N';
-                                }
+                    $query = [
+                        'sub_institute_id' => $sub_institute_id,
+                        'syear' => $syear,
+                        'academic_section_id' => $grade_id,
+                        'standard_id' => $standard_id,
+                        'division_id' => $division_id,
+                        'period_id' => $period_id,
+                        'week_day' => $week_day
+                    ];
 
-                                if ($batch_id != "--Batch--" && $batch_id != "" && $subject_id != "" && $teacher_id != "") {
-                                    $check_exist_data_batch = DB::table('timetable')
-                                        ->selectRaw('count(*) as total_data')
-                                        ->where('sub_institute_id', $sub_institute_id)
-                                        ->where('syear', $syear)
-                                        ->where('academic_section_id', $grade_id)
-                                        ->where('standard_id', $standard_id)
-                                        ->where('division_id', $division_id)
-                                        ->where('period_id', $period_id)
-                                        ->where('teacher_id', $teacher_id)
-                                        ->where('batch_id', $batch_id)
-                                        ->where('week_day', $week_day)
-                                        ->get()->toArray();
-                                    if ($check_exist_data_batch[0]->total_data != 0) {
-                                        // echo "<pre>";print_r($check_exist_data_batch);
-                                            // }
-                                        $finalArray = [
-                                            'batch_id'   => $batch_id,
-                                            'subject_id' => $subject_id,
-                                            'teacher_id' => $teacher_id,
-                                            'updated_at' => now(),
-                                            'extend_lab' => $extend_lab,
-                                            'type'       => $types,
-                                        ];
+                    if ($batch_id) {
+                        $query['batch_id'] = $batch_id;
+                    }
+                    
+                    $data = [
+                        'subject_id' => $subject_id,
+                        'teacher_id' => $teacher_id,
+                        'type' => $types,
+                        'extend_lab' => $extend_lab,
+                        'merge' => isset($request->standard_arr[$period_id]) && isset($request->division_arr[$period_id]) ? 1 : null
+                    ];
 
-                                        timetableModel::where([
-                                            "sub_institute_id"    => $sub_institute_id, "syear" => $syear,
-                                            "academic_section_id" => $grade_id,
-                                            "standard_id"         => $standard_id,
-                                            "division_id"         => $division_id, 
-                                            "period_id"           => $period_id,
-                                            "week_day"            => $week_day, 
-                                            "batch_id"            => $batch_id,
-                                        ])->update($finalArray);
-                                        $res['message'] = 'Timetable batch Updated Successfully';
+                    $existing = timetableModel::where($query)->first();
 
-                                    } 
-                                    else {
+                    if ($existing) {
+                        $existing->update($data + ['updated_at' => now()]);
+                        $response['message'] = 'Timetable updated successfully';
+                    } else {
+                        timetableModel::create($query + $data + ['created_at' => now()]);
+                        $response['message'] = 'Timetable added successfully';
+                    }
 
-                                        $finalArray = [
-                                            'sub_institute_id'    => $sub_institute_id,
-                                            'syear'               => $syear,
-                                            'academic_section_id' => $grade_id,
-                                            'standard_id'         => $standard_id,
-                                            'division_id'         => $division_id,
-                                            'period_id'           => $period_id,
-                                            'batch_id'            => $batch_id,
-                                            'subject_id'          => $subject_id,
-                                            'teacher_id'          => $teacher_id,
-                                            'week_day'            => $week_day,
-                                            'created_at'          => now(),
-                                            'extend_lab'          => $extend_lab,
-                                            'type'                => $types,
-                                        ];
-                                        timetableModel::insert($finalArray);
-                                        $res['message'] = 'Timetable batch add Successfully';
-
-                                    }
-                                }
-                                else{
-                                    $check_data = DB::table('timetable')
-                                    ->where('sub_institute_id', $sub_institute_id)
-                                    ->where('syear', $syear)
-                                    ->where('academic_section_id', $grade_id)
-                                    ->where('standard_id', $standard_id)
-                                    ->where('division_id', $division_id)
-                                    ->where('period_id', $period_id)
-                                    ->where('subject_id', $subject_id)
-                                    ->where('teacher_id', $teacher_id)
-                                    ->where('week_day', $week_day)
-                                    ->first();
-                                    
-                                    $finalArray = [
-                                        'sub_institute_id'    => $sub_institute_id,
-                                        'syear'               => $syear,
-                                        'academic_section_id' => $grade_id,
-                                        'standard_id'         => $standard_id,
-                                        'division_id'         => $division_id,
-                                        'period_id'           => $period_id,
-                                        'subject_id'          => $subject_id,
-                                        'teacher_id'          => $teacher_id,
-                                        'week_day'            => $week_day,
-                                        'extend_lab'          => $extend_lab,
-                                        'type'                => $types,
-                                    ];
-
-                                    if(empty($check_data) && !isset($check_data->id)){
-                                        $finalArray['created_at']=now();
-                                        timetableModel::insert($finalArray);
-                                    } else{
-                                        timetableModel::where('id',$check_data->id)->update($finalArray); 
-                                    }
-                                    $res['message'] = 'Timetable add ok Successfully';
-                                }
-                            } }
-                        } else {
-                            $merge = '';
-                            if (isset($standard_arr[$period_id]) && isset($division_arr[$period_id])) {
-                                $merge = 1;
-                            }
-
-                            if ($check_exist_data[0]->total_data > 0) {
-                                $finalArray = [
-                                    'subject_id' => $subject_id,
-                                    'teacher_id' => $teacher_arr[$period_id][$week_day],
-                                    'merge'      => $merge,
-                                    'updated_at' => now(),
-                                    'extend_lab' => $extend_lab,
-                                    'type'       => $types,
-                                ];
-
-                                timetableModel::where([
-                                    "sub_institute_id"    => $sub_institute_id, "syear" => $syear,
-                                    "academic_section_id" => $grade_id,
-                                    "standard_id"         => $standard_id, "division_id" => $division_id,
-                                    "period_id"           => $period_id, "week_day" => $week_day,
-                                ])->update($finalArray);
-                            $res['message'] = 'Timetable Updated Successfully';
-                            } else {
-                                $finalArray = [
-                                    'sub_institute_id'    => $sub_institute_id,
-                                    'syear'               => $syear,
-                                    'academic_section_id' => $grade_id,
-                                    'standard_id'         => $standard_id,
-                                    'division_id'         => $division_id,
-                                    'period_id'           => $period_id,
-                                    'batch_id'            => null,
-                                    'subject_id'          => $subject_id,
-                                    'teacher_id'          => $teacher_arr[$period_id][$week_day],
-                                    'week_day'            => $week_day,
-                                    'merge'               => $merge,
-                                    'created_at'          => now(),
-                                    'extend_lab'          => $extend_lab,
-                                    'type'                => $types,
-                                ];
-                                timetableModel::insert($finalArray);
-                            $res['message'] = 'Timetable Add Successfully';
-                            }
-
-                            // if (isset($standard_arr[$period_id][$week_day]) && isset($division_arr[$period_id][$week_day])) {
-                            //     $get_academic_section_id = standardModel::where([
-                            //         'sub_institute_id' => $sub_institute_id,
-                            //         'id'               => $standard_arr[$period_id][$week_day],
-                            //     ])->get()->toArray();
-                            //     $new_academic_section_id = $get_academic_section_id[0]['grade_id'];
-
-                            //     if ($check_exist_data[0]->total_data != 0) {
-                            //         $finalArray = [
-                            //             'subject_id' => $subject_id,
-                            //             'teacher_id' => $teacher_arr[$period_id][$week_day],
-                            //             'merge'      => $merge,
-                            //             'updated_at' => now(),
-                            //             'extend_lab' => $extend_lab,
-                            //             'type'       => $types,
-                            //         ];
-
-                            //         timetableModel::where([
-                            //             "sub_institute_id"    => $sub_institute_id, "syear" => $syear,
-                            //             "academic_section_id" => $new_academic_section_id,
-                            //             "standard_id"         => $standard_arr[$period_id][$week_day],
-                            //             "division_id"         => $division_arr[$period_id][$week_day],
-                            //             "period_id"           => $period_id, "week_day" => $week_day,
-                            //         ])->update($finalArray);
-                            // $res['message'] = 'Timetable Updated Successfully';
-
-                            //     } else {
-                            //         $finalArray = [
-                            //             'sub_institute_id'    => $sub_institute_id,
-                            //             'syear'               => $syear,
-                            //             'academic_section_id' => $new_academic_section_id,
-                            //             'standard_id'         => $standard_arr[$period_id][$week_day],
-                            //             'division_id'         => $division_arr[$period_id][$week_day],
-                            //             'period_id'           => $period_id,
-                            //             'batch_id'            => null,
-                            //             'subject_id'          => $subject_id,
-                            //             'teacher_id'          => $teacher_arr[$period_id][$week_day],
-                            //             'week_day'            => $week_day,
-                            //             'merge'               => $merge,
-                            //             'created_at'          => now(),
-                            //             'extend_lab'          => $extend_lab,
-                            //             'type'                => $types,
-                            //         ];
-                            //         timetableModel::insert($finalArray);
-                            //         $res['message'] = 'Timetable Added Successfully';
-
-                            //     }
-                            // }
-                        }
+                    if ($extend_lab === 'Y') {
+                        $this->extendLabs(
+                            $sub_institute_id, $syear, $grade_id,
+                            $standard_id, $division_id, $week_day,
+                            $subject_id, $teacher_id,
+                            $period_id, $types, $batch_id
+                        );
                     }
                 }
             }
-        $res['status_code'] = '1';
         }
-// exit;
 
-        $type = $request->input('type');
-        // $res = $this->create($request, $grade_id, $standard_id, $division_id, $sub_institute_id, $syear);
-        $res['grade_id']= $grade_id ;
-        $res['standard_id']=$standard_id;
-        $res['division_id']=$division_id;
-        return is_mobile($type, "create-timetable.index", $res, "redirect");
+        $response['status_code'] = 1;
+        // return is_mobile($request->input('type'), "create-timetable.index", $response, "redirect");
+        return redirect()->back()->with('status_code', $response['status_code'])
+            ->with('message', $response['message'])
+            ->with('grade_id', $response['grade_id'])
+            ->with('standard_id', $response['standard_id'])
+            ->with('division_id', $response['division_id']);
+    }
+
+    protected function checkAnyExtendLab($request, $period_id, $week_day)
+    {
+        if (isset($request->extend_lab[$period_id][$week_day])) {
+            $value = $request->extend_lab[$period_id][$week_day];
+            if (is_array($value)) {
+                return in_array('on', $value);
+            } else {
+                return $value === 'on';
+            }
+        }
+        return false;
+    }
+
+    public function extendLabs($sub_institute_id, $syear, $grade_id, $standard_id, $division_id, $week_day, $subject_id, $teacher_id, $period_id, $types, $batch_id = null)
+    {
+        $currentPeriod = periodModel::find($period_id);
+        if (!$currentPeriod) return;
+
+        $nextPeriod = periodModel::where('sort_order', $currentPeriod->sort_order + 1)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->first();
+
+        if (!$nextPeriod) return;
+
+        $query = [
+            'sub_institute_id' => $sub_institute_id,
+            'syear' => $syear,
+            'academic_section_id' => $grade_id,
+            'standard_id' => $standard_id,
+            'division_id' => $division_id,
+            'subject_id' => $subject_id,
+            'teacher_id' => $teacher_id,
+            'period_id' => $nextPeriod->id,
+            'week_day' => $week_day,
+            'extend_lab' => 'N',
+            'type' => $types
+        ];
+
+        if ($batch_id) {
+            $query['batch_id'] = $batch_id;
+        }
+
+        if (!timetableModel::where($query)->exists()) {
+            timetableModel::create($query + ['created_at' => now()]);
+        }
     }
 
 }
