@@ -124,9 +124,9 @@
                                     @foreach ($val as $key => $value)
                                         <option value="{{ $value['subject_id'] . '|||' . $value['period_id'] }}" 
                                                 data-type="{{ $value['type'] }}"
-                                                data-periodid="{{ $value['period_id'] }}"
-                                    data-timetableid="{{ $value['timetable'] }}"
-                                    >
+                                                data-periodid="{{ $value['period_id'] }}"   
+                                                data-timetableid="{{ $value['timetable'] }}"
+                                                @if(isset($data['subject']) && $data['subject'] == $value['subject_id'] . '|||' . $value['period_id']) selected @endif>
                                             {{ $value['subject'] }}
                                         </option>
                                     @endforeach
@@ -138,8 +138,7 @@
                 </div>
 
                 {{-- <div class="col-md-2" id="lecture_div">
-                    <input type="hidden" id="lecture_name" name="lecture_name"
-                        @if (isset($data['lecture_name'])) value="{{ $data['lecture_name'] }}" @endif>
+                   
                     <input type="hidden" id="batch_id" name="batch_id"
                         @if (isset($data['batch_id'])) value="{{ $data['batch_id'] }}" @endif>
 
@@ -175,6 +174,8 @@
                 </div>
 
             </div>
+             <input type="hidden" id="lecture_name" name="lecture_name"
+                        @if (isset($data['lecture_name'])) value="{{ $data['lecture_name'] }}" @endif>
             <div class="row">
                 <input type="hidden" name="timetable_id" id="timetable_id">
                 <input type="hidden" name="period_id" id="period_id">
@@ -281,6 +282,7 @@
 
     <script type="text/javascript">
         $(document).ready(function() {
+           
             var type = '{{ $type }}';
             // var all_subject = @json($data['all_subject'] ?? []); 
             // if (all_subject && all_subject.length > 0) {
@@ -292,7 +294,9 @@
             }
             // $('#lecture_div').hide();
             $('#batch_div').hide();
-
+            @if(isset($data['subject']) && isset($data['lecture_name']) && $data['lecture_name']!='Lecture')
+                $('#batch_div').show();
+            @endif
             //chek for type
             $('input[name="exampleRadios"]').on('change', function() {
                 if ($(this).val() == "Proxy") {
@@ -372,8 +376,9 @@
                 var selectedStandard = $('#standard').val();
                 var selectedDivision = $('#division').val();
                 var selectedDate = $('#from_date').val();
+                $('#lecture_name').val(type);
 
-                if (type !== 'Lab' && type!== 'Tutorial') {
+                if (type === 'Lecture') {
                     $('#batch_div').hide();
                 } else {
                     $('#batch_div').show();

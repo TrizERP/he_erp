@@ -387,170 +387,205 @@ class AJAXController extends Controller
     }
 
     public function getSubjectListTimetable(Request $request)
-    {
-        $standard_id = $request->standard_id;
-        $division_id = $request->division_id;
+{
+    $standard_id = $request->standard_id;
+    $division_id = $request->division_id;
 
-        $explode = explode(',', $request->standard_id);
+    $explode = explode(',', $request->standard_id);
 
-        $arr = $request->server;
-        $HTTP_REFERER = "";
-        foreach ($arr as $id => $val) {
-            if ($id == 'HTTP_REFERER') {
-                $HTTP_REFERER = $val;
+    $arr = $request->server;
+    $HTTP_REFERER = "";
+    foreach ($arr as $id => $val) {
+        if ($id == 'HTTP_REFERER') {
+            $HTTP_REFERER = $val;
+        }
+    }
+    $refer_arr = explode('/', $HTTP_REFERER);
+
+    if (count($refer_arr) >= 2 && $refer_arr[count($refer_arr) - 2] == 'exam_creation' || in_array('marks_entry', $refer_arr)) {
+        $where = array(
+            "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+            "sub_std_map.allow_grades" => "Yes",
+        );
+    } else {
+        $where = array(
+            "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
+        );
+    }
+    
+    if (count($explode) > 1) {
+        $std_sub_map = DB::table('subject')
+            ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
+            ->whereIn("sub_std_map.standard_id", $explode)
+            ->where($where)
+            ->orderBy('sub_std_map.sort_order')
+            ->pluck('sub_std_map.display_name', 'subject.id');
+    } else {
+        $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
+        if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
+            $fullDay = strtolower(date('l', strtotime($request->date)));
+            $todayDay = ($fullDay == 'thursday') ? 'H' : 'T';
+        }
+        
+        # Get subjects by teacher, standard and division
+        $std_sub_mapArr = DB::table('subject as sub')
+            ->join('timetable as t', 't.subject_id', '=', 'sub.id')
+            ->join('period as p', 'p.id', '=', 't.period_id')
+            ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
+                $query->where('t.teacher_id', session()->get('user_id'));
+            })
+            ->where('t.standard_id', $request->standard_id)
+            ->where('t.division_id', $request->division_id)
+            ->where('t.syear', session()->get('syear'))
+            ->where('t.week_day', strtoupper($todayDay))
+            ->select(
+                'sub.id',
+                'sub.subject_name as display_name',
+                't.extend_lab',
+                't.type',
+                't.id as timetable_id',
+                't.period_id',
+                'p.title as lecture',
+                'p.short_name',
+                'p.sort_order' // Add sort_order to determine period sequence
+            )
+            ->orderBy('p.sort_order') // Ensure periods are ordered
+            ->get();
+
+        $merged = [];
+
+        // Group by display_name + extend_lab + period_id first
+        foreach ($std_sub_mapArr as $value) {
+            $key = $value->display_name . "###" . $value->extend_lab . "###" . $value->period_id;
+
+            if (!isset($merged[$key])) {
+                $merged[$key] = [
+                    'entries' => [], // Store all original entries to maintain alignment
+                    'display_name' => $value->display_name,
+                    'extend_lab' => $value->extend_lab,
+                    'type' => $value->type,
+                    'period_id' => $value->period_id,
+                    'sort_order' => $value->sort_order,
+                    'short_name' => $value->short_name
+                ];
             }
-        }
-        $refer_arr = explode('/', $HTTP_REFERER);
 
-        if (count($refer_arr) >= 2 && $refer_arr[count($refer_arr) - 2] == 'exam_creation' || in_array('marks_entry', $refer_arr)) {
-            $where = array(
-                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
-                "sub_std_map.allow_grades" => "Yes",
-            );
-        } else {
-            $where = array(
-                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
-            );
+            $merged[$key]['entries'][] = [
+                'subject_id' => $value->id,
+                'period_id' => $value->period_id,
+                'sort_order' => $value->sort_order,
+                'timetable_id' => $value->timetable_id,
+                'short_name' => $value->short_name
+            ];
         }
-        if (count($explode) > 1) {
-            $std_sub_map = DB::table('subject')
-                ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
-                ->whereIn("sub_std_map.standard_id", $explode)
-                ->where($where)
-                ->orderBy('sub_std_map.sort_order')
-                ->pluck('sub_std_map.display_name', 'subject.id');
-        } else {
-            // if (session()->get('user_profile_name') == 'Lecturer') {
-            $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
-            if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
-                $fullDay = strtolower(date('l', strtotime($request->date)));
-                $todayDay = ($fullDay == 'thursday') ? 'H' : 'T';
+
+        // Now group by display_name + extend_lab for consecutive period checking
+        $grouped_by_subject = [];
+        foreach ($merged as $key => $item) {
+            $subject_key = $item['display_name'] . "###" . $item['extend_lab'];
+            
+            if (!isset($grouped_by_subject[$subject_key])) {
+                $grouped_by_subject[$subject_key] = [
+                    'display_name' => $item['display_name'],
+                    'extend_lab' => $item['extend_lab'],
+                    'type' => $item['type'],
+                    'periods' => []
+                ];
             }
             
-            // return strtoupper($todayDay);
-            # Get subjects by teacher, standard and division
-            $std_sub_mapArr = DB::table('subject as sub')
-                ->join('timetable as t', 't.subject_id', '=', 'sub.id')
-                ->join('period as p', 'p.id', '=', 't.period_id')
-                ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
-                    $query->where('t.teacher_id', session()->get('user_id'));
-                })
-                ->where('t.standard_id', $request->standard_id)
-                ->where('t.division_id', $request->division_id)
-                ->where('t.syear', session()->get('syear'))
-                ->where('t.week_day', strtoupper($todayDay))
-                ->select(
-                    'sub.id',
-                    'sub.subject_name as display_name',
-                    't.extend_lab',
-                    't.type',
-                    't.id as timetable_id',
-                    't.period_id',
-                    'p.title as lecture',
-                    'p.short_name'
-                )
-                ->get();
-                // return $std_sub_mapArr;
-            $merged = [];
+            // Add the period entry (already merged by period_id)
+            $grouped_by_subject[$subject_key]['periods'][] = [
+                'subject_id' => $item['entries'][0]['subject_id'], // Use first entry's subject_id
+                'period_id' => $item['period_id'],
+                'sort_order' => $item['sort_order'],
+                'timetable_ids' => array_column($item['entries'], 'timetable_id'), // All timetable_ids
+                'short_name' => $item['short_name']
+            ];
+        }
 
-            // Step 1: Group by display_name + extend_lab
-            foreach ($std_sub_mapArr as $value) {
-                $key = $value->display_name . "###" . $value->extend_lab; // unique group key
-
-                if (!isset($merged[$key])) {
-                    $merged[$key] = [
-                        'ids' => [],
-                        'shorts' => [],
-                        'display_name' => $value->display_name,
-                        'extend_lab' => $value->extend_lab,
-                        'timetable_id' => $value->timetable_id,
-                    ];
-                }
-
-                // store ids and shorts
-                $merged[$key]['ids'][] = $value->id;
-                $merged[$key]['shorts'][] = $value->short_name;
-            }
-
-            // Step 2: Build final output
-            $merged = [];
-
-            // Step 1: Group by display_name + extend_lab
-            foreach ($std_sub_mapArr as $value) {
-                $key = $value->display_name . "###" . $value->extend_lab; // unique group key
-
-                if (!isset($merged[$key])) {
-                    $merged[$key] = [
-                        'subject_ids' => [],
-                        'period_ids' => [],
-                        'timetable_ids' => [],
-                        'shorts' => [],
-                        'display_name' => $value->display_name,
-                        'extend_lab' => $value->extend_lab,
-                        'type' => $value->type
-                    ];
-                }
-
-                $merged[$key]['subject_ids'][] = $value->id;
-                $merged[$key]['period_ids'][] = $value->period_id;
-                $merged[$key]['timetable_ids'][] = $value->timetable_id;
-                $merged[$key]['shorts'][] = $value->short_name;
-            }
-
-            // Step 2: Build final output
-            $std_sub_map = [];
-            foreach ($merged as $item) {
-                // unique + sorted
-                $subject_ids = array_values(array_unique($item['subject_ids']));
-                $period_ids  = array_values(array_unique($item['period_ids']));
-                $timetable_ids  = array_values(array_unique($item['timetable_ids']));
-                $shorts      = array_values(array_unique($item['shorts']));
-
-                natsort($subject_ids);
-                natsort($period_ids);
-                natsort($timetable_ids);
-                natsort($shorts);
-
-                // If multiple shorts → create "range" L1-L3
-                if (count($shorts) > 1) {
-                    $subject_prefix = reset($shorts) . '-' . end($shorts);
-
-                    // 👇 ensure "double ###" when multiple shorts
-                    $subject_id = implode('###', $subject_ids);
-                    $period_id  = implode('###', $period_ids);
-                    $timetable_id  = implode('###', $timetable_ids);
+        // Step 3: Process each subject group to find consecutive periods
+        $std_sub_map = [];
+        foreach ($grouped_by_subject as $subject_key => $item) {
+            // Sort periods by sort_order
+            usort($item['periods'], function($a, $b) {
+                return $a['sort_order'] <=> $b['sort_order'];
+            });
+            
+            // Group consecutive periods
+            $consecutive_groups = $this->groupConsecutivePeriods($item['periods']);
+            
+            foreach ($consecutive_groups as $group) {
+                if (count($group) > 1) {
+                    // Multiple consecutive periods - create range
+                    $first = reset($group);
+                    $last = end($group);
+                    $subject_prefix = $first['short_name'] . '-' . $last['short_name'];
+                    
+                    $subject_ids = array_column($group, 'subject_id');
+                    $period_ids = array_column($group, 'period_id');
+                    $timetable_ids = array_merge(...array_column($group, 'timetable_ids'));
                 } else {
-                    $subject_prefix = reset($shorts);
-                    $subject_id = implode('###', $subject_ids);
-                    $period_id  = implode('###', $period_ids);
-                    $timetable_id  = implode('###', $timetable_ids);
+                    // Single period
+                    $single = reset($group);
+                    $subject_prefix = $single['short_name'];
+                    
+                    $subject_ids = [$single['subject_id']];
+                    $period_ids = [$single['period_id']];
+                    $timetable_ids = $single['timetable_ids'];
                 }
-
-                // final subject text
+                
+                // Final subject text
                 $subject = $subject_prefix . ' - ' . $item['display_name'];
-
+                
                 $std_sub_map[] = [
-                    'subject_id' => $subject_id,
-                    'period_id'  => $period_id,
+                    'subject_id' => implode('###', array_unique($subject_ids)),
+                    'period_id'  => implode('###', $period_ids),
                     'subject'    => $subject,
-                    'timetable'    => $timetable_id,
+                    'timetable'  => implode('###', $timetable_ids),
                     'extend_lab' => $item['extend_lab'],
                     'type'       => $item['type']
                 ];
             }
-            // } else {
-            //     $where['sub_std_map.standard_id'] = $request->standard_id;
-
-            //     $std_sub_map = DB::table('subject')
-            //         ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
-            //         ->where($where)
-            //         ->orderBy('sub_std_map.sort_order')
-            //         ->pluck('sub_std_map.display_name', 'subject.id');
-            // }
         }
-
-        return response()->json($std_sub_map);
     }
+
+    return response()->json($std_sub_map);
+}
+
+/**
+ * Group consecutive periods together
+ */
+private function groupConsecutivePeriods($periods)
+{
+    $groups = [];
+    $current_group = [];
+    
+    foreach ($periods as $period) {
+        if (empty($current_group)) {
+            // Start new group
+            $current_group = [$period];
+        } else {
+            $last_period = end($current_group);
+            
+            // Check if current period is consecutive to the last one
+            if ($period['sort_order'] == $last_period['sort_order'] + 1) {
+                // Add to current group
+                $current_group[] = $period;
+            } else {
+                // Save current group and start new one
+                $groups[] = $current_group;
+                $current_group = [$period];
+            }
+        }
+    }
+    
+    // Add the last group
+    if (!empty($current_group)) {
+        $groups[] = $current_group;
+    }
+    
+    return $groups;
+}
 
     public function getBatchTimetable (Request $request)
     {
