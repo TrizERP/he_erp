@@ -516,3 +516,25 @@ $route = ['dashboard'];
     });
 
 </script>
+<script>
+        let idleTime = 0;
+        const maxIdleTime = 5 * 60 * 1000; // 5 minutes
+
+        function resetIdleTime() {
+            idleTime = 0;
+        }
+
+        // Reset idle time on activity
+        window.onload = resetIdleTime;
+        document.onmousemove = resetIdleTime;
+        document.onkeydown = resetIdleTime;
+        document.onclick = resetIdleTime;
+        document.onscroll = resetIdleTime;
+
+        setInterval(function () {
+            idleTime += 1000; // increase 1 second
+            if (idleTime >= maxIdleTime) {
+                window.location.href = "{{ route('logout') }}";
+            }
+        }, 1000);
+</script>
