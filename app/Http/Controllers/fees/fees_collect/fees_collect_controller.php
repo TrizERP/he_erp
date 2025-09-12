@@ -3329,6 +3329,7 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         $receipt_no = $request->input('receipt_no');
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
+        $marking_period_id=session()->get('term_id');
 
         $extra_fp = "  AND fp.syear = '" . $syear . "' AND te.syear = '" . $syear . "' AND t.sub_institute_id = '" . $sub_institute_id . "' AND fp.sub_institute_id = '" . $sub_institute_id . "' AND fp.is_deleted = 'N' ";
 
@@ -3371,7 +3372,7 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         }
 
 
-        $data = DB::table(function ($query) use ($sub_institute_id, $syear, $extra_fo, $extra_fp) {
+        $data = DB::table(function ($query) use ($sub_institute_id, $syear, $extra_fo, $extra_fp, $marking_period_id) {
             $query->selectRaw('t.id as student_id, t.enrollment_no, te.roll_no, t.uniqueid, t.place_of_birth, '
                 . DB::raw("CONCAT_WS(' ', t.first_name, t.middle_name, t.last_name) as student_name") . ', g.title as grade, s.name as standard_name, d.name as division_name, fp.created_date, '
                 . DB::raw('CONCAT_WS(" ", u.first_name, u.last_name) AS user_name, GROUP_CONCAT(fp.term_id) AS term_id, fp.receiptdate, fp.receipt_no, fp.payment_mode, '
@@ -3382,7 +3383,10 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
                     $join->on('te.student_id', '=', 't.id')->where('te.syear',$syear);
                 })
                 ->leftJoin('academic_section as g', 'g.id', '=', 'te.grade_id')
-                ->leftJoin('standard as s', 's.id', '=', 'te.standard_id')
+                ->join('standard as s', 's.id', '=', 'te.standard_id')
+                    ->when($marking_period_id, function ($query) use ($marking_period_id) {
+                        $query->where('s.marking_period_id', $marking_period_id);
+                    })
                 ->leftJoin('division as d', 'd.id', '=', 'te.section_id')
                 ->leftJoin('student_quota as sq', 'sq.id', '=', 'te.student_quota')
                 ->leftjoin('batch as b', function ($join) {
@@ -3391,14 +3395,17 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
                         ->whereRaw('b.id = t.studentbatch')
                         ->whereRaw('b.syear = te.syear');
                 })
-                ->Join('fees_collect as fp', 'fp.student_id', '=', 'te.student_id')
+                ->join('fees_collect as fp', function($join) {
+                    $join->on('fp.student_id', '=', 'te.student_id')
+                         ->on('fp.standard_id', '=', 'te.standard_id');
+                })
                 ->leftJoin('tbluser as u',function($join){
                     $join->on('fp.created_by', '=', 'u.id')->where('u.status',1); // 23-04-24 by uma
                 })
                 ->whereRaw("1=1 " . $extra_fp)
                 ->groupBy('fp.receipt_no')
 
-                ->unionAll(function ($query) use ($sub_institute_id, $syear, $extra_fo, $extra_fp) {
+                ->unionAll(function ($query) use ($sub_institute_id, $syear, $extra_fo, $extra_fp, $marking_period_id) {
                     $query->selectRaw('t.id as student_id, t.enrollment_no, te.roll_no, t.uniqueid, t.place_of_birth, '
                         . DB::raw("CONCAT_WS(' ', t.first_name, t.middle_name, t.last_name) as student_name") . ', g.title as grade, s.name as standard_name, d.name as division_name, NULL AS created_date, '
                         . DB::raw('CONCAT_WS(" ", u.first_name, u.last_name) AS user_name, fo.month_id AS term_id, fo.receiptdate AS receiptdate, fo.reciept_id AS receipt_no, fo.payment_mode AS payment_mode, '
@@ -3409,7 +3416,10 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
                             $join->on('te.student_id', '=', 't.id')->where('te.syear',$syear);
                         })
                         ->leftJoin('academic_section as g', 'g.id', '=', 'te.grade_id')
-                        ->leftJoin('standard as s', 's.id', '=', 'te.standard_id')
+                        ->join('standard as s', 's.id', '=', 'te.standard_id')
+                            ->when($marking_period_id, function ($query) use ($marking_period_id) {
+                                $query->where('s.marking_period_id', $marking_period_id);
+                            })
                         ->leftJoin('division as d', 'd.id', '=', 'te.section_id')
                         ->leftJoin('student_quota as sq', 'sq.id', '=', 'te.student_quota')
                         ->leftjoin('batch as b', function ($join) {

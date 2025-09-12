@@ -76,29 +76,46 @@ class otherNewfeesReportController extends Controller
         }
 
         $other_feesData = DB::table('fees_other_collection as c')
-            ->join('fees_other_head as h', function ($join) {
-                $join->whereRaw('c.deduction_head_id = h.id');
-            })->join('tblstudent as s', function ($join) {
-                $join->whereRaw('s.id = c.student_id AND c.sub_institute_id = s.sub_institute_id');
-            })->join('tblstudent_enrollment as se', function ($join) {
-                $join->whereRaw('se.student_id = s.id AND se.syear = c.syear AND se.end_date is null');
-            })->join('standard as st', function ($join) use ($marking_period_id) {
-                $join->whereRaw('st.id = c.standard_id')
-                     ->when($marking_period_id, function ($query) use ($marking_period_id) {
-                         $query->where('st.marking_period_id', $marking_period_id);
-                     });
+            ->join('fees_other_head as h', 'c.deduction_head_id', '=', 'h.id')
+            ->join('tblstudent as s', function ($join) {
+                $join->on('s.id', '=', 'c.student_id')
+                     ->on('s.sub_institute_id', '=', 'c.sub_institute_id');
             })
-            ->join('division as d', function ($join) {
-                $join->whereRaw('se.section_id = d.id');
-            })->selectRaw("CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS student_name,s.enrollment_no,
-                s.mobile,c.student_id,st.name as standard_name,d.name as division_name,h.display_name as fees_head,
-                h.amount AS total_amt, c.deduction_amount,c.deduction_remarks,c.deduction_date,c.payment_mode,c.receipt_id,c.id,c.student_id")
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.student_id', '=', 's.id')
+                     ->on('se.syear', '=', 'c.syear')
+                     ->whereNull('se.end_date');
+            })
+            ->join('standard as st', 'st.id', '=', 'se.standard_id')
+            ->when($marking_period_id, function ($query) use ($marking_period_id) {
+                $query->where('st.marking_period_id', $marking_period_id);
+            })
+            ->join('division as d', 'se.section_id', '=', 'd.id')
+            ->join('tbluser as u', 'u.id', '=', 'c.created_by')
+            ->selectRaw("
+                CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name) AS student_name,
+                s.enrollment_no,
+                s.mobile,
+                c.student_id,
+                st.name AS standard_name,
+                d.name AS division_name,
+                h.display_name AS fees_head,
+                h.amount AS total_amt,
+                c.deduction_amount,
+                c.deduction_remarks,
+                c.deduction_date,
+                c.payment_mode,
+                c.receipt_id,
+                c.id,
+                CONCAT_WS(' ', u.first_name, u.last_name) AS created_by
+            ")
             ->where('c.sub_institute_id', $sub_institute_id)
             ->where('c.syear', $syear)
-            ->where('c.is_deleted', '=', 'N')
+            ->where('c.is_deleted', 'N')
             ->whereRaw($extraSearch)
             ->orderBy('c.deduction_date')
-            ->get()->toArray();
+            ->get()
+            ->toArray();
 
         $other_feesData = json_decode(json_encode($other_feesData), true);
 

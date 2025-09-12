@@ -328,6 +328,7 @@ class studentCertificateController extends Controller
             strtoupper($value['any_other_remarks']), $html_content);
         $html_content = str_replace(htmlspecialchars("<<student_uniqueid_value>>"), strtoupper($value['unique_id']),
             $html_content);
+            $html_content = str_replace(htmlspecialchars("<<admin_user>>"), session()->get('name'), $html_content);
         // added 14-08-2024
         $institute_name = session()->get('school_name');
         $student_address = $value['address'] ?? '';

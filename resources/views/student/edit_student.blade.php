@@ -249,10 +249,10 @@ br {
                                             <label>{{App\Helpers\get_string('studentquota','request')}}<i class="mdi mdi-lead-pencil"></i></label>
                                             @php 
                                             $disable =$readonly= " ";
-                                            if(count($data['fees_data']) != 0) {
-                                                $disable = "style=pointer-events:none";
-                                                $readonly = "readonly";
-                                            }
+                                            //if(count($data['fees_data']) != 0) {
+                                            //    $disable = "style=pointer-events:none";
+                                            //    $readonly = "readonly";
+                                            //}
                                             @endphp
                                             <select id='student_quota' required name="student_quota" class="form-control" {{$disable}} {{$readonly}}>
                                                 <option value="">--Select--</option>
@@ -471,10 +471,20 @@ br {
                                                 <span class="input-group-addon"><i class="icon-calender"></i></span>
                                             </div>
                                         </div>
-
+<!--
                                         <div class="col-md-4 form-group" id="remarks_div" @if(isset($student_data->end_date)) style="display: block;" @else style="display: none;" @endif>
                                             <label>Inactive Remarks </label>
                                             <textarea type="text" id='remarks' name="remarks" class="form-control">@if(isset($student_data->remarks)) {{$student_data->remarks}} @endif</textarea>
+                                        </div>
+-->                                        
+                                        <div class="col-md-4 form-group" id="remarks_div" @if(isset($student_data->end_date)) style="display: block;" @else style="display: none;" @endif>
+                                            <label>Inactive Remarks </label>
+                                            <select id='remarks' name="remarks" class="form-control">
+                                                <option>N/A</option>
+                                                <option value="Drop" @if(isset($student_data->remarks) && $student_data->remarks == 'Drop') selected="selected" @endif>Drop</option>
+                                                <option value="Detain" @if(isset($student_data->remarks) && $student_data->remarks == 'Detain') selected="selected" @endif>Detain</option>
+                                                <option value="Admission Cancel" @if(isset($student_data->remarks) && $student_data->remarks == 'Admission Cancel') selected="selected" @endif>Admission Cancel</option>
+                                            </select>
                                         </div>
 
                                         @if(isset($data['custom_fields']))
@@ -1584,9 +1594,9 @@ br {
             $("#standard").find('option[value=""]').remove();
             $("#standard").attr("readonly",true); 
 
-            $('option', "#student_quota").not(':eq(0), :selected').remove(); 
-            $("#student_quota").find('option[value=""]').remove();
-            $("#student_quota").attr("readonly",true); 
+        // $('option', "#student_quota").not(':eq(0), :selected').remove(); 
+        // $("#student_quota").find('option[value=""]').remove();
+        // $("#student_quota").attr("readonly",true); 
 
             $('option', "#admission_year").not(':eq(0), :selected').remove(); 
             $("#admission_year").find('option[value=""]').remove();

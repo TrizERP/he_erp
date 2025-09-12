@@ -326,15 +326,15 @@ class studentReportController extends Controller
 
         $feesCollect = DB::table('fees_collect as fc')
         ->join('tblstudent_enrollment as se',function($q) use($sub_institute_id){
-            $q->on('se.student_id','=','fc.student_id')->on('se.syear','=','fc.syear')
+            $q->on('se.student_id','=','fc.student_id')->on('se.syear','=','fc.syear')->on('se.standard_id','=','fc.standard_id')
             ->where('se.sub_institute_id',$sub_institute_id);
         })
-        ->join('standard as std','std.id','=','se.standard_id')
+        ->join('standard as std','std.id','=','fc.standard_id')
         ->leftjoin('tbluser as u','u.id','=','fc.created_by')
         ->selectRaw('fc.*,sum(fc.amount) as fees_paid,std.name as stdName,CONCAT_WS(" ",COALESCE(u.first_name,"-"),COALESCE(u.middle_name,"-"),COALESCE(u.last_name,"-")) as received_by')
         ->where(['fc.sub_institute_id'=>$sub_institute_id,'fc.student_id'=>$student_id])
         ->where('is_deleted','!=','Y')
-        ->groupBy('fc.standard_id')
+        ->groupBy('fc.receipt_no')
         ->get()->toArray();
 
         $cancelFeesCollect = DB::table('fees_cancel as fc')
@@ -362,7 +362,7 @@ class studentReportController extends Controller
             ->join('fees_other_head as h', function ($join) {
                 $join->whereRaw('c.deduction_head_id = h.id');
             })->join('tblstudent_enrollment as se', function ($join) {
-                $join->whereRaw('se.student_id = c.student_id AND se.syear = c.syear AND se.end_date is null');
+                $join->whereRaw('se.student_id = c.student_id AND se.syear = c.syear AND se.end_date is null AND c.standard_id = se.standard_id');
             })->join('standard as st', function ($join){
                 $join->whereRaw('st.id = se.standard_id');
             })
