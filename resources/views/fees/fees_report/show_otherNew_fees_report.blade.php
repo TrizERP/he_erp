@@ -114,6 +114,7 @@
                             <th>Payment Mode</th>
                             <th>Received Date</th>
                             <th>Paid Amount</th>
+                            <th>Collect By</th>
                             <th>Ledger</th>
                         </tr>
                     </thead>
@@ -151,6 +152,7 @@
                             <td>{{$fees_value['payment_mode']}}</td>
                             <td>{{date('d-m-Y',strtotime($fees_value['deduction_date']))}}</td>
                             <td>{{$fees_value['deduction_amount']}}</td>
+                            <td>{{$fees_value['created_by']}}</td>
                             <td>
                                 <button type="button" class="btn btn-info float-right" data-toggle="modal" onclick="javascript:save_data({{$fees_value['student_id']}});">View Ledger</button>
                             </td>
@@ -173,6 +175,7 @@
                             <td></td>
                             <td>Total</td>
                             <td>{{$grand_total}}</td>
+                            <td></td>
                             <td></td>
                         </tr>
 

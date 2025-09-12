@@ -83,7 +83,6 @@
                             <th>{{ App\Helpers\get_string('standard','request')}}</th>
                             <th>{{ App\Helpers\get_string('division','request')}}</th>                            
                             <th>Mobile</th>
-                            <th>Term</th>
                             <th>Roll No</th>
                             <th>Amount</th>
                             <th>Bank Name</th>
@@ -117,7 +116,6 @@
                                 <td>{{$val->standard_name}}</td>
                                 <td>{{$val->divison_name}}</td>
                                 <td>{{$val->mobile}}</td>
-                                <td>{{$val->term_name}}</td>
                                 <td>{{$val->roll_no}}</td>
                                 <td>{{$val->amount}}</td>
                                 <td>{{$val->cheque_bank_name}}</td>

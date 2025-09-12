@@ -62,6 +62,7 @@
 
                     @php
                         $departments = $data['departments'];
+                        $new_emp_code = $data['new_emp_code'];
                         $employees = $data['employees'];
                         $job_titles = $data['job_titles'];
                         $user_profiles = $data['user_profiles'];
@@ -104,6 +105,10 @@
                                             <option value="Miss."
                                                     @if(isset($data))@if("Miss." == $data['name_suffix']) selected @endif  @endif>
                                                 Miss.
+                                            </option>
+                                            <option value="Dr."
+                                                    @if(isset($data))@if("Dr." == $data['name_suffix']) selected @endif  @endif>
+                                                Dr.
                                             </option>
                                         </select>
                                     </div>
@@ -388,7 +393,12 @@
                                             </div>
                                         @endforeach
                                     @endif
-
+                                    
+                                    <div class="col-md-4 form-group">
+                                        <label>Employee Id</label>
+                                        <input type="text" id='employee_no' name="employee_no"
+                                                    class="form-control" value="{{ $new_emp_code }}">
+                                    </div>
                                     <div class="col-md-4 form-group">
                                         <label>Job Title</label>
                                         <select id='jobtitle_id' name="jobtitle_id" class="form-control">
@@ -861,6 +871,7 @@
                                 @csrf
                                 @php 
                                 $teachingType = [1=>"Teaching",2=>"Non-Teaching"];
+                                $experienceType = ["School Exp."=>"School Exp.","Diploma Exp."=>"Diploma Exp.","Degree Exp."=>"Degree Exp.",    "Industrial Exp."=>"Industrial Exp."];
                                 @endphp
 
                                 {{-- added on 08-05-2025 for grid view like old --}}
@@ -872,6 +883,7 @@
                                                     <th>Teching Type</th>
                                                     <th>Institute Name</th>
                                                     <th>Designation</th>
+                                                    <th>Exp.Type</th>
                                                     <th>Joining Date</th>
                                                     <th>Leaving Date</th>
                                                     <th>Experirnce</th>
@@ -896,6 +908,14 @@
                                                     </td>
                                                     <td>
                                                         <input type="text" name="designation_name[]" value="@if(isset($experience_detail->designation_name)){{$experience_detail->designation_name}}@endif" class="form-control mb-0" data-new="1">
+                                                    </td>
+                                                    <td>
+                                                        <select name="experience_type[]" id="experience_type" class="form-control"  data-new="1">
+                                                            <option value="">N/A</option>
+                                                            @foreach($experienceType as $k=>$v)
+                                                            <option value="{{$k}}" @if(isset($experience_detail->experience_type) && $experience_detail->experience_type==$k) selected @endif>{{$v}}</option>
+                                                            @endforeach
+                                                        </select>
                                                     </td>
                                                     <td>
                                                         <input type="date" name="joining_date[]" value="@if(isset($experience_detail->joining_date)){{$experience_detail->joining_date}}@endif" class="form-control mb-0" data-new="1">
@@ -933,6 +953,14 @@
                                                     </td>
                                                     <td>
                                                         <input type="text" name="designation_name[]" class="form-control mb-0" data-new="1">
+                                                    </td>
+                                                    <td>
+                                                        <select name="experience_type[]" id="experience_type" class="form-control"  data-new="1">
+                                                            <option value="">N/A</option>
+                                                            @foreach($experienceType as $k=>$v)
+                                                            <option value="{{$k}}">{{$v}}</option>
+                                                            @endforeach
+                                                        </select>
                                                     </td>
                                                     <td>
                                                         <input type="date" name="joining_date[]" class="form-control mb-0" data-new="1" onchange=" (this)">
@@ -2144,6 +2172,7 @@
 
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Institutional Name</label><input type="text" name="institutional_name[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Designation Name</label><input type="text" name="designation_name[]" value="" class="form-control mb-0"/></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Exp. Type</label> <select name="experience_type[]" id="experience_type" class="form-control mb-0"  data-new="1"><option value="">N/A</option><option value="School Exp.">School Exp.</option><option value="Diploma Exp.">Diploma Exp.</option><option value="Degree Exp."></option><option value="Industrial Exp.">Industrial Exp.</option></select></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Joining Date</label><input type="date" name="joining_date[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Leaving Date</label><input type="text" name="leaving_date[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Experience</label><input type="text" name="experience[]" value="" class="form-control mb-0"/></div></div>';

@@ -258,8 +258,8 @@
                      <a class="dropdown-item" href="{{route('change_password.index')}}"><i
                         class="mdi mdi-settings"></i> Change Password</a>
                   @if(session()->get('user_profile_name')!='Student')
-                     <a class="dropdown-item" href="{{route('dashboard_setting.index')}}"><i
-                        class="mdi mdi-vector-triangle"></i> Dashboard Setting</a>
+                     <!--<a class="dropdown-item" href="{{route('dashboard_setting.index')}}"><i
+                        class="mdi mdi-vector-triangle"></i> Dashboard Setting</a>-->
                      <a class="dropdown-item" href="{{route('device_check')}}"><i
                         class="mdi mdi-table-settings"></i> Device Check</a>
                      <a class="dropdown-item" href="{{route('erp_status.index')}}"><i

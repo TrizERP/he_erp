@@ -36,9 +36,11 @@ class ChequeReconciliationController extends Controller
             ->join('tblstudent as s', function ($join) {
                 $join->whereRaw('s.id = fc.student_id');
             })->join('tblstudent_enrollment as se', function ($join) {
-                $join->whereRaw('se.student_id = fc.student_id AND se.sub_institute_id = fc.sub_institute_id');
+                $join->whereRaw('se.student_id = fc.student_id AND se.sub_institute_id = fc.sub_institute_id AND fc.syear=se.syear');
+            /*
             })->Join('academic_year as t', function ($join) {
                 $join->whereRaw('t.term_id = se.term_id AND t.sub_institute_id = se.sub_institute_id');
+            */
             })->join('standard as st', function ($join) use ($marking_period_id) {
                 $join->on('st.id', '=', 'se.standard_id')
                     ->when($marking_period_id, function ($query) use ($marking_period_id) {
@@ -46,8 +48,8 @@ class ChequeReconciliationController extends Controller
                     });
             })->leftJoin('division as d', function ($join) {
                 $join->whereRaw('d.id = se.section_id');
-            })->selectRaw("fc.id as collect_id,fc.standard_id,fc.student_id,fc.term_id,fc.created_by,fc.payment_mode,fc.bank_branch,fc.receiptdate,fc.receipt_no,fc.cheque_no,fc.bank_name,fc.cheque_date,fc.cheque_bank_name,fc.amount,fc.is_deleted,fc.fine,fc.fees_discount,fc.is_waved,fc.created_by,s.enrollment_no,CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS student_name,s.mobile,s.roll_no,st.medium,st.name as standard_name,d.id,d.name as divison_name,t.title as term_name,se.term_id as sterm_id")
-            ->whereRaw('fc.payment_mode = "cheque" AND fc.sub_institute_id = "' . $sub_institute_id . '" AND fc.syear = "' . $syear . '" AND fc.is_deleted = "N" ')
+            })->selectRaw("fc.id as collect_id,fc.standard_id,fc.student_id,fc.term_id,fc.created_by,fc.payment_mode,fc.bank_branch,fc.receiptdate,fc.receipt_no,fc.cheque_no,fc.bank_name,fc.cheque_date,fc.cheque_bank_name,fc.amount,fc.is_deleted,fc.fine,fc.fees_discount,fc.is_waved,fc.created_by,s.enrollment_no,CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS student_name,s.mobile,s.roll_no,st.medium,st.name as standard_name,d.id,d.name as divison_name,se.term_id as sterm_id")
+            ->whereRaw('fc.payment_mode = "Cheque" AND fc.sub_institute_id = "' . $sub_institute_id . '" AND fc.syear = "' . $syear . '" AND fc.is_deleted = "N" ')
             ->whereBetween("fc.cheque_date", [$from_date, $to_date])->get()->toArray();
 
         $res['from_date'] = $from_date;
@@ -198,14 +200,14 @@ class ChequeReconciliationController extends Controller
         $type = $request->input('type');
 
         if ($request->mode == "clear") {
-            $query = fees_collect::select('id', 'student_id', 'standard_id', 'payment_mode', 'syear', 'sub_institute_id')->whereRaw('payment_mode = "cheque" AND sub_institute_id = "' . $sub_institute_id . '" AND syear = "' . $syear . '" AND is_deleted = "Y" ')->whereBetween("cheque_date", [$from_date, $to_date])->get()->toArray();
+            $query = fees_collect::select('id', 'student_id', 'standard_id', 'payment_mode', 'syear', 'sub_institute_id')->whereRaw('payment_mode = "Cheque" AND sub_institute_id = "' . $sub_institute_id . '" AND syear = "' . $syear . '" AND is_deleted = "Y" ')->whereBetween("cheque_date", [$from_date, $to_date])->get()->toArray();
             $query = DB::table('fees_collect as fc')
                 ->join('tblstudent as s', function ($join) {
                     $join->whereRaw('s.id = fc.student_id');
                 })->join('tblstudent_enrollment as se', function ($join) {
-                    $join->whereRaw('se.student_id = fc.student_id AND se.sub_institute_id = fc.sub_institute_id');
+                    $join->whereRaw('se.student_id = fc.student_id AND se.sub_institute_id = fc.sub_institute_id AND se.standard_id=fc.standard_id');
                 })->Join('academic_year as t', function ($join) {
-                    $join->whereRaw('t.term_id = se.term_id AND t.sub_institute_id = se.sub_institute_id');
+                    $join->whereRaw('t.term_id = se.term_id AND t.sub_institute_id = se.sub_institute_id AND t.syear=fc.syear');
                 })->join('standard as st', function ($join) use ($marking_period_id) {
                     $join->on('st.id', '=', 'fc.standard_id')
                         ->when($marking_period_id, function ($query) use ($marking_period_id) {
@@ -214,7 +216,7 @@ class ChequeReconciliationController extends Controller
                 })->leftJoin('division as d', function ($join) {
                     $join->whereRaw('d.id = se.section_id');
                 })->selectRaw("fc.id as collect_id,fc.standard_id,fc.student_id,fc.term_id,fc.created_by,fc.payment_mode,fc.bank_branch,fc.receiptdate,fc.receipt_no,fc.cheque_no,fc.bank_name,fc.cheque_date,fc.cheque_bank_name,fc.amount as amountpaid,fc.payment_mode as cancel_type,fc.created_date as cancel_date,fc.remarks as cancel_remark,fc.is_deleted,fc.fine,fc.fees_discount,fc.is_waved,fc.created_by,s.enrollment_no,CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS student_name,s.mobile,s.roll_no,st.medium,st.name as standard_name,d.id,d.name as divison_name,t.title as term_name,se.term_id as sterm_id")
-                ->whereRaw('fc.payment_mode = "cheque" AND fc.sub_institute_id = "' . $sub_institute_id . '" AND fc.syear = "' . $syear . '" AND fc.is_deleted = "Y" ')
+                ->whereRaw('fc.payment_mode = "Cheque" AND fc.sub_institute_id = "' . $sub_institute_id . '" AND fc.syear = "' . $syear . '" AND fc.is_deleted = "Y" ')
                 ->whereBetween("fc.cheque_date", [$from_date, $to_date])->get()->toArray();
 
         } else {
@@ -222,11 +224,11 @@ class ChequeReconciliationController extends Controller
                 ->join('tblstudent as s', function ($join) {
                     $join->whereRaw('s.id = fc.student_id');
                 })->Join('fees_collect as fct', function ($join) {
-                    $join->whereRaw('fct.student_id = fc.student_id');
+                    $join->whereRaw('fct.student_id = fc.student_id AND fct.standard_id=fc.standard_id AND fc.reciept_id=fct.receipt_no');
                 })->join('tblstudent_enrollment as se', function ($join) {
                     $join->whereRaw('se.student_id = fc.student_id AND se.sub_institute_id = fc.sub_institute_id');
                 })->Join('academic_year as t', function ($join) {
-                    $join->whereRaw('t.term_id = se.term_id AND t.sub_institute_id = se.sub_institute_id');
+                    $join->whereRaw('t.term_id = se.term_id AND t.sub_institute_id = se.sub_institute_id AND t.syear=fc.syear');
                 })->join('standard as st', function ($join) use ($marking_period_id) {
                     $join->on('st.id', '=', 'fct.standard_id')
                         ->when($marking_period_id, function ($query) use ($marking_period_id) {
