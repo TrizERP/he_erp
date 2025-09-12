@@ -273,7 +273,7 @@ Route::any('signup', [signupController::class, 'index'])->name('signup');
 
 Route::any('ajaxMenuSession', [loginController::class, 'ajaxMenuSession'])->name('ajaxMenuSession');
 
-Route::any('/logout', [loginController::class, 'logout']);
+Route::any('logout', [loginController::class, 'logout'])->name('logout');
 
 Route::any('/profileAPI', [loginController::class, 'profileAPI']);
 
