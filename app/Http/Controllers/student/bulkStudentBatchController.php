@@ -92,7 +92,7 @@ class bulkStudentBatchController extends Controller
             ]);
 
         $res['status_code'] = $updated ? 1 : 0;
-        $res['message'] = $updated ? 'Students updated successfully' : 'No records updated';
+        $res['message'] = $updated ? 'Batch updated successfully' : 'No records updated';
 
         return is_mobile($type, "bulk_student_batch.index", $res);
     }
