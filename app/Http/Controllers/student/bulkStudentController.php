@@ -57,7 +57,7 @@ class bulkStudentController extends Controller
         $tblcustom_fields['last_name']['name'] = 'Surname';
         //$tblcustom_fields['standard']['name'] = 'Standard';
         $tblcustom_fields['division']['name'] = 'Division';
-        $tblcustom_fields['studentbatch']['name'] = 'Batch';
+        //$tblcustom_fields['studentbatch']['name'] = 'Batch';
         if($sub_institute_id == 257)
         {
             $tblcustom_fields['student_quota']['name'] = 'Student Quota';
@@ -96,7 +96,7 @@ class bulkStudentController extends Controller
         $tblcustom_fields['last_name']['type'] = 'textbox';
         //$tblcustom_fields['standard']['type'] = 'dropdown';
         $tblcustom_fields['division']['type'] = 'dropdown';
-        $tblcustom_fields['studentbatch']['type'] = 'dropdown';
+        //$tblcustom_fields['studentbatch']['type'] = 'dropdown';
         if($sub_institute_id == 257)
         {
             $tblcustom_fields['student_quota']['type'] = 'dropdown';
