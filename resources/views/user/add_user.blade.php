@@ -63,6 +63,7 @@
                             <option value="Mr."> Mr.</option>
                             <option value="Mrs."> Mrs.</option>
                             <option value="Miss."> Miss.</option>
+                            <option value="Miss."> Dr.</option>
                         </select>
                     </div>
                     <div class="col-md-4 form-group">
@@ -227,9 +228,14 @@
                             </div>
                         @endforeach
                     @endif
+                    
+                    <div class="col-md-4 form-group">
+                        <label>Employee Id</label>
+                        <input type="text" id='employee_no' name="employee_no" class="form-control" value="{{$new_emp_code}}">
+                    </div>
 
                     <div class="col-md-4 form-group">
-                        <label>Job Title Id</label>
+                        <label>Job Title</label>
                         <select id='jobtitle_id' name="jobtitle_id" class="form-control">
                             <option value="0">Select Title</option>
                             @foreach($job_titles as $title)
@@ -238,9 +244,16 @@
                         </select>
                     </div>
 
+                    <!-- employee department  -->
                     <div class="col-md-4 form-group">
-                        <label>Department Id</label>
-                        <input type="text" id='department_id' name="department_id" class="form-control">
+                        <label>Branch</label>
+                        <select id='department_id' name="department_id" class="form-control">
+                            <option value="0">Select Branch</option>
+                            @foreach($departments as $title)
+                                    <option value="{{$title->id}}">{{$title->department}}</option>
+                            @endforeach
+                        </select>
+                        <!-- <input type="text" id='department_id' name="department_id" class="form-control"> -->
                     </div>
 
                     <div class="col-md-4 form-group">

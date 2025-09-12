@@ -83,20 +83,20 @@ class student_certificate_reportController extends Controller
             $studentIds = array_column($studentLists,'id');
       
             $certificateLists = DB::table('certificate_history')
-                                ->selectRaw('*,id as certi_id')
-                                ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
-                                ->whereRaw('student_id in ('.implode(',',$studentIds).')')
-                                ->when($certificate_type,function($query) use($certificate_type){
-                                    $query->where('certificate_type',$certificate_type);
-                                });
+                ->selectRaw('*,id as certi_id')
+                ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
+                ->whereRaw('student_id in ('.implode(',',$studentIds).')')
+                ->when($certificate_type,function($query) use($certificate_type){
+                    $query->where('certificate_type',$certificate_type);
+                });
 
-                        if(isset($from_date) && isset($to_date)){
-                            $certificateLists->whereBetween('created_at',[$from_date,$to_date]);
-                        }else if(isset($from_date)){
-                            $certificateLists->where('created_at', '<>', $from_date);
-                        }else if (isset($to_date)){
-                            $certificateLists->where('created_at', '<>', $to_date);
-                        }
+                if(isset($from_date) && isset($to_date)){
+                    $certificateLists->whereBetween(DB::raw('DATE(created_at)'),[$from_date,$to_date]);
+                }else if(isset($from_date)){
+                    $certificateLists->where(DB::raw('DATE(created_at)'), '<>', $from_date);
+                }else if (isset($to_date)){
+                    $certificateLists->where(DB::raw('DATE(created_at)'), '<>', $to_date);
+                }
 
                 $certificateLists = $certificateLists->get()->toArray();
 

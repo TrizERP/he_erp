@@ -62,12 +62,23 @@ class tbluserController extends Controller
             $i++;
         }
 
+        // auto increament 20-04-24
+        $maxEmpCode = DB::table('tbluser')->selectRaw("MAX(CAST(employee_no AS INT)) AS new_emp_code")
+        ->where('sub_institute_id', $sub_institute_id)->whereRaw('employee_no is not null')->limit(1)->orderBy('id')->get()->toArray();
+
+            $maxEmpCode = array_map(function ($value) {
+                return (array) $value;
+            }, $maxEmpCode);
+
+        $new_emp_code = ($maxEmpCode['0']['new_emp_code'] + 1) ?? 1;
+
         $departments = DB::table('hrms_departments')->where('sub_institute_id', $sub_institute_id)->where('status', 1)->get()->toArray();
 
         if (count($finalfieldsData) > 0) {
             view()->share('data_fields', $finalfieldsData);
         }
-
+        
+        view()->share('new_emp_code', $new_emp_code);
         view()->share('custom_fields', $dataCustomFields);
         view()->share('subject_data', $subject_data);
         view()->share('user_profiles', $data);
@@ -240,6 +251,10 @@ class tbluserController extends Controller
         if (count($finalfieldsData) > 0) {
             $res['data_fields'] = $finalfieldsData;
         }
+        
+        $empCode = DB::table('tbluser')->where('id',$id)->first();
+        $new_emp_code = $empCode->employee_no;
+
         $departments = DB::table('hrms_departments')->where('sub_institute_id', $sub_institute_id)->where('status', 1)->get()->toArray();
         // 23-10-2024
         $categorties=DB::table('cast')->where('sub_institute_id', $sub_institute_id)->orderBy('sort_order')->get()->toArray();
@@ -265,6 +280,7 @@ class tbluserController extends Controller
         $res['subject_data'] = $subject_data;
         $res['subject_data_selected_arr'] = $subject_data_selected_arr;
         $res['user_profiles'] = $data;
+        $res['new_emp_code'] = $new_emp_code;
         $res['data'] = $editData;
 
         return is_mobile($type, "user/edit_user", $res, "view");
@@ -449,6 +465,7 @@ class tbluserController extends Controller
                         'teching_type' => $teching_type,
                         'institutional_name' => $request->get('institutional_name')[$key] ?? '',
                         'designation_name' => $request->get('designation_name')[$key] ?? '',
+                        'experience_type' => $request->get('experience_type')[$key] ?? '',
                         'joining_date' => $request->get('joining_date')[$key] ?? '',
                         'leaving_date' => $request->get('leaving_date')[$key] ?? '',
                         'experience' => isset($request->get('experience')[$key]) ? $request->get('experience')[$key] : 0,
@@ -458,7 +475,7 @@ class tbluserController extends Controller
                         DB::table('tbluser_experience_details')->where('id', $request->get('experience_detail_id')[$key])->update($prepareData);
 
                     } 
-                    elseif(isset($teching_type) || isset($request->get('institutional_name')[$key]) || isset($request->get('designation_name')[$key]) || isset($request->get('joining_date')[$key]) || isset($request->get('leaving_date')[$key])) {
+                    elseif(isset($teching_type) || isset($request->get('institutional_name')[$key]) || isset($request->get('designation_name')[$key]) || isset($request->get('joining_date')[$key]) || isset($request->get('leaving_date')[$key]) || isset($request->get('experience_type')[$key])) {
                         DB::table('tbluser_experience_details')->insert($prepareData);
                     }
                 }
