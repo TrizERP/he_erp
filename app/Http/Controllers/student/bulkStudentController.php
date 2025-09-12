@@ -7,6 +7,7 @@ use App\Models\school_setup\academic_sectionModel;
 use App\Models\school_setup\bloodgroupModel;
 use App\Models\school_setup\casteModel;
 use App\Models\school_setup\divisionModel;
+use App\Models\school_setup\batchModel;
 use App\Models\school_setup\religionModel;
 use App\Models\school_setup\standardModel;
 use App\Models\settings\tblcustomfieldsModel;
@@ -23,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use function App\Helpers\is_mobile;
 use Illuminate\Support\Facades\Storage;
+use DB;
 
 class bulkStudentController extends Controller
 {
@@ -54,7 +56,8 @@ class bulkStudentController extends Controller
         $tblcustom_fields['middle_name']['name'] = 'Middle Name';
         $tblcustom_fields['last_name']['name'] = 'Surname';
         //$tblcustom_fields['standard']['name'] = 'Standard';
-        $tblcustom_fields['division_id']['name'] = 'Division';
+        $tblcustom_fields['division']['name'] = 'Division';
+        $tblcustom_fields['studentbatch']['name'] = 'Batch';
         if($sub_institute_id == 257)
         {
             $tblcustom_fields['student_quota']['name'] = 'Student Quota';
@@ -92,7 +95,8 @@ class bulkStudentController extends Controller
         $tblcustom_fields['middle_name']['type'] = 'textbox';
         $tblcustom_fields['last_name']['type'] = 'textbox';
         //$tblcustom_fields['standard']['type'] = 'dropdown';
-        $tblcustom_fields['division_id']['type'] = 'dropdown';
+        $tblcustom_fields['division']['type'] = 'dropdown';
+        $tblcustom_fields['studentbatch']['type'] = 'dropdown';
         if($sub_institute_id == 257)
         {
             $tblcustom_fields['student_quota']['type'] = 'dropdown';
@@ -270,17 +274,11 @@ class bulkStudentController extends Controller
         $keyQuotes = '';
 
         foreach ($request->input('dynamicFields') as $key => $value) {
-            if ($value != 'standard' && $value != 'grade' && $value != 'division'  && $value != 'division_id') {
+            if ($value != 'standard' && $value != 'grade' && $value != 'division' && $value != 'roll_no' && $value != 'student_height' && $value != 'student_weight') {
                 $array[] = $value;
-            }else if( $value == 'division_id'){
-                $array[] = 'section_id as division_id';
             }
             $value1 = str_replace($searchArr, $replaceArr, $value);
-            if( $value == 'division_id'){
-                $header[$value] = "Division";
-            }else{
-                $header[$value] = ucfirst($value1);
-            }
+            $header[$value] = ucfirst($value1);
 
             $keyQuotes .= "'" . $value . "',";
         }
@@ -321,6 +319,7 @@ class bulkStudentController extends Controller
             ->join('academic_section', 'academic_section.id', '=', 'tblstudent_enrollment.grade_id')
             ->join('standard', 'standard.id', '=', 'tblstudent_enrollment.standard_id')
             ->join('division', 'division.id', '=', 'tblstudent_enrollment.section_id')
+            ->leftjoin('batch', 'batch.id', '=', 'tblstudent.studentbatch')
             ->leftjoin("fees_collect", function ($join) {
                 $join->on("fees_collect.sub_institute_id", "=", "tblstudent_enrollment.sub_institute_id")
                     ->on("fees_collect.student_id", "=", "tblstudent_enrollment.student_id");
@@ -335,8 +334,17 @@ class bulkStudentController extends Controller
         $tblstandard = standardModel::where(["sub_institute_id" => $sub_institute_id])
             ->pluck("name", "id")->toArray();
 
-        $tbldivision = divisionModel::where(["sub_institute_id" => $sub_institute_id])
-            ->pluck("name", "id")->toArray();
+        $tbldivision = DB::table('std_div_map')
+            ->join('division', 'division.id', '=', 'std_div_map.division_id')
+            ->where("std_div_map.standard_id", $standard_id)
+            ->pluck("division.name", "division.id")
+            ->toArray();
+
+        $tblbatch = batchModel::where(["sub_institute_id" => $sub_institute_id,
+        "syear" => $syear,
+        "standard_id" => $standard_id,
+        "division_id" => $division_id])
+            ->pluck("title", "id")->toArray();
 
         $tblgrade = academic_sectionModel::where(["sub_institute_id" => $sub_institute_id])
             ->pluck("title", "id")->toArray();
@@ -364,7 +372,8 @@ class bulkStudentController extends Controller
         }
 
         $fieldsData['standard'] = $tblstandard;
-        $fieldsData['division_id'] = $tbldivision;
+        $fieldsData['division'] = $tbldivision;
+        $fieldsData['studentbatch'] = $tblbatch;
         $fieldsData['grade'] = $tblgrade;
         $fieldsData['gender'] = ['F' => 'F', 'M' => 'M'];
         $fieldsData['religion'] = $religion;
