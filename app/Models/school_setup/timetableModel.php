@@ -18,6 +18,7 @@ class timetableModel extends Model
         'period_id',
         'subject_id',
         'teacher_id',
+        'room',
         'week_day',
         'merge',
         'created_at',
