@@ -66,6 +66,8 @@ class divisionCapacityMasterController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
         $created_by = $request->session()->get('user_id');
+        $sem_start_date = date('Y-m-d', strtotime($request->get('sem_start_date')));
+        $sem_end_date = date('Y-m-d', strtotime($request->get('sem_end_date')));
 
         $division_capacity = new divisionCapacityMasterModel([
             'sub_institute_id' => $sub_institute_id,
@@ -74,6 +76,8 @@ class divisionCapacityMasterController extends Controller
             'standard_id'      => $request->get('standard'),
             'division_id'      => $request->get('division'),
             'capacity'         => $request->get('capacity'),
+            'sem_start_date'   => $sem_start_date,
+            'sem_end_date'     => $sem_end_date,
             'created_on'       => date('Y-m-d H:i:s'),
             'created_by'       => $created_by,
             'created_ip'       => $_SERVER['REMOTE_ADDR'],
@@ -83,7 +87,7 @@ class divisionCapacityMasterController extends Controller
 
         $res = [
             "status_code" => 1,
-            "message"     => "Divison Capacity Added Successfully",
+            "message"     => "Divison Planner Added Successfully",
             "class"       => "alert-success",
         ];
 
@@ -116,6 +120,8 @@ class divisionCapacityMasterController extends Controller
         $data['standard_id'] = $res['standard_id'];
         $data['division_id'] = $res['division_id'];
         $data['capacity'] = $res['capacity'];
+        $data['sem_start_date'] = $res['sem_start_date'];
+        $data['sem_end_date'] = $res['sem_end_date'];
         $data['data'] = $this->getData($request);
         $data['button'] = "Update";
 
@@ -135,12 +141,16 @@ class divisionCapacityMasterController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
         $updated_by = $request->session()->get('user_id');
+        $sem_start_date = date('Y-m-d', strtotime($request->get('sem_start_date')));
+        $sem_end_date = date('Y-m-d', strtotime($request->get('sem_end_date')));
 
         $capacity_data = [
             'grade_id'    => $request->get('grade'),
             'standard_id' => $request->get('standard'),
             'division_id' => $request->get('division'),
             'capacity'    => $request->get('capacity'),
+            'sem_start_date'=> $sem_start_date,
+            'sem_end_date'  => $sem_end_date,
             'updated_on'  => date('Y-m-d H:i:s'),
             'updated_by'  => $updated_by,
         ];
@@ -148,7 +158,7 @@ class divisionCapacityMasterController extends Controller
 
         $data = [
             "status_code" => 1,
-            "message"     => "Division Capacity Updated Successfully",
+            "message"     => "Division Planner Updated Successfully",
             "class"       => "alert-success",
         ];
 
@@ -168,7 +178,7 @@ class divisionCapacityMasterController extends Controller
         $type = $request->input('type');
         divisionCapacityMasterModel::where(["id" => $id])->delete();
         $res['status_code'] = "1";
-        $res['message'] = "Division Capacity Deleted Successfully";
+        $res['message'] = "Division Planner Deleted Successfully";
 
         return is_mobile($type, "division_capacity_master.index", $res);
     }

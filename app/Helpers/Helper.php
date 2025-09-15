@@ -941,6 +941,7 @@ if (!function_exists('FeeBreakoffHeadWise')) {
                 });
             })
             ->leftJoin('division as d', 'd.id', '=', 'se.section_id')
+            ->leftJoin('student_quota as sq', 'sq.id', '=', 'se.student_quota')
             ->join('fees_breackoff as fb', function ($join) use ($syear, $sub_institute_id) {
                 $join->on('fb.syear', '=', DB::raw("'" . $syear . "'"))
                     ->on('fb.admission_year', '=', 's.admission_year')
@@ -958,12 +959,8 @@ if (!function_exists('FeeBreakoffHeadWise')) {
                 $join->on('ae.id', '=', 'ar.enquiry_id')
                     ->on('ar.sub_institute_id', '=', 'ae.sub_institute_id');
             })
-            ->selectRaw("s.*, se.syear, se.student_id, se.grade_id, se.standard_id, se.section_id, se.student_quota,
-                    se.start_date, se.end_date, se.enrollment_code, se.drop_code, se.drop_remarks, se.drop_remarks, se.term_id,
-                    se.remarks, se.admission_fees, se.house_id, se.lc_number, fb.amount, st.name as standard_name, d.name as division_name,
-                    fb.month_id, ft.display_name, ft.fees_title, ft.mandatory, '' as breakoff, s.father_name, s.mother_name,
-                    RIGHT(fb.month_id, 4) as sort_year, CAST(SUBSTRING(fb.month_id, 1, CHAR_LENGTH(fb.month_id) - 4) as signed) as sort_month,
-                    ae.fees_circular_form_no")
+            ->selectRaw("s.*, se.syear, se.student_id, se.grade_id, se.standard_id, se.section_id, se.student_quota,se.start_date, se.end_date, se.enrollment_code, se.drop_code, se.drop_remarks, se.drop_remarks, se.term_id,se.remarks, se.admission_fees, se.house_id, se.lc_number, fb.amount, st.name as standard_name, d.name as division_name,fb.month_id, ft.display_name, ft.fees_title, ft.mandatory, '' as breakoff, s.father_name, s.mother_name,RIGHT(fb.month_id, 4) as sort_year, CAST(SUBSTRING(fb.month_id, 1, CHAR_LENGTH(fb.month_id) - 4) as signed) as sort_month,
+                    ae.fees_circular_form_no,sq.title AS quota")
             ->havingRaw("sum(fb.amount) != 0")
             ->where('s.sub_institute_id', $sub_institute_id)
             ->where('se.syear', $syear)
@@ -1015,7 +1012,9 @@ if (!function_exists('FeeBreakoffHeadWise')) {
             $student_data[$value->id]['middle_name'] = $value->middle_name;
             $student_data[$value->id]['student_name'] = sortStudentName("",$value->first_name ,$value->middle_name , $value->last_name);
             $student_data[$value->id]['gender'] = $value->gender;
+            $student_data[$value->id]['quota'] = $value->quota;
             $student_data[$value->id]['mobile'] = $value->mobile;
+            $student_data[$value->id]['mother_mobile'] = $value->mother_mobile;
             $student_data[$value->id]['student_mobile'] = $value->student_mobile;
             $student_data[$value->id]['dob'] = $value->dob;
             $student_data[$value->id]['admission_year'] = $value->admission_year;

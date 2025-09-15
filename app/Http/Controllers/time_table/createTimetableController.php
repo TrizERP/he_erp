@@ -301,7 +301,6 @@ class createTimetableController extends Controller
         $week_day = $arr[0];
         $period_id = $arr[1];
         $teacher_id = $arr[2];
-        $room = $arr[3];
 
         $check_timetable_data = timetableModel::where([
             'sub_institute_id' => $sub_institute_id,
@@ -311,7 +310,6 @@ class createTimetableController extends Controller
             'week_day'         => $week_day,
             'period_id'        => $period_id,
             'teacher_id'       => $teacher_id,
-            'room'             => $room,
             
         ])->get()->toArray();
 
@@ -325,7 +323,6 @@ class createTimetableController extends Controller
                     "week_day"         => $week_day,
                     "period_id"        => $period_id,
                     "teacher_id"       => $teacher_id,
-                    "room"             => $room,
                 ])->delete();
         }
 

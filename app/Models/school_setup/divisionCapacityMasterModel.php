@@ -15,6 +15,8 @@ class divisionCapacityMasterModel extends Model
         'standard_id',
         'division_id',
         'capacity',
+        'sem_start_date',
+        'sem_end_date',
         'created_on',
         'created_by',
         'created_ip',

@@ -61,7 +61,7 @@
                             {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
 
                             @if(isset($data['months']))
-                                <div class="col-md-6 form-group">
+                                <div class="col-md-3 form-group">
                                     <label>Months:</label>
                                     <select name="month[]" class="form-control" required="required" multiple="multiple">
                                         @foreach($data['months'] as $key => $value)
@@ -76,7 +76,7 @@
                             @endif
 
                             @if(isset($data['fees_heads']))
-                                <div class="col-md-6 form-group">
+                                <div class="col-md-3 form-group">
                                     <label>Fees Heads:</label>
                                     <select name="fees_head[]" class="form-control" required="required" multiple="multiple">
                                         @foreach($data['fees_heads'] as $key => $value)
@@ -88,6 +88,20 @@
                                         @endforeach
                                     </select>
                                 </div>
+                            @endif
+                            @if(!empty($data['number_types']) && is_array($data['number_types']))
+                            <div class="col-md-3 form-group">
+                                <label>Number Type:</label>
+                                <select class="form-control" name="number_type" required>
+                                        @foreach ($data['number_types'] as $key => $value)
+                                            <option value="{{$key}}" @if(isset($data['number_type']))
+                                            @if($key == $data['number_type'])
+                                                SELECTED
+                                            @endif
+                                            @endif>{{$value}}</option>
+                                        @endforeach
+                                </select>
+                            </div>
                             @endif
 
                             <div class="col-md-12 form-group">
@@ -120,7 +134,8 @@
 		                                    <th>{{ App\Helpers\get_string('studentname','request')}}</th>
 		                                    <th>{{ App\Helpers\get_string('standard','request')}}</th>
 		                                    <th>{{ App\Helpers\get_string('division','request')}}</th>
-                                            <th>Mobile</th>
+                                            <th>Quota</th>
+                                            <th>{{ $data['number_type'] }}</th>
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 <th>{{$data['fees_heads'][$dv]}}</th>
                                             @endforeach
@@ -145,14 +160,15 @@
                                         @if($amount)
 		                                <tr>
                                             <td>
-                                                <input type='checkbox' name="stu_ids[]" class="remain_fees" data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}" data-remain_fees="{{ $amount }}" data-mobile="{{ $value['mobile'] }}" />
+                                                <input type='checkbox' name="stu_ids[]" class="remain_fees" data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}" data-remain_fees="{{ $amount }}" data-mobile="{{ $value[$data['number_type']] }}" />
                                             </td>
 		                                    <!-- <td> {{$j}} </td> -->
 		                                    <td>{{$value['enrollment_no']}}</td>
 		                                    <td>{{$value['student_name']}}</td>
 		                                    <td>{{$value['standard_name']}}</td>
 		                                    <td>{{$value['division_name']}}</td>
-                                            <td>{{$value['mobile']}}</td>
+                                            <td>{{$value['quota']}}</td>
+                                            <td>{{$value[$data['number_type']]}}</td>
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 @if(isset($data['fees_details'][$value['id']][$data['fees_heads'][$dv]]))
                                                     <td>{{$data['fees_details'][$value['id']][$data['fees_heads'][$dv]]}}</td>
