@@ -85,12 +85,13 @@
                                             @if (isset($data['timetable_data'][$wval][$pval['id']]['SUBJECT'])) 
                                                 @foreach ($data['timetable_data'][$wval][$pval['id']]['SUBJECT'] as $k => $v) 
                                                     @php
-                                                        $currentBatch = $data['timetable_data'][$wval][$pval['id']]['BATCH'][$k] ?? '-';
-                                                        $currentSubject = $data['timetable_data'][$wval][$pval['id']]['SUBJECT'][$k];
-                                                        $currentStd = $data['timetable_data'][$wval][$pval['id']]['STANDARD'][$k];
-                                                        $currentType = $data['timetable_data'][$wval][$pval['id']]['TYPE'][$k];
-
-                                                        $value .= $currentSubject . $currentBatch .' /'. $currentStd . ' / ' . $currentType . '<br>';
+                                    $currentBatch = $data['timetable_data'][$wval][$pval['id']]['BATCH'][$k] ?? '-';
+                                    $currentSubject = data['timetable_data'][$wval][$pval['id']]['SUBJECT'][$k];
+                                    $currentStd = $data['timetable_data'][$wval][$pval['id']]['STANDARD'][$k];
+                                    $currentType = $data['timetable_data'][$wval][$pval['id']]['TYPE'][$k];
+                                    $currentRoom = $data['timetable_data'][$wval][$pval['id']]['ROOM'][$k];
+                                    
+                                    $value .= $currentSubject .'<br>'. $currentBatch .'<br>'. $currentStd . '<br>' . $currentType . '<br>' . $currentRoom . '<br>';
                                                     @endphp
                                                 @endforeach
 
@@ -137,6 +138,7 @@
                             $currentSubject = $data['timetable_data'][$wval][$pval['id']]['SUBJECT'][$k];
                             $currentStd = $data['timetable_data'][$wval][$pval['id']]['STANDARD'][$k];
                             $currentType = $data['timetable_data'][$wval][$pval['id']]['TYPE'][$k];
+                            $currentRoom = $data['timetable_data'][$wval][$pval['id']]['ROOM'][$k];
 
                             // Check if the current values match the previous values
                             if ($currentSubject == $prevSubject && $currentStd == $prevStd) {
@@ -148,7 +150,7 @@
                             $prevSubject = $currentSubject;
                             $prevStd = $currentStd;
 
-                            $value .= $currentSubject . $currentBatch . ' / ' . $currentStd . ' / ' . $currentType . '<br>';
+                            $value .= $currentSubject . '<br>' . $currentBatch . '<br>' . $currentStd . '<br>' . $currentType . '<br>' . $currentRoom . '<br>';
                         @endphp
                     @endforeach
 

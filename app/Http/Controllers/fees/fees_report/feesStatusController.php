@@ -38,7 +38,13 @@ class feesStatusController extends Controller
         ->pluck('display_name', 'fees_title')
         ->toArray();
         asort($feesHead);
-
+        
+        $number_types = [
+            "mobile"   => "Mobile",
+            "student_mobile" => "Student Mobile",
+            "mother_mobile" => "Mother Mobile",
+        ];
+        $res['number_types'] =$number_types;
         $res['status_code'] = "1";
         $res['message'] = "Success";
         $res['months'] = $months;
@@ -55,10 +61,17 @@ class feesStatusController extends Controller
         $division = $request->input('division');
         $month = $request->input('month');
         $fees_head = $request->input('fees_head');
+        $number_type = $request->input('number_type');
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
         $months = FeeMonthId();
+
+        $number_types = [
+            "mobile"   => "Mobile",
+            "student_mobile" => "Student Mobile",
+            "mother_mobile" => "Mother Mobile",
+        ];
 
         $feesHead = fees_title::where(['sub_institute_id' => $sub_institute_id, 'other_fee_id' => 0])
         ->orderBy('sort_order') 
@@ -137,6 +150,8 @@ class feesStatusController extends Controller
         $res['fees_heads'] = $feesHead;
         $res['fees_head'] = $fees_head;
         $res['fees_data'] = $data;
+        $res['number_type'] = $number_type;
+        $res['number_types'] = $number_types;
         $res['fees_details'] = $displayBreakoff;
 
         return is_mobile($type, "fees/fees_report/status_report", $res, "view");

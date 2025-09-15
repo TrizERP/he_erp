@@ -54,12 +54,13 @@ class timetableReportsController extends Controller
         $html = "";
         $old_timetable_data = [];
         $timetable_data = timetableModel::select('timetable.*',
-            DB::raw('concat(first_name," ",last_name) as teacher_name'),
-            'subject.subject_name', 'subject.subject_code', 'batch.title as batch_name')
+            DB::raw('CONCAT_WS(" ",last_name,first_name,middle_name) as teacher_name'),
+            'subject.subject_name', 'subject.short_name', 'batch.title as batch_name','rm.room_name')
             ->join('academic_section', 'academic_section.id', "=", 'timetable.academic_section_id')
             ->join('subject', 'subject.id', "=", 'timetable.subject_id')
             ->join('tbluser', 'tbluser.id', "=", 'timetable.teacher_id')
             ->leftJoin('batch', 'batch.id', "=", 'timetable.batch_id')
+            ->leftJoin('hostel_room_master as rm', 'rm.id', "=", 'timetable.room')
             ->where([
                 'timetable.sub_institute_id'    => $sub_institute_id,
                 'timetable.academic_section_id' => $academic_section_id,
@@ -71,9 +72,10 @@ class timetableReportsController extends Controller
 
         foreach ($timetable_data as $k => $p) {
             $old_timetable_data[$p['week_day']][$p['period_id']]['SUBJECT'][] = $p['subject_name'];
-            $old_timetable_data[$p['week_day']][$p['period_id']]['SUBJECT_CODE'][] = $p['subject_code'];
+            $old_timetable_data[$p['week_day']][$p['period_id']]['SUBJECT_CODE'][] = $p['short_name'];
             $old_timetable_data[$p['week_day']][$p['period_id']]['TEACHER'][] = $p['teacher_name'];
             $old_timetable_data[$p['week_day']][$p['period_id']]['TYPE'][] = $p['type'];
+            $old_timetable_data[$p['week_day']][$p['period_id']]['ROOM'][] = $p['room_name'];
             if (isset($p['batch_name'])) {
                 $old_timetable_data[$p['week_day']][$p['period_id']]['BATCH'][] = $p['batch_name'];
             }
@@ -125,13 +127,13 @@ class timetableReportsController extends Controller
         $html = "";
         $marking_priod_id=session()->get('term_id');
         $get_teacher_name = DB::table('tbluser')
-            ->selectRaw("id,CONCAT_WS(' ',first_name,middle_name,last_name) as teacher_name")
+            ->selectRaw("id,CONCAT_WS(' ',last_name,first_name,middle_name) as teacher_name")
             ->where('id', $teacher_id)
             ->where('sub_institute_id', $sub_institute_id)->get()->toArray();
 
         $timetable_data_arr = timetableModel::select('timetable.*',
-            'subject.subject_name', 'subject.subject_code', 'batch.title as batch_name', 'period.title as period_name',
-            'standard.name as standard_name', 'division.name as division_name')
+            'subject.subject_name', 'subject.short_name', 'batch.title as batch_name', 'period.title as period_name',
+            'standard.name as standard_name', 'division.name as division_name','rm.room_name')
             ->join('standard',function($join) use($marking_priod_id){
                 $join->on('standard.id', "=", 'timetable.standard_id');
                 // ->when($marking_priod_id,function($query) use($marking_priod_id){
@@ -142,6 +144,7 @@ class timetableReportsController extends Controller
             ->leftjoin('division', 'division.id', "=", 'timetable.division_id')
             ->join('period', 'period.id', "=", 'timetable.period_id')
             ->leftJoin('batch', 'batch.id', "=", 'timetable.batch_id')
+            ->leftJoin('hostel_room_master as rm', 'rm.id', "=", 'timetable.room')
             ->where([
                 'timetable.sub_institute_id' => $sub_institute_id,
                 'timetable.teacher_id'       => $teacher_id,
@@ -153,9 +156,10 @@ class timetableReportsController extends Controller
         foreach ($timetable_data_arr as $k => $p) {
             $res['period_data'][$p['period_id']]["title"] = $p['period_name'];
             $res['period_data'][$p['period_id']]["id"] = $p['period_id'];
-            $res['timetable_data'][$p['week_day']][$p['period_id']]['SUBJECT'][] = $p['subject_name'].' / '.$p['subject_code'];
-            $res['timetable_data'][$p['week_day']][$p['period_id']]['STANDARD'][] = $p['standard_name'].' / '.$p['division_name'];
+            $res['timetable_data'][$p['week_day']][$p['period_id']]['SUBJECT'][] = $p['subject_name'].' - '.$p['short_name'];
+            $res['timetable_data'][$p['week_day']][$p['period_id']]['STANDARD'][] = $p['standard_name'].' '.$p['division_name'];
             $res['timetable_data'][$p['week_day']][$p['period_id']]['TYPE'][] = $p['type'];
+            $res['timetable_data'][$p['week_day']][$p['period_id']]['ROOM'][] = $p['room_name'];
 
             if (isset($p['batch_name'])) {
                 $res['timetable_data'][$p['week_day']][$p['period_id']]['BATCH'][] = $p['batch_name'];
@@ -188,9 +192,10 @@ class timetableReportsController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
         return tbluserModel::select('tbluser.*',
-            DB::raw('concat(tbluser.first_name," ",tbluser.middle_name," ",tbluser.last_name) as teacher_name'))
+            DB::raw('CONCAT_WS(" ",tbluser.last_name,tbluser.first_name,tbluser.middle_name) as teacher_name'))
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2,'tbluser.status'=>1])
+            ->orderby('tbluser.last_name')
             ->orderby('tbluser.first_name')
             ->pluck('teacher_name','id');
     }

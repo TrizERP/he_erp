@@ -86,9 +86,11 @@
                                                         $subjectCount = count($data['old_timetable_data'][$wval][$pval['id']]['SUBJECT']);
                                                         @endphp
                                                             @foreach ($periodData['SUBJECT'] as $k => $subject_name)
-                                                                {{ $subject_name . (isset($periodData['BATCH'][$k]) ? " / " . $periodData['BATCH'][$k] : '') }}
-                                                                @if (isset($periodData['TEACHER'][$k]))<br>{{ $periodData['TEACHER'][$k] }}@endif
+                                {{ $subject_name .' - '. $periodData['SUBJECT_CODE'][$k] }}
+                                {!! $periodData['BATCH'][$k] ?? '' ? '<br>' . $periodData['BATCH'][$k] : '' !!}
+                                @if (isset($periodData['TEACHER'][$k]))<br>{{ $periodData['TEACHER'][$k] }}@endif
                                                                 <br>{{ $periodData['TYPE'][$k] }}
+                                                                <br>{{ $periodData['ROOM'][$k] }}
                                                                 @if ($k != ($subjectCount - 1))<br><hr>@endif
                                                             @endforeach
                                                         @else

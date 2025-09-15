@@ -335,6 +335,8 @@ class studentReportController extends Controller
         ->where(['fc.sub_institute_id'=>$sub_institute_id,'fc.student_id'=>$student_id])
         ->where('is_deleted','!=','Y')
         ->groupBy('fc.receipt_no')
+        ->orderBy('std.sort_order')
+        ->orderBy('fc.id')
         ->get()->toArray();
 
         $cancelFeesCollect = DB::table('fees_cancel as fc')
