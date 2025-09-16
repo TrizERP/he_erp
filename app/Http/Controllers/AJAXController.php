@@ -1284,7 +1284,7 @@ private function groupConsecutivePeriods($periods)
 
         $RSMainQuery = DB::table('rightside_menumaster as m')
             ->whereRaw("FIND_IN_SET('" . $sub_institute_id . "', m.sub_institute_id) AND
-                m.parent_menu_id = 0 AND main_menu_id = '" . $main_menu_id . "' AND status=1")
+                m.parent_menu_id = 0 AND main_menu_id = '" . $main_menu_id . "' AND m.status=1")
             ->orderBy('sort_order')->get()->toArray();
 
         $RSMainQuery = json_decode(json_encode($RSMainQuery), true);
@@ -1301,9 +1301,9 @@ private function groupConsecutivePeriods($periods)
             })->leftJoin('tblgroupwise_rights as g', function ($join) {
                 $join->whereRaw('u.user_profile_id = g.profile_id AND u.sub_institute_id = g.sub_institute_id');
             })->join('rightside_menumaster as m', function ($join) {
-                $join->whereRaw('(i.menu_id = m.tblmenu_master_id OR g.menu_id = m.tblmenu_master_id) AND status=1');
+                $join->whereRaw('(i.menu_id = m.tblmenu_master_id OR g.menu_id = m.tblmenu_master_id) AND m.status=1');
             })->join('tblmenumaster as mm', function ($join) use ($sub_institute_id) {
-                $join->whereRaw("mm.id = m.tblmenu_master_id AND FIND_IN_SET('" . $sub_institute_id . "', m.sub_institute_id) AND status=1");
+                $join->whereRaw("mm.id = m.tblmenu_master_id AND FIND_IN_SET('" . $sub_institute_id . "', m.sub_institute_id) AND mm.status=1");
             })
             ->selectRaw('distinct(m.id),m.*,mm.link')
             ->where('u.sub_institute_id', $sub_institute_id)
