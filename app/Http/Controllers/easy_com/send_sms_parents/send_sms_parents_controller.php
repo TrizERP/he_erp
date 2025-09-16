@@ -30,9 +30,16 @@ class send_sms_parents_controller extends Controller
             }
         }
 
-
         $data['data'] = array();
         $type = $request->input('type');
+
+        $number_types = [
+            "mobile"   => "Mobile",
+            "student_mobile" => "Student Mobile",
+            "mother_mobile" => "Mother Mobile",
+        ];
+        
+        $data['number_types'] =$number_types;
 
         return is_mobile($type, "easy_comm/send_sms_parents/show", $data, "view");
     }
@@ -51,14 +58,16 @@ class send_sms_parents_controller extends Controller
         $responce_arr['grade'] = $_REQUEST['grade'];
         $responce_arr['standard'] = $_REQUEST['standard'];
         $responce_arr['division'] = $_REQUEST['division'];
+        $responce_arr['number_type'] = $_REQUEST['number_type'];
 
         foreach ($student_data as $id => $arr) {
             $responce_arr['stu_data'][$id]['sr.no'] = $id + 1;
             $responce_arr['stu_data'][$id]['name'] = $arr['first_name'].' '.$arr['middle_name'].' '.$arr['last_name'];
             $responce_arr['stu_data'][$id]['student_id'] = $arr['student_id'];
-            $responce_arr['stu_data'][$id]['mobile'] = $arr['mobile'];
+            $responce_arr['stu_data'][$id][$_REQUEST['number_type']] = $arr[$_REQUEST['number_type']];
             $responce_arr['stu_data'][$id]['standard_name'] = $arr['standard_name'];
             $responce_arr['stu_data'][$id]['division_name'] = $arr['division_name'];
+            $responce_arr['stu_data'][$id]['enrollment_no'] = $arr['enrollment_no'];
         }
 
         return is_mobile($type, "easy_comm/send_sms_parents/add", $responce_arr, "view");

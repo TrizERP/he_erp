@@ -796,7 +796,8 @@ if (!function_exists('SearchStudent')) {
 
         $query->whereraw($extraRaw);
 
-        $query->orderByRaw('s.sort_order, d.id, ts.roll_no');
+        //$query->orderByRaw('s.sort_order, d.id, ts.roll_no');
+        $query->orderByRaw("s.sort_order, d.id, CAST(REGEXP_SUBSTR(ts.enrollment_no, '[0-9]+') AS UNSIGNED)");
 
         return $query->get($columns)->toArray();
     }

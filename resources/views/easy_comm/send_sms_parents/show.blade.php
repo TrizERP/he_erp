@@ -22,10 +22,22 @@
                         {{ method_field("GET") }}
                         {{csrf_field()}}
                         <div class="row"> 
-                            <div class="col-md-12 form-group">
+                            <div class="col-md-9 form-group">
                                 <div class="row"> 
                                     {{ App\Helpers\SearchChain('4','single','grade,std,div') }}
                                 </div>
+                            </div>
+                            <div class="col-md-3 form-group">
+                                <label>Number Type:</label>
+                                <select class="form-control" name="number_type" required>
+                                        @foreach ($data['number_types'] as $key => $value)
+                                            <option value="{{$key}}" @if(isset($data['number_type']))
+                                            @if($key == $data['number_type'])
+                                                SELECTED
+                                            @endif
+                                            @endif>{{$value}}</option>
+                                        @endforeach
+                                </select>
                             </div>
                             <div class="col-md-12 form-group">
                                 <center>

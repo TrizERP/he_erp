@@ -222,7 +222,9 @@ class bulkStudentController extends Controller
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
-
+//echo "<pre>";
+//print_r($order_by);
+//exit();
         $extraSearchArray = [];
         $extraSearchArray['tblstudent_enrollment.sub_institute_id'] = $sub_institute_id;
         $extraSearchArray['tblstudent_enrollment.syear'] = $syear;
@@ -236,16 +238,16 @@ class bulkStudentController extends Controller
         if ($division_id != '') {
             $extraSearchArray['tblstudent_enrollment.section_id'] = $division_id;
         }
-        if ($order_by != '' && $order_by == 'student_name') {
+		if ($order_by != '' && $order_by == 'student_name') {
             $extra_order_by = 'tblstudent.first_name';
         } elseif ($order_by != '' && $order_by == 'standard_id') {
             $extra_order_by = 'standard.sort_order';
         } elseif ($order_by != '' && $order_by == 'enrollment_no') {
-            $extra_order_by = 'CONVERT(tblstudent.enrollment_no, SIGNED)';
+            $extra_order_by = "CAST(REGEXP_SUBSTR(enrollment_no, '[0-9]+') AS UNSIGNED)";
         } elseif ($order_by != '' && $order_by == 'roll_no') {
-            $extra_order_by = 'CAST(tblstudent.roll_no AS INT)';
+            $extra_order_by = 'CAST(tblstudent_enrollment.roll_no AS INT)';
         } else {
-            $extra_order_by = 'tblstudent.first_name,tblstudent.enrollment_no';
+            $extra_order_by = "CAST(REGEXP_SUBSTR(enrollment_no, '[0-9]+') AS UNSIGNED)";
         }
 
         $array = [
