@@ -205,7 +205,7 @@
                     </select>
                 </div>
                 <a class="fas fa-window-close text-danger" href="#"
-                    onclick="deleteTimetable('{{ $shortday . '-' . $timetable_id . '-' . $teachers['id'] }}');"></a>
+                    onclick="deleteTimetable('{{ $shortday . '-' . $timetable_id . '-' . $selected_teach }}');"></a>
             @endforeach
             @if (in_array($selected_type, ['Lab', 'Tutorial']))
                 @php
@@ -287,8 +287,8 @@
     </div>
     <!-- add or delete timetable  -->
     <a class="fas fa-window-close text-danger" href="#"
-        onclick="deleteTimetable('{{ $shortday . '-' . $timetable_id . '-' . $teachers['id'] }}');"
-        id="delete-{{ $shortday . '-' . $timetable_id . '-' . $teachers['id'] }}"></a>
+        onclick="deleteTimetable('{{ $shortday . '-' . $timetable_id }}');"
+        id="delete-{{ $shortday . '-' . $timetable_id }}"></a>
 
     <a class='fas fa-plus-square' href='#'
         onclick="addNewRow('{{ $shortday . '-' . $timetable_id }}');"
