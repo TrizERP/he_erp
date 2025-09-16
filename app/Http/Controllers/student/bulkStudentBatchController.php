@@ -209,6 +209,7 @@ class bulkStudentBatchController extends Controller
             ->leftjoin('batch', 'batch.id', '=', 'tblstudent.studentbatch')
             ->where($extraSearchArray)
             ->whereRaw($extraRaw)
+            ->orderByRaw("CAST(REGEXP_SUBSTR(tblstudent.enrollment_no, '[0-9]+') AS UNSIGNED)")
             ->get();
             // dd(DB::getQueryLog($student_data));
 

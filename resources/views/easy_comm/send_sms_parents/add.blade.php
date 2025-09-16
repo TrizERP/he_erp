@@ -28,6 +28,7 @@
                         <input type="hidden" name="grade" value="<?php echo $data['grade']; ?>">
                         <input type="hidden" name="standard" value="<?php echo $data['standard']; ?>">
                         <input type="hidden" name="division" value="<?php echo $data['division']; ?>">
+                        <input type="hidden" name="number_type" value="<?php echo $data['number_type']; ?>">
                         <div class="row">                            
                             <div class="col-md-4 form-group">
                                 <label>SMS Text</label>
@@ -39,10 +40,11 @@
                                 <tr>
                                     <th><input type="checkbox" name="all" id="ckbCheckAll" class="ckbox">  </th>
                                     <th>No</th>
+                                    <th>Enrollment No</th>
                                     <th>Student Name</th>
                                     <th>Standard</th>
                                     <th>Division</th>
-                                    <th>Mobile</th>
+                                    <th>{{$data['number_type']}}</th>
                                 </tr>
                                 @php
 
@@ -51,12 +53,13 @@
                                 @endphp
                                 <tr>
 
-                                    <td><input type="checkbox" name="@php echo 'sendsms['.$col_arr['mobile'].']'; @endphp" class="ckbox1">  </td>
+                                    <td><input type="checkbox" name="@php echo 'sendsms['.$col_arr[$data['number_type']].']'; @endphp" class="ckbox1">  </td>
                                     <td>@php echo $id+1; @endphp</td>
+                                    <td>@php echo $col_arr['enrollment_no']; @endphp</td>
                                     <td>@php echo $col_arr['name']; @endphp</td>
                                     <td>@php echo $col_arr['standard_name']; @endphp</td>
                                     <td>@php echo $col_arr['division_name']; @endphp</td>
-                                    <td>@php echo $col_arr['mobile']; @endphp</td>
+                                    <td>@php echo $col_arr[$data['number_type']]; @endphp</td>
 
                                 </tr>
                                 @php

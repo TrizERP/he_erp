@@ -178,6 +178,7 @@ class studentOptionalSubjectController extends Controller
             ->join('division', 'division.id', '=', 'tblstudent_enrollment.section_id')
             ->where($extraSearchArray)
             ->whereRaw($extraRaw)
+            ->orderByRaw("CAST(REGEXP_SUBSTR(tblstudent.enrollment_no, '[0-9]+') AS UNSIGNED)")
             ->get();
             // dd(DB::getQueryLog($student_data));
 

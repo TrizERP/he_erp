@@ -288,7 +288,7 @@
     <!-- add or delete timetable  -->
     <a class="fas fa-window-close text-danger" href="#"
         onclick="deleteTimetable('{{ $shortday . '-' . $timetable_id . '-' . $teachers['id'] }}');"
-        id="delete-{{ $shortday . '-' . $timetable_id }}"></a>
+        id="delete-{{ $shortday . '-' . $timetable_id . '-' . $teachers['id'] }}"></a>
 
     <a class='fas fa-plus-square' href='#'
         onclick="addNewRow('{{ $shortday . '-' . $timetable_id }}');"
