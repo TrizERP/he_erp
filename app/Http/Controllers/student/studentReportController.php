@@ -386,9 +386,9 @@ class studentReportController extends Controller
 
         if(isset($personalData[$student_id])){
             $pData  = $personalData[$student_id];
-            $enrollNo =isset($pData['image']) ? $pData['image'] : 'N/A'; isset($pData['image']) ? $pData['image'] : 'N/A';
-            $rollNo = isset($pData['enrollment_no']) ? $pData['enrollment_no'] : 'N/A';
-            $studentImg = isset($pData['roll_no']) ? $pData['roll_no'] : 'N/A';
+            $studentImg =isset($pData['image']) ? $pData['image'] : 'N/A';
+            $enrollNo = isset($pData['enrollment_no']) ? $pData['enrollment_no'] : 'N/A';
+            $rollNo = isset($pData['roll_no']) ? $pData['roll_no'] : 'N/A';
             //personal data
             $personalDatas = [
                 'Name' => isset($pData['student_full_name']) ? $pData['student_full_name'] : 'N/A',

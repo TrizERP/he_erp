@@ -463,8 +463,7 @@
                                 <thead>
                                     <tr>
                                         <th>Student Name</th>
-                                        <th>Standard</th>
-                                        <th>Division</th>
+                                        <th>Sem/Div</th>
                                         <th>DOB</th>
 
                                     </tr>
@@ -475,7 +474,6 @@
                                         <tr>
                                             <td><span>{{$value->student_name}}</span> </td>
                                             <td><span>{{$value->standard_name}} - {{$value->division_name}}</span></td>
-                                            <td><span>{{$value->division_name}}</span></td>
                                             <td><span>{{$value->dob}}</span></td>
                                         </tr>
                                         @endforeach

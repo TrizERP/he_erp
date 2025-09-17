@@ -22,10 +22,10 @@
                 <br>
                 <h2 style="text-decoration:underline;">STUDENT PROFILE</h2>
                 <div class="imgDiv" style="padding:20px 0px;">
-                    @if(isset($data['studentImg']) && $data['studentImg']!='')
-                    <img src="{{asset('/storage/student/'.$data['studentImg'])}}" alt="{{$data['personalData']->id}}" width="200" height="200">
+                    @if(isset($data['student_image']) && $data['student_image']!='')
+                    <img src="{{asset('/storage/student/'.$data['student_image'])}}" alt="{{$data['student_image']}}" width="150" height="150">
                     @else 
-                    <img src="{{asset('admin_dep/images/no-student.jpg')}}" alt="no-Img" width="200" height="200">
+                    <img src="{{asset('admin_dep/images/no-student.jpg')}}" alt="no-Img" width="150" height="150">
                     @endif
                 </div>
             </center>
@@ -35,9 +35,11 @@
                 <div class="enroll">
                     <h4><b>Enrollment No. :</b>{{$data['enrollment_no']}}</h4>
                 </div>
+            <!--
                 <div class="roll">
                     <h4><b>Roll No. :</b>{{$data['roll_no']}}</h4>
                 </div>
+            -->
             </div>
              <!-- enrollment and rollno end -->
             <!-- personal detail table start  -->
