@@ -113,7 +113,7 @@ if (isset($_REQUEST['sub_institute_id']) && $_REQUEST['sub_institute_id'] != '')
 }
 
 //PAYROLL SYSTEM
-Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::get('/payroll-type', [PayrollController::class, 'payrollType'])->name('payroll_type.index');
     Route::get('/payroll-type/create', [PayrollController::class, 'payrollCreate'])->name('payroll_type.create');
     Route::post('/payroll-type/store', [PayrollController::class, 'payrollStore'])->name('payroll_type.store');
@@ -153,24 +153,24 @@ Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::get('/payroll-bank-wise-report', [PayrollController::class, 'payrollBankWiseReport'])->name('payroll_bankwise_report.index');
     Route::post('/payroll-bank-wise-report', [PayrollController::class, 'payrollBankWiseReport'])->name('payroll.show_payroll_bankwise_report');
 
-    Route::get('hrms-job-title', [HrmsController::Class, 'hrmsJobTitle']);
+    Route::get('hrms-job-title', [HrmsController::class, 'hrmsJobTitle']);
     Route::get('/hrms-job-title/create', [HrmsController::class, 'hrmsCreate'])->name('hrms_job_title.create');
     Route::get('/hrms-job-title/create/{id}', [HrmsController::class, 'hrmsCreate']);
     Route::post('/hrms-job-title/store', [HrmsController::class, 'hrmsStore'])->name('hrms_job_title.store');
     Route::delete('/hrms-job-title/destroy/{id}', [HrmsController::class, 'hrmsDestroy'])->name('hrms_job_title.destroy');
-    Route::get('departmentwise-emplist', [AJAXController::Class, 'getDepEmployeeLists'])->name('departmentwise-emplist');
-    Route::get('hrms-inout-time', [HrmsController::Class, 'hrmsInOutTime'])->name('hrms_inout_time.index');
-    Route::post('hrms-in-time/store', [HrmsController::Class, 'hrmsInTimeStore'])->name('hrms_in_time.store');
-    Route::post('hrms-out-time/store', [HrmsController::Class, 'hrmsOutTimeStore'])->name('hrms_out_time.store');
+    Route::get('departmentwise-emplist', [AJAXController::class, 'getDepEmployeeLists'])->name('departmentwise-emplist');
+    Route::get('hrms-inout-time', [HrmsController::class, 'hrmsInOutTime'])->name('hrms_inout_time.index');
+    Route::post('hrms-in-time/store', [HrmsController::class, 'hrmsInTimeStore'])->name('hrms_in_time.store');
+    Route::post('hrms-out-time/store', [HrmsController::class, 'hrmsOutTimeStore'])->name('hrms_out_time.store');
 
-    Route::get('hrms-attendance', [HrmsController::Class, 'hrmsAttendance'])->name('hrms_attendance.index');
-    Route::post('hrms-attendance-in-time/store', [HrmsController::Class, 'hrmsAttendanceInTimeStore'])->name('hrms_attendance_in_time.store');
-    Route::post('hrms-attendance-out-time/store', [HrmsController::Class, 'hrmsAttendanceOutTimeStore'])->name('hrms_attendance_out_time.store');
+    Route::get('hrms-attendance', [HrmsController::class, 'hrmsAttendance'])->name('hrms_attendance.index');
+    Route::post('hrms-attendance-in-time/store', [HrmsController::class, 'hrmsAttendanceInTimeStore'])->name('hrms_attendance_in_time.store');
+    Route::post('hrms-attendance-out-time/store', [HrmsController::class, 'hrmsAttendanceOutTimeStore'])->name('hrms_attendance_out_time.store');
 
-    Route::get('hrms-attendance-report', [HrmsController::Class, 'hrmsAttendanceReport'])->name('hrms_attendance_report.index');
+    Route::get('hrms-attendance-report', [HrmsController::class, 'hrmsAttendanceReport'])->name('hrms_attendance_report.index');
     Route::post('/hrms-attendance-report', [HrmsController::class, 'hrmsAttendanceReport'])->name('hrms.show_hrms_attendance_report');
 
-    Route::get('early-going-hrms-attendance-report', [HrmsController::Class, 'earlyGoingHrmsAttendanceReport'])->name('hrms_attendance_report.early_going_report');
+    Route::get('early-going-hrms-attendance-report', [HrmsController::class, 'earlyGoingHrmsAttendanceReport'])->name('hrms_attendance_report.early_going_report');
     Route::post('/early-going-hrms-attendance-report', [HrmsController::class, 'earlyGoingHrmsAttendanceReport'])->name('hrms.show_early_going_hrms_attendance_report');
 
     Route::resource('naac_master', sqaa_controller::class);
@@ -236,17 +236,17 @@ Route::any('/knowledge-base', [dashboardController::class, 'knowledge_base'])->n
 
 Route::any('/knowledge-base-detail/{id}/{title}', [dashboardController::class, 'knowledge_base_detail'])->name('knowledge_base_detail')->middleware('session', 'menu');
 
-Route::get('dashboard', [dashboardController::class, 'index'])->name('dashboard')->middleware('session', 'menu', 'logRoute');
+Route::get('dashboard', [dashboardController::class, 'index'])->name('dashboard')->middleware('session', 'menu', 'logRoute','check_permissions');
 // add by uma 
 Route::resource('norm-clature', normClatureController::class);
-Route::resource('add-institute-details', institute_detail::class);
+// Route::resource('add-institute-details', institute_detail::class);
 
 // From Build
-Route::get('formbuilder/list', [UserFormbuilderController::class, 'index'])->name('formbuild.list')->middleware('session', 'menu', 'logRoute');
-Route::get('formbuilder/create', [UserFormbuilderController::class, 'formbuilder'])->name('formbuild.create')->middleware('session', 'menu', 'logRoute');
-Route::post('saveformbuild/{id?}', [UserFormbuilderController::class, 'saveformbuilder'])->name('saveformbuild')->middleware('session', 'menu', 'logRoute');
-Route::get('formbuilder/edit/{id?}', [UserFormbuilderController::class, 'editformbuilder'])->name('formbuild.edit')->middleware('session', 'menu', 'logRoute');
-Route::get('formbuilder/delete/{id?}', [UserFormbuilderController::class, 'deleteformbuilder'])->name('formbuild.delete')->middleware('session', 'menu', 'logRoute');
+Route::get('formbuilder/list', [UserFormbuilderController::class, 'index'])->name('formbuild.list')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('formbuilder/create', [UserFormbuilderController::class, 'formbuilder'])->name('formbuild.create')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::post('saveformbuild/{id?}', [UserFormbuilderController::class, 'saveformbuilder'])->name('saveformbuild')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('formbuilder/edit/{id?}', [UserFormbuilderController::class, 'editformbuilder'])->name('formbuild.edit')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('formbuilder/delete/{id?}', [UserFormbuilderController::class, 'deleteformbuilder'])->name('formbuild.delete')->middleware('session', 'menu', 'logRoute','check_permissions');
 Route::get('getformbuilder/{name?}', [UserFormbuilderController::class, 'getformbuilder'])->name('getformbuild');
 Route::get('apiGetformbuilder/{name?}', [UserFormbuilderController::class, 'Apigetformbuilder'])->name('getformbuild');
 
@@ -261,11 +261,11 @@ Route::get('displayForm', [UserFormbuilderController::class, 'displayFormDataRec
 
 //End From Build
 
-Route::get('chart_dashboard', [dashboardController::class, 'chart'])->name('chart_dashboard')->middleware('session', 'menu', 'logRoute');
+Route::get('chart_dashboard', [dashboardController::class, 'chart'])->name('chart_dashboard')->middleware('session', 'menu', 'logRoute','check_permissions');
 
 Route::get('schoolList', [dashboardController::class, 'schoolList'])->name('schoolList');
 
-Route::get('siteMap', [dashboardController::class, 'siteMap'])->name('siteMap')->middleware('session', 'menu', 'logRoute');
+Route::get('siteMap', [dashboardController::class, 'siteMap'])->name('siteMap')->middleware('session', 'menu', 'logRoute','check_permissions');
 
 Route::any('login', [loginController::class, 'index'])->name('login');
 Route::any('signup', [signupController::class, 'index'])->name('signup');
@@ -279,16 +279,16 @@ Route::any('/profileAPI', [loginController::class, 'profileAPI']);
 
 Route::any('/tourUpdate', [tourController::class, 'index'])->name('tourUpdate');
 
-Route::get('/implementation', [tourController::class, 'implementation'])->name('implementation')->middleware('session', 'menu', 'logRoute');
-Route::get('/Onboarding', [tourController::class, 'Onboarding'])->name('Onboarding')->middleware('session', 'menu', 'logRoute');
-Route::get('/implementation_1', [tourController::class, 'implementation_1'])->name('implementation_1')->middleware('session', 'menu', 'logRoute');
-Route::get('/implementation_2', [tourController::class, 'implementation_2'])->name('implementation_2')->middleware('session', 'menu', 'logRoute');
-Route::get('/skip_implementation', [tourController::class, 'skipImplementation'])->name('skip_implementation')->middleware('session', 'menu', 'logRoute');
+Route::get('/implementation', [tourController::class, 'implementation'])->name('implementation')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('/Onboarding', [tourController::class, 'Onboarding'])->name('Onboarding')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('/implementation_1', [tourController::class, 'implementation_1'])->name('implementation_1')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('/implementation_2', [tourController::class, 'implementation_2'])->name('implementation_2')->middleware('session', 'menu', 'logRoute','check_permissions');
+Route::get('/skip_implementation', [tourController::class, 'skipImplementation'])->name('skip_implementation')->middleware('session', 'menu', 'logRoute','check_permissions');
 
 Route::get('ajax_SaveDynamicDashboardMenu', [dashboardSettingController::class, 'ajax_SaveDynamicDashboardMenu'])->name('ajax_SaveDynamicDashboardMenu');
 
 // Harshad Start
-Route::group(['prefix' => 'student', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'student', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::get('studentresult', [TemplateResult::class, 'index']);
     Route::post('studentresult_show', [TemplateResult::class, 'show_result'])->name('studentresult.show');
     Route::get('result_show/{arr?}', [TemplateResult::class, 'result_show'])->name('result.show');
@@ -296,7 +296,7 @@ Route::group(['prefix' => 'student', 'middleware' => ['session', 'menu', 'logRou
 // Harshad End
 
 
-Route::group(['prefix' => 'school_setup', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'school_setup', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('add_school', schoolController::class);
     Route::resource('std_div_map', std_divController::class);
     Route::resource('division_capacity_master', divisionCapacityMasterController::class);
@@ -402,8 +402,8 @@ Route::post('reset-password', [ForgotPasswordController::class, 'submitResetPass
 Route::post('NewLMS_temp_signup', [NewLMS_ApiController::class, 'NewLMS_temp_signup'])->name("NewLMS_temp_signup");
 Route::post('NewLMS_signup', [NewLMS_ApiController::class, 'NewLMS_signup'])->name("NewLMS_signup");
 Route::get('Resend_otp', [NewLMS_ApiController::class, 'Resend_otp'])->name("Resend_otp");
-Route::post('preload-institute', [NewLMS_ApiController::Class, 'Preload_institute'])->name("preload-institute");
-Route::post('add-institute', [NewLMS_ApiController::Class, 'add_institute'])->name("add-institute");
+Route::post('preload-institute', [NewLMS_ApiController::class, 'Preload_institute'])->name("preload-institute");
+Route::post('add-institute', [NewLMS_ApiController::class, 'add_institute'])->name("add-institute");
 
 Route::post('NewLMS_temp_signup_student', [NewLMS_StudentApiController::class, 'NewLMS_temp_signup_student'])->name("NewLMS_temp_signup_student");
 Route::post('NewLMS_signup_student', [NewLMS_StudentApiController::class, 'NewLMS_signup_student'])->name("NewLMS_signup_student");
@@ -443,7 +443,7 @@ Route::get('fetch_payment_status', 'fees\online_fees\online_fees_collect_control
 Route::get('icici_fetch_payment_status', 'fees\online_fees\online_fees_collect_controller@icici_fetch_payment_status');
 Route::get('payphi_fetch_payment_status', 'fees\online_fees\online_fees_collect_controller@payphi_fetch_payment_status');
 
-Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('leave-type', LeaveTypeController::class);
     Route::resource('holiday', HolidayController::class);
     Route::resource('leave-apply', ApplyLeaveController::class);
@@ -454,12 +454,12 @@ Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::post('holiday.weekdays', [HolidayController::class, 'storeWeekdays'])->name('holiday.weekdays');
 
     Route::resource('books', BookController::class);
-    Route::resource('item_verification_status', itemVerificationController::class);
-    Route::resource('scan_books', itemScanController::class);
-    Route::get('scan_books_remarks', [itemScanController::class, 'remarksIndex'])->name('scan_books_remarks.index');
-    Route::post('scan_books_remarks/store', [itemScanController::class, 'remarksStore'])->name('scan_books_remarks.store');
-    Route::get('verified_book_report', [itemScanController::class, 'verifiedReport'])->name('verified_report.index');
-    Route::get('verified_book_report_pending', [itemScanController::class, 'verifyPendingReport'])->name('verifiyPending_report.index');
+    // Route::resource('item_verification_status', itemVerificationController::class);
+    // Route::resource('scan_books', itemScanController::class);
+    // Route::get('scan_books_remarks', [itemScanController::class, 'remarksIndex'])->name('scan_books_remarks.index');
+    // Route::post('scan_books_remarks/store', [itemScanController::class, 'remarksStore'])->name('scan_books_remarks.store');
+    // Route::get('verified_book_report', [itemScanController::class, 'verifiedReport'])->name('verified_report.index');
+    // Route::get('verified_book_report_pending', [itemScanController::class, 'verifyPendingReport'])->name('verifiyPending_report.index');
 
     Route::get('books/{id}/barcode', [BookController::class, 'generateBarcode'])->name('books.barcode');
     Route::get('books/{id}/reutrn', [BookController::class, 'returnBook'])->name('books.return');
@@ -484,7 +484,7 @@ Route::group(['middleware' => ['session', 'menu', 'logRoute']], function () {
     Route::post('generateBarcodePdf', [LibraryReportController::class, 'generateBarcodePdf'])->name('generateBarcodePdf');
 });
 
-Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     // attendanceController
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
