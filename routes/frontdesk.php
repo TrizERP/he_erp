@@ -13,7 +13,7 @@ use App\Http\Controllers\frontdesk\PettyCashReportController;
 use App\Http\Controllers\frontdesk\taskController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'frontdesk', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'frontdesk', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('frontdesk', frontdeskController::class);
     Route::resource('task', taskController::class);
     Route::resource('complaint', complaintController::class);

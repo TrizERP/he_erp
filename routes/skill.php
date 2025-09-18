@@ -6,7 +6,7 @@ use App\Http\Controllers\lms\library\jobroleSkillController;
 use App\Http\Controllers\lms\library\jobroleTaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'lms', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'lms', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::get('/matrix', [SkillMatrixController::class, 'index'])->name('matrix');
     Route::post('/matrix/save', [SkillMatrixController::class, 'store'])->name('matrix.save');
     Route::get('/jobrole', [SkillMatrixController::class, 'JobRole'])->name('jobrole.index');

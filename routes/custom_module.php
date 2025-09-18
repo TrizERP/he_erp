@@ -3,7 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\custom_module\CustomModuleController;
 use App\Http\Controllers\custom_module\customMapModule\donationController;
 
-Route::group(['prefix' => 'custom-module','middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'custom-module','middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::get('/tables',[CustomModuleController::class,'tables'])->name('custom-module.tables');
     Route::get('/table-create/{id?}',[CustomModuleController::class,'tableCreate'])->name('custom_module_table.create');
     Route::post('/table-store',[CustomModuleController::class,'tableStore'])->name('custom_module_table.store');
@@ -34,8 +34,8 @@ Route::group(['prefix' => 'custom-module','middleware' => ['session', 'menu', 'l
 });
 
 // 10-04-2025
-Route::group(['middleware' => ['session', 'menu', 'logRoute','check_permissions']], function() {
-    Route::resource('donation_collection', donationController::class);
-    Route::get('donation_report', [donationController::class, 'donationReport'])->name('donation_report.index');
+Route::group(['middleware' => ['session', 'menu', 'logRoute','check_permissions','check_permissions']], function() {
+    // Route::resource('donation_collection', donationController::class);
+    // Route::get('donation_report', [donationController::class, 'donationReport'])->name('donation_report.index');
 });
 Route::get('menuLevel2', [CustomModuleController::class, 'menuLevel2'])->name('menuLevel2.index');

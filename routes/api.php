@@ -37,11 +37,11 @@ Route::controller(apiController::class)->group(function () {
 });
 
 // 12-11-2024
-Route::get('crm-whatsapp', [\App\Http\Controllers\WhatsappController::class, 'whatsappCRM'])->withoutMiddleware([Authenticate::class])->name('crm-whatsapp');
-Route::get('crm-whatsapp-update', [\App\Http\Controllers\WhatsappController::class, 'updateCRMWhatsappStatus'])->withoutMiddleware([Authenticate::class])->name('updateCRMWhatsappStatus');
+// Route::get('crm-whatsapp', [\App\Http\Controllers\WhatsappController::class, 'whatsappCRM'])->withoutMiddleware([Authenticate::class])->name('crm-whatsapp');
+// Route::get('crm-whatsapp-update', [\App\Http\Controllers\WhatsappController::class, 'updateCRMWhatsappStatus'])->withoutMiddleware([Authenticate::class])->name('updateCRMWhatsappStatus');
 
-// 27-01-2025 only for API
-Route::get('/compliance/list',[instituteDetailController::class,'index']);
-Route::post('/compliance/create',[instituteDetailController::class,'store']);
-Route::post('/compliance/update/{id}',[instituteDetailController::class,'update']);
-Route::post('/compliance/delete/{id}',[instituteDetailController::class,'destroy']);
+// // 27-01-2025 only for API
+// Route::get('/compliance/list',[instituteDetailController::class,'index']);
+// Route::post('/compliance/create',[instituteDetailController::class,'store']);
+// Route::post('/compliance/update/{id}',[instituteDetailController::class,'update']);
+// Route::post('/compliance/delete/{id}',[instituteDetailController::class,'destroy']);

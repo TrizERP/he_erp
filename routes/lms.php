@@ -57,7 +57,7 @@ use App\Http\Controllers\AJAXController;
 
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'lms', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'lms', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('chapter_master', chapterController::class);
     Route::resource('course_master', courseController::class);
     Route::resource('topic_master', topicController::class);
@@ -224,7 +224,7 @@ Route::controller(lms_apiController::class)->group(function () {
     Route::post('/trizStandardAPI', 'trizStandardAPI');
 });
 
-Route::group(['prefix' => 'bazar', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'bazar', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('bulk_upload_sheet', bulkUploadSheetController::class);
     Route::get('bulk_position_data', [bulkUploadSheetController::class, 'bulk_position_data'])->name('bulk_position_data');
     Route::post('store_position_data', [bulkUploadSheetController::class, 'store_position_data'])->name('store_position_data');
@@ -237,7 +237,7 @@ Route::group(['prefix' => 'bazar', 'middleware' => ['session', 'menu', 'logRoute
     Route::post('show_bazar_report', [bulkUploadedReportController::class, 'show_bazar_report'])->name('show_bazar_report');
 });
 
-Route::group(['prefix' => 'OBE', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'OBE', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('add_course_co', addCourseCOController::class);
     Route::resource('co_po_mapping', CoPoMappingController::class);
     Route::resource('print_co_po', coPOViewController::class);
