@@ -229,4 +229,13 @@ function check_validation()
     }
 }
 </script>
+<script>
+$(document).ready(function () {
+    $('#example').DataTable({
+        paging: false,          // Enable pagination
+        pageLength: 500,        // Rows per page
+        autoWidth: false,      // Disable auto column width
+    });
+});
+</script>
 @include('includes.footer')

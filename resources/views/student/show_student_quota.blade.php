@@ -78,6 +78,13 @@
 </div>
 
 @include('includes.footerJs')
+<script src="{{ asset("/plugins/bower_components/datatables/datatables.min.js") }}"></script>
+<script>
+$(document).ready(function () {
+    $('#example').DataTable();
+});
+
+</script>
 @if(Session::get('erpTour')['student_quota']==0)
 <script src="../../../tooltip/bower_components/todomvc-common/base.js"></script>
         <!-- <script src="../../../tooltip/bower_components/jquery/jquery.js"></script> -->
@@ -118,11 +125,5 @@
       });
     </script>
 @endif
-<script src="{{ asset("/plugins/bower_components/datatables/datatables.min.js") }}"></script>
-<script>
-$(document).ready(function () {
-    $('#example').DataTable();
-});
 
-</script>
 @include('includes.footer')
