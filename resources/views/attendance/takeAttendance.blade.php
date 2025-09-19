@@ -216,7 +216,7 @@
                     <table id="example" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Sr No</th>
+                                <!--<th>Sr No</th>-->
                                 <th>Subject</th>
                                 <th>Lecture</th>
                                 <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
@@ -236,7 +236,7 @@
                         <tbody>
                             @foreach ($student_data as $key => $value)
                                 <tr>
-                                    <td> {{ $j++ }} </td>
+                                    <!--<td> {{ $j++ }} </td>-->
                                     <td> {{ $data['subject_name'] }} </td>
                                     <td> {{ $data['lecture_name'] }} </td>
                                     <td> {{ $value['enrollment_no'] }} </td>
@@ -279,6 +279,53 @@
     </div>
 
     @include('includes.footerJs')
+<script>
+$(document).ready(function () {
+    $('#example').DataTable({
+        // Basic
+        paging: false,          // Enable pagination
+        pageLength: 500,        // Rows per page
+        //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+        ordering: true,        // Enable sorting
+        searching: true,       // Enable search box
+        info: true,            // Show "Showing 1 to n of n entries"
+        autoWidth: false,      // Disable auto column width
+
+        // Language / Labels
+        /*language: {
+            search: "Filter records:",
+            lengthMenu: "Display _MENU_ records per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },*/
+
+        // Column specific settings
+        columnDefs: [
+            { targets: 3, orderable: true },  // Enable sorting on 1st column
+        //    { targets: [1, 2], searchable: true }, // Search enabled for columns
+        //    { targets: -1, orderable: false } // Last column no sorting
+        ],
+
+        // Default sorting
+        order: [[3, "asc"]], // Sort by 1st column ascending
+
+        // State saving (keeps paging, sorting, etc. on reload)
+        stateSave: true,
+
+        // AJAX source (if needed)
+        // ajax: "data.json",
+
+        // Buttons (if you include DataTables Buttons extension)
+        // dom: 'Bfrtip',
+        // buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+    });
+});
+</script>
 
     <script type="text/javascript">
         $(document).ready(function() {
