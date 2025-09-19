@@ -83,7 +83,7 @@ class examWiseProgressReportController extends Controller
             ->where('se.standard_id', $standard)
             ->where('qp.id', $exams)
             ->groupByRaw('s.id,qp.id')
-            ->orderByRaw('s.roll_no ASC')->get()->toArray();*/
+            ->orderByRaw('se.roll_no ASC')->get()->toArray();*/
             // echo "<pre>";print_r($data);exit;
 //DB::enableQueryLog();
         $data = DB::table('tblstudent as s')
@@ -116,7 +116,7 @@ class examWiseProgressReportController extends Controller
             ->where('se.standard_id', $standard)
             ->where('qp.id', $exams)
             ->groupBy('s.id', 'qp.id')
-            ->orderBy('s.roll_no', 'ASC')
+            ->orderBy('se.roll_no', 'ASC')
             ->get()->toArray();
 //dd(DB::getQueryLog());
 

@@ -297,7 +297,7 @@ class other_fees_collect_controller extends Controller
                 })->join('division as d', function ($join) {
                     $join->whereRaw('d.id = se.section_id AND d.sub_institute_id = se.sub_institute_id');
                 })->selectRaw("s.id,CONCAT_WS(' ',s.first_name,s.last_name) AS stu_name,st.name as standard,d.name as division,
-                    CONCAT_WS('/',st.name,d.name) AS std_name,s.enrollment_no,s.roll_no,s.mobile")
+                    CONCAT_WS('/',st.name,d.name) AS std_name,s.enrollment_no,se.roll_no,s.mobile")
                 ->where('s.id', $student_id)
                 ->where('se.syear', $syear)
                 ->whereNull('se.end_date')

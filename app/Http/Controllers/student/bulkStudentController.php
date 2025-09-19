@@ -85,7 +85,7 @@ class bulkStudentController extends Controller
         $tblcustom_fields['bloodgroup']['name'] = 'Blood Group';
         $tblcustom_fields['adharnumber']['name'] = 'Adhar Number';
         $tblcustom_fields['anuualincome']['name'] = 'Annual Income';
-        //$tblcustom_fields['roll_no']['name'] = 'Roll Number';
+        $tblcustom_fields['roll_no']['name'] = 'Roll No';
         $tblcustom_fields['image']['name'] = 'Image';
         $tblcustom_fields['uniqueid']['name'] = 'Unique ID';
         $tblcustom_fields['dise_uid']['name'] = 'Dise U_ID';
@@ -124,7 +124,7 @@ class bulkStudentController extends Controller
         $tblcustom_fields['bloodgroup']['type'] = 'dropdown';
         $tblcustom_fields['adharnumber']['type'] = 'textbox';
         $tblcustom_fields['anuualincome']['type'] = 'textbox';
-        //$tblcustom_fields['roll_no']['type'] = 'textbox';
+        $tblcustom_fields['roll_no']['type'] = 'textbox';
         $tblcustom_fields['image']['type'] = 'file';
         $tblcustom_fields['uniqueid']['type'] = 'textbox';
         $tblcustom_fields['dise_uid']['type'] = 'textbox';
@@ -253,7 +253,9 @@ class bulkStudentController extends Controller
         $array = [
             'tblstudent_enrollment.standard_id as standard',
             'tblstudent_enrollment.section_id as division',
-            'tblstudent_enrollment.grade_id as grade', 'tblstudent.id as id',
+            'tblstudent_enrollment.grade_id as grade',
+            'tblstudent_enrollment.roll_no as roll_no',
+            'tblstudent.id as id',
         ];
         //$header = array('student_name' => 'Student Name');
         $header = [
@@ -276,7 +278,7 @@ class bulkStudentController extends Controller
         $keyQuotes = '';
 
         foreach ($request->input('dynamicFields') as $key => $value) {
-            if ($value != 'standard' && $value != 'grade' && $value != 'division' && $value != 'roll_no' && $value != 'student_height' && $value != 'student_weight') {
+            if ($value != 'standard' && $value != 'grade' && $value != 'division' && $value != 'roll_no') {
                 $array[] = $value;
             }
             $value1 = str_replace($searchArr, $replaceArr, $value);
@@ -439,6 +441,9 @@ class bulkStudentController extends Controller
             if (isset($value['house'])) {
                 $studentEnrollment['house_id'] = $value['house'];
             }
+            if (isset($value['roll_no'])) {
+                $studentEnrollment['roll_no'] = $value['roll_no'];
+            }
 
             if (count($studentEnrollment) > 0) {               
                 
@@ -545,7 +550,7 @@ class bulkStudentController extends Controller
         // unset($newRequest['student_image']);
         $finalArray = array();
         foreach ($newRequest as $key => $value) {
-            if ($key != '_method' && $key != '_token' && $key != 'submit' && $key != 'grade' && $key != 'standard' && $key != 'division' && $key != 'student_quota' && $key != 'id' && $key != 'house') {
+            if ($key != '_method' && $key != '_token' && $key != 'submit' && $key != 'grade' && $key != 'standard' && $key != 'division' && $key != 'student_quota' && $key != 'id' && $key != 'house' && $key != 'updateData' && $key != 'roll_no') {
                 if (is_array($value)) {
                     $value = implode(",", $value);
                 }

@@ -136,7 +136,7 @@ class coPOViewController extends Controller
         ->leftJoin('result_marks as rm',function($join) use($sub_institute_id,$syear,$request){
             $join->on('rm.exam_id','=','rce.id')->on('s.id','=','rm.student_id')->on('rce.sub_institute_id','=','se.sub_institute_id');  
         })
-        ->selectRaw('s.id,CONCAT_WS(" ",COALESCE(s.first_name,"-"),COALESCE(s.middle_name,"-"),COALESCE(s.last_name,"-")) as student_name,s.enrollment_no,s.roll_no,rem.Id as master_id ,rem.examTitle,rem.weightage,rce.co_id,rce.id as create_id,rce.title,rce.points,rm.points as obt_marks')
+        ->selectRaw('s.id,CONCAT_WS(" ",COALESCE(s.first_name,"-"),COALESCE(s.middle_name,"-"),COALESCE(s.last_name,"-")) as student_name,s.enrollment_no,se.roll_no,rem.Id as master_id ,rem.examTitle,rem.weightage,rce.co_id,rce.id as create_id,rce.title,rce.points,rm.points as obt_marks')
         ->where('s.sub_institute_id', $sub_institute_id)
         ->orderBy('s.enrollment_no')
         ->get()->toArray();

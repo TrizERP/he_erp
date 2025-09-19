@@ -791,7 +791,7 @@ if (!function_exists('SearchStudent')) {
 
 
         if ($roll_no != '') {
-            $extraRaw .= " AND ts.roll_no = '" . $roll_no . "' ";
+            $extraRaw .= " AND se.roll_no = '" . $roll_no . "' ";
         }
 
         $query->whereraw($extraRaw);
@@ -1385,7 +1385,7 @@ if (!function_exists('getStudents')) {
             })->leftJoin('transport_kilometer_rate as tkr', function ($join) {
                 $join->whereRaw('tkr.id = s.distance_from_school AND tkr.sub_institute_id = s.sub_institute_id');
             })
-            ->selectRaw("tc.*,s.*,se.syear,se.student_id,se.grade_id,se.standard_id,se.section_id,se.student_quota,
+            ->selectRaw("tc.*,s.*,se.roll_no,se.syear,se.student_id,se.grade_id,se.standard_id,se.section_id,se.student_quota,
                 se.start_date,se.end_date,se.enrollment_code,se.drop_code,se.drop_remarks,se.drop_remarks,se.term_id,
                 se.remarks,se.admission_fees,se.house_id,se.lc_number,st.name standard_name,st.short_name as short_standard_name,s.city,se.standard_id,se.section_id,
                 se.grade_id,d.name as division_name,s.father_name,s.mother_name,ss.SchoolName as school_name,ss.Mobile as school_mobile,
