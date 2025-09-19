@@ -41,16 +41,16 @@
                         <div class="row">
                             @if(isset($data['lomaster_data']))
 
-                                {{ App\Helpers\SearchChain('4','','grade,std',$data['lomaster_data']['grade_id'],$data['lomaster_data']['standard_id']) }}
+                                {{ App\Helpers\SearchChain('4','multiple','grade',$data['lomaster_data']['grade_id']) }}
 
                             @else
 
-                                {{ App\Helpers\SearchChain('4','','grade,std') }}
+                                {{ App\Helpers\SearchChain('4','multiple','grade') }}
 
                             @endif
 
 
-                            <div class="col-md-4 form-group">
+                            {{-- <div class="col-md-4 form-group">
                                 <label for="subject">Select Subject:</label>
                                 <select name="subject" id="subject" class="form-control" required>
                                     <option value="">Select Subject</option>
@@ -73,23 +73,26 @@
                                         @endforeach
                                     @endif
                                 </select>
-                            </div>
+                            </div> --}}
                             <div class="col-md-4 form-group">
-                                <label>Title</label>
+                                <label>Statement</label>
                                 <input type="text" id='title' name="title"
                                        value="@if(isset($data['lomaster_data']['title'])){{$data['lomaster_data']['title']}}@endif"
+                                       placeholder="Enter Statement"
                                        class="form-control" required>
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>Short Code</label>
                                 <input type="text" id='short_code' name="short_code"
                                        value="@if(isset($data['lomaster_data']['short_code'])){{$data['lomaster_data']['short_code']}}@endif"
+                                       placeholder="Enter Short Code"
                                        class="form-control" required>
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>Sort Order</label>
                                 <input type="text" id='sort_order' name="sort_order"
                                        value="@if(isset($data['lomaster_data']['sort_order'])){{$data['lomaster_data']['sort_order']}}@endif"
+                                       placeholder="Enter Sort Order"
                                        class="form-control">
                             </div>
                             <div class="col-md-4 form-group mt-4">
