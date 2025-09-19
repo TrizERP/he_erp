@@ -13,6 +13,7 @@ class tblstudentEnrollmentModel extends Model
     protected $fillable = [
         'id',
         'syear',
+        'roll_no',
         'student_id',
         'grade_id',
         'standard_id',

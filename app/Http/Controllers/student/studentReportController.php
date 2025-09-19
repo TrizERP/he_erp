@@ -151,11 +151,11 @@ class studentReportController extends Controller
         } elseif ($order_by != '' && $order_by == 'standard_id') {
             $extra_order_by = 'standard.sort_order';
         } elseif ($order_by != '' && $order_by == 'enrollment_no') {
-            $extra_order_by = 'CONVERT(tblstudent.enrollment_no, SIGNED)';
+            $extra_order_by = "CAST(REGEXP_SUBSTR(enrollment_no, '[0-9]+') AS UNSIGNED)";
         } elseif ($order_by != '' && $order_by == 'roll_no') {
-            $extra_order_by = 'CAST(tblstudent.roll_no AS INT)';
+            $extra_order_by = 'CAST(tblstudent_enrollment.roll_no AS INT)';
         } else {
-            $extra_order_by = 'tblstudent.first_name';
+            $extra_order_by = "CAST(REGEXP_SUBSTR(enrollment_no, '[0-9]+') AS UNSIGNED)";
         }
 
 
@@ -252,7 +252,7 @@ class studentReportController extends Controller
                 $q->whereRaw('tblstudent.enrollment_no = "'.$request->stu_enrollment_no.'"');
             })
             ->when($request->stu_roll_no,function($q) use ($request) {
-                $q->whereRaw('tblstudent.roll_no ='.$request->stu_roll_no);
+                $q->whereRaw('tblstudent_enrollment.roll_no ='.$request->stu_roll_no);
             })
             ->orderByRaw($extra_order_by)
             ->groupBy('tblstudent.id')
