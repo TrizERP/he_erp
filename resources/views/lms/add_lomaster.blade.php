@@ -75,7 +75,7 @@
                                 </select>
                             </div> --}}
                             <div class="col-md-4 form-group">
-                                <label>Statement</label>
+                                <label>PO Statement</label>
                                 <input type="text" id='title' name="title"
                                        value="@if(isset($data['lomaster_data']['title'])){{$data['lomaster_data']['title']}}@endif"
                                        placeholder="Enter Statement"

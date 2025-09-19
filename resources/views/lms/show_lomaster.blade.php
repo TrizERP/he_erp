@@ -6,7 +6,7 @@
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row bg-title">
-            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12"  style="text-align:right;">
                 <h4 class="page-title">Create PO Master</h4>
             </div>
         </div>
@@ -33,7 +33,7 @@
                                 <!--<th>{{App\Helpers\get_string('standard','request')}}</th>-->
                                 {{-- <th>Subject</th> --}}
                                 <!--<th>Chapter</th>-->
-                                <th>Statement</th>
+                                <th>PO Statement</th>
                                 <th>Short Code</th>
                                 <!--<th>Availability</th>-->
                                 <th>Sort Order</th>
