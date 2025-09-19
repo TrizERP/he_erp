@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\time_table\createTimetableController;
 use App\Http\Controllers\time_table\timetableReportsController;
 
-Route::group(['prefix' => 'implementation', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'implementation', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('add_implementation', implementation_MasterController::class);
 });
 
-Route::group(['prefix' => 'timetable', 'middleware' => ['session', 'menu', 'logRoute']], function () {
+Route::group(['prefix' => 'timetable', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     // create timetabel 
     Route::resource('create-timetable', createTimetableController::class);
     Route::get('add_remove_Batch_Timetable', [createTimetableController::class, 'getBatchTimetable'])->name('add_remove_Batch_Timetable');
