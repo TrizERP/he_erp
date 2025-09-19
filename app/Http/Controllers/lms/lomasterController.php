@@ -32,8 +32,13 @@ class lomasterController extends Controller
     {
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
-        $data['lomaster_data'] = lomasterModel::select('lo_master.*', 'standard.name as standard_name',
-            'academic_section.title as grade_name', 'subject_name', 'chapter_name')
+        $data['lomaster_data'] = lomasterModel::select(
+            'lo_master.*',
+            'standard.name as standard_name',
+            'academic_section.title as grade_name',
+            'subject_name',
+            'chapter_name'
+        )
             ->leftjoin('standard', 'standard.id', '=', 'lo_master.standard_id')
             ->leftjoin('academic_section', 'academic_section.id', '=', 'lo_master.grade_id')
             ->leftjoin('subject', 'subject.id', '=', 'lo_master.subject_id')
@@ -66,34 +71,48 @@ class lomasterController extends Controller
      */
     public function store(Request $request)
     {
+        $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
         $user_id = $request->session()->get('user_id');
         $show_hide = $request->get('show_hide');
         $show_hide_val = $show_hide ?? '';
+        $i = 0;
+        if (!empty($request->grade)) {
+            foreach ($request->grade as $key => $val) {
+                $content = [
+                    'grade_id'         => $val,
+                    'standard_id'      => $request->get('standard'),
+                    'subject_id'       => $request->get('subject'),
+                    'chapter_id'       => $request->get('chapter'),
+                    'title'            => $request->get('title'),
+                    'show_hide'        => $show_hide_val,
+                    'sort_order'       => $request->get('sort_order'),
+                    'short_code'       => $request->get('short_code'),
+                    'availability'     => $request->get('availability'),
+                    'created_by'       => $user_id,
+                    'sub_institute_id' => $sub_institute_id,
+                    'syear'            => $syear,
+                ];
 
-        $content = [
-            'grade_id'         => $request->get('grade'),
-            'standard_id'      => $request->get('standard'),
-            'subject_id'       => $request->get('subject'),
-            'chapter_id'       => $request->get('chapter'),
-            'title'            => $request->get('title'),
-            'show_hide'        => $show_hide_val,
-            'sort_order'       => $request->get('sort_order'),
-            'short_code'       => $request->get('short_code'),
-            'availability'     => $request->get('availability'),
-            'created_by'       => $user_id,
-            'sub_institute_id' => $sub_institute_id,
-            'syear'            => $syear,
-        ];
-
-        lomasterModel::insert($content);
+                $insert = lomasterModel::insert($content);
+                if ($insert) {
+                    $i++;
+                }
+            }
+        }
 
         $res = [
-            "status_code" => 1,
-            "message"     => "Lo-Master Added Successfully",
+            "status_code" => 0,
+            "message"     => "Failed To Add Data",
         ];
-        $type = $request->input('type');
+
+        if ($i > 0) {
+            $res = [
+                "status_code" => 1,
+                "message"     => "Lo-Master Added Successfully",
+            ];
+        }
 
         return is_mobile($type, "lo_master.index", $res, "redirect");
     }
@@ -149,27 +168,45 @@ class lomasterController extends Controller
         $user_id = $request->session()->get('user_id');
         $show_hide = $request->get('show_hide');
         $show_hide_val = $show_hide ?? '';
+        $i=0;
+        if (!empty($request->grade)) {
+            foreach ($request->grade as $key => $val) {
+                $data = [
+                    'grade_id'         =>  $val,
+                    'standard_id'      => $request->get('standard'),
+                    'subject_id'       => $request->get('subject'),
+                    'chapter_id'       => $request->get('chapter'),
+                    'title'            => $request->get('title'),
+                    'show_hide'        => $show_hide_val,
+                    'sort_order'       => $request->get('sort_order'),
+                    'short_code'       => $request->get('short_code'),
+                    'availability'     => $request->get('availability'),
+                    'created_by'       => $user_id,
+                    'sub_institute_id' => $sub_institute_id,
+                    'syear'            => $syear,
+                ];
+                $update = lomasterModel::where(["id" => $id])->update($data);
+                if($update){
+                    $i++;
+                }
+            }
+        }
 
-        $data = [
-            'grade_id'         => $request->get('grade'),
-            'standard_id'      => $request->get('standard'),
-            'subject_id'       => $request->get('subject'),
-            'chapter_id'       => $request->get('chapter'),
-            'title'            => $request->get('title'),
-            'show_hide'        => $show_hide_val,
-            'sort_order'       => $request->get('sort_order'),
-            'short_code'       => $request->get('short_code'),
-            'availability'     => $request->get('availability'),
-            'created_by'       => $user_id,
-            'sub_institute_id' => $sub_institute_id,
-            'syear'            => $syear,
-        ];
-
-        lomasterModel::where(["id" => $id])->update($data);
         $res = [
-            "status_code" => 1,
-            "message"     => "Lo-Master Updated Successfully",
+            "status_code" => 0,
+            "message"     => "Failed To Update Data",
         ];
+
+        if ($i > 0) {
+            $res = [
+                "status_code" => 1,
+                "message"     => "Lo-Master Updated Successfully",
+            ];
+        }
+        // $res = [
+        //     "status_code" => 1,
+        //     "message"     => "Lo-Master Updated Successfully",
+        // ];
         $type = $request->input('type');
 
         return is_mobile($type, "lo_master.index", $res, "redirect");
@@ -199,5 +236,4 @@ class lomasterController extends Controller
         return lomasterModel::where(['sub_institute_id' => $sub_institute_id, 'chapter_id' => $chapter_id])
             ->get()->toArray();
     }
-
 }

@@ -6,7 +6,7 @@
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row bg-title">
-            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12"  style="text-align:right;">
                 <h4 class="page-title">Create PO Master</h4>
             </div>
         </div>
@@ -19,7 +19,7 @@
                 </div>
             @endif
             <div class="row">
-                <div class="col-lg-12 col-sm-3 col-xs-3">
+                <div class="col-lg-12 col-sm-3 col-xs-3" style="margin-bottom:10px;">
                     <a href="{{ route('lo_master.create') }}" class="btn btn-info add-new"><i class="fa fa-plus"></i>
                         Add PO Master</a>
                 </div>
@@ -31,10 +31,10 @@
                                 <th>Sr. No.</th>
                                 <th>Academic Section</th>
                                 <!--<th>{{App\Helpers\get_string('standard','request')}}</th>-->
-                                <th>Subject</th>
+                                {{-- <th>Subject</th> --}}
                                 <!--<th>Chapter</th>-->
-                                <th>Code</th>
-                                <th>Title</th>
+                                <th>PO Statement</th>
+                                <th>Short Code</th>
                                 <!--<th>Availability</th>-->
                                 <th>Sort Order</th>
                                 <!--<th>Show/Hide</th>-->
@@ -49,10 +49,10 @@
                                         <td>@php echo $i++;@endphp</td>
                                         <td>{{$lodata->grade_name}}</td>
                                         <!--<td>{{$lodata->standard_name}}</td>-->
-                                        <td>{{$lodata->subject_name}}</td>
+                                        {{-- <td>{{$lodata->subject_name}}</td> --}}
                                         <!--<td>{{$lodata->chapter_name}}</td>-->
-                                        <td>{{$lodata->short_code}}</td>
                                         <td>{{$lodata->title}}</td>
+                                        <td>{{$lodata->short_code}}</td>
                                         <!--<td>
                                             @if($lodata->availability == 1)
                                                 Available
@@ -101,7 +101,48 @@
 <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 <script>
 $(document).ready(function () {
-    $('#subject_list').DataTable();
+    // $('#subject_list').DataTable();
+    $(document).ready(function () {
+        var table = $('#subject_list').DataTable({
+            select: true,
+            lengthMenu: [
+                [100, 500, 1000, -1],
+                ['100', '500', '1000', 'Show All']
+            ],
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'pdfHtml5',
+                    title: 'PO Master',
+                    orientation: 'landscape',
+                    pageSize: 'LEGAL',
+                    pageSize: 'A0',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                },
+                {extend: 'csv', text: ' CSV', title: 'PO Master'},
+                {extend: 'excel', text: ' EXCEL', title: 'PO Master'},
+                {extend: 'print', text: ' PRINT', title: 'PO Master'},
+                'pageLength'
+            ],
+        });
+
+        $('#subject_list thead tr').clone(true).appendTo('#subject_list thead');
+        $('#subject_list thead tr:eq(1) th').each(function (i) {
+            var title = $(this).text();
+            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+            $('input', this).on('keyup change', function () {
+                if (table.column(i).search() !== this.value) {
+                    table
+                        .column(i)
+                        .search( this.value )
+                        .draw();
+                }
+            } );
+        } );
+    } );
 });
 </script>
 <script>

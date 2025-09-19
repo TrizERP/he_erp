@@ -6,12 +6,12 @@
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row bg-title">
-            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12" style="text-align:right;">
                 <h4 class="page-title">Create CO Master</h4>
             </div>
         </div>
 
-    <div class="row" style=" margin-top: 25px;">
+    <div class="card row" style=" margin-top: 25px;">
         <div class="white-box">
             <div class="panel-body">
                 @if ($sessionData = Session::get('data'))
@@ -34,7 +34,8 @@
                                 <th>Academic Section</th>
                                 <th>{{App\Helpers\get_string('standard','request')}}</th>
                                 <th>Subject</th>
-                                <th>Title</th>
+                                <th>CO Statement</th>
+                                <th>Short Code</th>
                                 <!--<th>Availability</th>-->
                                 <th>Sort Order</th>
                                 <!--<th>Show/Hide</th>-->
@@ -51,6 +52,7 @@
                                 <td>{{$lodata->standard_name}}</td>
                                 <td>{{$lodata->subject_name}}</td>
                                 <td>{{$lodata->title}}</td>
+                                <td>{{$lodata->short_code}}</td>
                                 <!--<td>
                                     @if($lodata->availability == 1)
                                     Available
@@ -66,11 +68,16 @@
                                     Hide
                                     @endif
                                 </td>-->
-                                <td style="display: inline-flex;">
+                                <td>
+                                    <div class="d-inline">
+                                        <a href="{{ route('lo_category.edit',[$lodata->id])}}"
+                                           class="btn btn-info btn-outline"><i class="ti-pencil-alt"></i></a>
+                                    </div>
                                     <form action="{{ route('lo_category.destroy', $lodata->id)}}" method="post">
                                     @csrf
                                     @method('DELETE')
-                                    <button onclick="return confirmDelete();" type="submit" class="btn btn-info btn-outline btn-circle btn m-r-5"><i class="ti-trash"></i></button>
+                                    <button onclick="return confirmDelete();" type="submit"  class="btn btn-info btn-outline-danger"><i class="ti-trash"></i>
+                                    </button>
                                     </form>
                                 </td>
                             </tr>
@@ -92,26 +99,47 @@
 <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 <script>
-// $(document).ready(function () {
+  $(document).ready(function () {
+        var table = $('#subject_list').DataTable({
+            select: true,
+            lengthMenu: [
+                [100, 500, 1000, -1],
+                ['100', '500', '1000', 'Show All']
+            ],
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'pdfHtml5',
+                    title: 'PO Master',
+                    orientation: 'landscape',
+                    pageSize: 'LEGAL',
+                    pageSize: 'A0',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                },
+                {extend: 'csv', text: ' CSV', title: 'CO Master'},
+                {extend: 'excel', text: ' EXCEL', title: 'CO Master'},
+                {extend: 'print', text: ' PRINT', title: 'CO Master'},
+                'pageLength'
+            ],
+        });
 
-// 	$('#subject_list thead tr').clone(true).appendTo( '#subject_list thead' );
-//     $('#subject_list thead tr:eq(1) th').each( function (i) {
-//         var title = $(this).text();
-//         $(this).html( '<input type="text" size="4" placeholder="Search '+title+'" />' );
+        $('#subject_list thead tr').clone(true).appendTo('#subject_list thead');
+        $('#subject_list thead tr:eq(1) th').each(function (i) {
+            var title = $(this).text();
+            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
-//         $( 'input', this ).on( 'keyup change', function () {
-//             if ( table.column(i).search() !== this.value ) {
-//                 table
-//                     .column(i)
-//                     .search( this.value )
-//                     .draw();
-//             }
-//         });
-//     });
-
-//     $('#subject_list').DataTable({});
-// });
-
+            $('input', this).on('keyup change', function () {
+                if (table.column(i).search() !== this.value) {
+                    table
+                        .column(i)
+                        .search( this.value )
+                        .draw();
+                }
+            } );
+        } );
+    } );
 </script>
 <script>
     $( document ).ready(function() {

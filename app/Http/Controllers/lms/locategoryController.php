@@ -76,12 +76,15 @@ class locategoryController extends Controller
             'standard_id'      => $request->get('standard'),
             'subject_id'       => $request->get('subject'),
             'title'            => $request->get('title'),
+            'short_code'       => $request->get('short_code'),
             'show_hide'        => $show_hide_val,
             'sort_order'       => $request->get('sort_order'),
             'availability'     => $request->get('availability'),
             'created_by'       => $user_id,
             'sub_institute_id' => $sub_institute_id,
             'syear'            => $syear,
+            'created_at'       => now(),
+            'created_by'       => $user_id,
         ];
 
         locategoryModel::insert($content);
@@ -152,12 +155,15 @@ class locategoryController extends Controller
             'standard_id'      => $request->get('standard'),
             'subject_id'       => $request->get('subject'),
             'title'            => $request->get('title'),
+            'short_code'       => $request->get('short_code'),
             'show_hide'        => $show_hide_val,
             'sort_order'       => $request->get('sort_order'),
             'availability'     => $request->get('availability'),
             'created_by'       => $user_id,
             'sub_institute_id' => $sub_institute_id,
             'syear'            => $syear,
+            'updated_at'       => now(),
+            'updated_by'       => $user_id,
         ];
 
         locategoryModel::where(["id" => $id])->update($data);
