@@ -92,7 +92,8 @@
                             @if(!empty($data['number_types']) && is_array($data['number_types']))
                             <div class="col-md-3 form-group">
                                 <label>Number Type:</label>
-                                <select class="form-control" name="number_type" required>
+                                <select class="form-control" name="number_type">
+                                    <option value="">Select Number</option>
                                         @foreach ($data['number_types'] as $key => $value)
                                             <option value="{{$key}}" @if(isset($data['number_type']))
                                             @if($key == $data['number_type'])
@@ -135,7 +136,13 @@
 		                                    <th>{{ App\Helpers\get_string('standard','request')}}</th>
 		                                    <th>{{ App\Helpers\get_string('division','request')}}</th>
                                             <th>Quota</th>
-                                            <th>{{ $data['number_type'] }}</th>
+                                            @if($data['number_type']!='')
+                                            <th>{{ $data['number_types'][$data['number_type']] ?? '-' }}</th>
+                                            @else
+                                            <th>Father Mobile</th>
+                                            <th>Student Mobile</th>
+                                            <th>Mother Mobile</th>
+                                            @endif
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 <th>{{$data['fees_heads'][$dv]}}</th>
                                             @endforeach
@@ -159,8 +166,14 @@
                                         @endforeach
                                         @if($amount)
 		                                <tr>
+                                            @php 
+                                            $sendNumber = $value['mobile'] ?? '';
+                                            if($data['number_type']!=''){
+                                                $sendNumber = $value[$data['number_type']];
+                                            }
+                                            @endphp
                                             <td>
-                                                <input type='checkbox' name="stu_ids[]" class="remain_fees" data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}" data-remain_fees="{{ $amount }}" data-mobile="{{ $value[$data['number_type']] }}" />
+                                                <input type='checkbox' name="stu_ids[]" class="remain_fees" data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}" data-remain_fees="{{ $amount }}" data-mobile="{{ $sendNumber }}" />
                                             </td>
 		                                    <!-- <td> {{$j}} </td> -->
 		                                    <td>{{$value['enrollment_no']}}</td>
@@ -168,7 +181,13 @@
 		                                    <td>{{$value['standard_name']}}</td>
 		                                    <td>{{$value['division_name']}}</td>
                                             <td>{{$value['quota']}}</td>
+                                            @if($data['number_type']!='')
                                             <td>{{$value[$data['number_type']]}}</td>
+                                            @else
+                                            <td>{{$value['mobile']}}</td>
+                                            <td>{{$value['student_mobile']}}</td>
+                                            <td>{{$value['mother_mobile']}}</td>
+                                            @endif
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 @if(isset($data['fees_details'][$value['id']][$data['fees_heads'][$dv]]))
                                                     <td>{{$data['fees_details'][$value['id']][$data['fees_heads'][$dv]]}}</td>
@@ -279,6 +298,7 @@
     // SEND SMS
     $(document).ready(function(){
         $('#remain_fees_sms').on('click', function(){
+            alert('Please wait for a while');
             // get checked sudend ids
             var studentsData = [];
             $('.remain_fees:checked').each(function() {
@@ -304,9 +324,10 @@
                 data: { studentsData: studentsData},
                 dataType: 'json',
                 success: function ( response ) {
-                    if ( response.status == 200 ) {
+                    // if ( response.status == 200 ) {
+                        alert('SMS Sent Successfully');
                         window.location.href="{{ route('fees_status_report.index') }}";
-                    }
+                    // }
                 }
             });
         });
