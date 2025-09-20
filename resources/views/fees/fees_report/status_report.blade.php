@@ -139,9 +139,9 @@
                                             @if($data['number_type']!='')
                                             <th>{{ $data['number_types'][$data['number_type']] ?? '-' }}</th>
                                             @else
-                                            <th>Father Mobile</th>
-                                            <th>Student Mobile</th>
-                                            <th>Mother Mobile</th>
+                                            @foreach ($data['number_types'] as $key => $value)
+                                             <th>{{$value}}</th>
+                                            @endforeach
                                             @endif
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 <th>{{$data['fees_heads'][$dv]}}</th>
@@ -184,9 +184,9 @@
                                             @if($data['number_type']!='')
                                             <td>{{$value[$data['number_type']]}}</td>
                                             @else
-                                            <td>{{$value['mobile']}}</td>
-                                            <td>{{$value['student_mobile']}}</td>
-                                            <td>{{$value['mother_mobile']}}</td>
+                                            @foreach ($data['number_types'] as $nkey => $nvalue)
+                                            <td>{{$value[$nkey] ?? '-'}}</td>
+                                           @endforeach
                                             @endif
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 @if(isset($data['fees_details'][$value['id']][$data['fees_heads'][$dv]]))
