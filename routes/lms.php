@@ -193,7 +193,7 @@ Route::post('show_question_wise_report',
     Route::resource('subjectwise_graph', chapterController::class);
     Route::resource('lms_curriculum', lmsCurriculumController::class);
     Route::resource('lms_syllabus', lmsSyllabusController::class);
-    Route::resource('content_library', contentLibraryController::class);
+    // Route::resource('content_library', contentLibraryController::class);
     Route::resource('curriculum_lessonplan', curriculumLessonplanController::class);
     
     Route::resource('skill_library',skillLibraryController::class);
