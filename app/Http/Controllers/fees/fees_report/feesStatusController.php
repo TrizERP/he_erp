@@ -40,7 +40,7 @@ class feesStatusController extends Controller
         asort($feesHead);
         
         $number_types = [
-            "mobile"   => "Mobile",
+            "mobile"   => "Father Mobile",
             "student_mobile" => "Student Mobile",
             "mother_mobile" => "Mother Mobile",
         ];
@@ -68,7 +68,7 @@ class feesStatusController extends Controller
         $months = FeeMonthId();
 
         $number_types = [
-            "mobile"   => "Mobile",
+            "mobile"   => "Father Mobile",
             "student_mobile" => "Student Mobile",
             "mother_mobile" => "Mother Mobile",
         ];
@@ -153,7 +153,7 @@ class feesStatusController extends Controller
         $res['number_type'] = $number_type;
         $res['number_types'] = $number_types;
         $res['fees_details'] = $displayBreakoff;
-
+        // echo "<pre>";print_r($res);exit;
         return is_mobile($type, "fees/fees_report/status_report", $res, "view");
     }
 
@@ -171,6 +171,8 @@ class feesStatusController extends Controller
             $studentsData = $request->studentsData;
 
             $sub_institute_id = session()->get('sub_institute_id');
+            $syear = session()->get('syear');
+
             $message_sent = [];
             foreach ($studentsData as $student) {
 

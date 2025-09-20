@@ -114,7 +114,7 @@
                                 <input type="text" id='father_name' name="father_name" class="form-control">
                             </div>
                             <div class="col-md-4 form-group text-left">
-                                <label>SMS Number<span style="color: red;">*</span></label>
+                                <label>{{App\Helpers\get_string('mobile','request')}}<span style="color: red;">*</span></label>
                                 <input type="text" id='mobile' pattern="[1-9]{1}[0-9]{9}" required name="mobile" class="form-control">
                             </div>
                             <div class="col-md-4 form-group text-left">
