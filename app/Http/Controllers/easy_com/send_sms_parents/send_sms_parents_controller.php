@@ -186,12 +186,12 @@ class send_sms_parents_controller extends Controller
     public function saveParentLog($student_id, $msg, $number, $sub_institute_id, $syear,$message_id)
     {
         DB::table('sms_sent_parents')->insert([
-            'SYEAR'            => $syear,
-            'STUDENT_ID'       => $student_id,
-            'SMS_TEXT'         => $msg,
-            'SMS_NO'           => $number,
-            'MODULE_NAME'      => 'PARENT',
-            'MESSAGE_ID'       => $message_id,
+            'syear'            => $syear,
+            'student_id'       => $student_id,
+            'sms_text'         => $msg,
+            'sms_no'           => $number,
+            'module_name'      => 'Parent',
+            'message_id'       => $message_id,
             'sub_institute_id' => $sub_institute_id,
         ]);
     }

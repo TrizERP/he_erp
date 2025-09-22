@@ -17,23 +17,31 @@
                     <table id="example" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Syear</th>
                                 <th>Date</th>
+                                <th>Enrollment No</th>
                                 <th>Name</th>
                                 <th>Mobile</th>
                                 <th>Text</th>
-                                <th class="text-left">Module</th>
+                                <th>Module</th>
+                                <th>Message ID</th>
+                                <th>Response</th>
+                                <th>Status Desc</th>
+                                <th class="text-left">Delivered Datetime</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($data as $key => $arr)
                             <tr>    
-                                <td>{{$arr['syear']}}</td>
                                 <td>{{$arr['sent_date']}}</td>
+                                <td>{{$arr['enrollment_no']}}</td>
                                 <td>{{$arr['name']}}</td>
                                 <td>{{$arr['sms_no']}}</td>
                                 <td>{{$arr['sms_text']}}</td>                 
                                 <td>{{$arr['module_name']}}</td>                                                  
+                                <td>{{$arr['message_id']}}</td>
+                                <td>{{$arr['message_response']}}</td>
+                                <td>{{$arr['message_bill_credit']}}</td>
+                                <td>{{$arr['delivered_datetime']}}</td>
                             </tr>
                             @endforeach
                         </tbody>
