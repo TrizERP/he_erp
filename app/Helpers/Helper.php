@@ -643,7 +643,7 @@ if (!function_exists('TermDD')) {
 }
 if (!function_exists('SearchStudent')) {
 
-    function SearchStudent($grade = "", $standard = "", $div = "", $sub_institute_id = "", $syear = "", $roll_no = "", $stu_name = "", $uniqueid = "", $mobile = "", $grno = "", $stud_id = "", $batch = "")
+    function SearchStudent($grade = "", $standard = "", $div = "", $sub_institute_id = "", $syear = "", $roll_no = "", $stu_name = "", $uniqueid = "", $mobile = "", $grno = "", $stud_id = "", $batch = "",$status="")
     {
         if ($sub_institute_id == '') {
             $sub_institute_id = session()->get('sub_institute_id');
@@ -704,7 +704,6 @@ if (!function_exists('SearchStudent')) {
         $where = array(
             'se.syear' => $syear,
             'ts.sub_institute_id' => $sub_institute_id,
-            'se.end_date' => null,
         );
 
         $query = tblstudentModel::from('tblstudent as ts');
@@ -739,6 +738,9 @@ if (!function_exists('SearchStudent')) {
             }
             // Now, you can safely use the whereIn function with $stud_id
             $query->whereIn('ts.id', $stud_id);
+        }
+        if($status==""){
+            $query->whereNull('se.end_date');
         }
 
         $columns = explode(',', $select_fields);
