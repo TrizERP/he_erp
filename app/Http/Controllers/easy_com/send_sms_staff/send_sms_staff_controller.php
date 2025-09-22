@@ -253,8 +253,8 @@ class send_sms_staff_controller extends Controller
             'staff_id'         => $student_id,
             'sms_text'         => $msg,
             'sms_no'           => $number,
-            'module_name'      => 'STAFF',
-            'MESSAGE_ID'       => $message_id,
+            'module_name'      => 'Staff',
+            'message_id'       => $message_id,
         ]);
     }
 
