@@ -2405,7 +2405,7 @@ if (!function_exists('get_string')) {
 
     // 28-04-2025 
     if (!function_exists('getDataWithId')) {
-        function getDataWithId($id,$type){
+        function getDataWithId($id,$type,$table_name='',$field=''){
             $name='-';
             if($type=="department"){
                 $name = DB::table('hrms_departments')->where('id',$id)->value('department');
@@ -2416,6 +2416,10 @@ if (!function_exists('get_string')) {
             elseif($type=="student"){
                 $stuData = DB::table('tblstudent')->where('id',$id)->selectRaw('*,CONCAT_WS(" ",COALESCE(first_name,"-"),COALESCE(middle_name,"-"),COALESCE(last_name,"-")) as name')->first();
                 $name = $stuData->name.' ('.$stuData->enrollment_no.')';
+            }
+            elseif($table_name!='' && $field!=''){
+                $stuData = DB::table($table_name)->where('id',$id)->value($field);
+                $name = $stuData;
             }
            return $name;
        }
