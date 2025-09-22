@@ -8,6 +8,7 @@ use GenTux\Jwt\GetsJwtToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use function App\Helpers\is_mobile;
 use function App\Helpers\SearchStudent;
 
@@ -104,11 +105,12 @@ class send_sms_parents_controller extends Controller
             } else {
                 $student_id = 0;
                 foreach ($student_data as $id => $arr) {
-                    if ($arr['mobile'] == $number) {
+                    if ($arr['mobile'] == $number || $arr['student_mobile'] == $number || $arr['mother_mobile'] == $number) {
                         $student_id = $arr['student_id'];
                     }
                 }
-                $this->saveParentLog($student_id, $text, $number, $sub_institute_id, $syear);
+                $message_id = $responce['message'];
+                $this->saveParentLog($student_id, $text, $number, $sub_institute_id, $syear,$message_id);
             }
         }
 
@@ -145,22 +147,28 @@ class send_sms_parents_controller extends Controller
                 $data['last_var'] = $template_id;
             }
 
-            $url = $data['url'].$data['pram'].$data['mobile_var'].$mobile.$data['text_var'].$text.$data['last_var'];
-            $ch = curl_init();
-
-            // Ignore SSL certificate verification
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_URL, $url);
-            $output = curl_exec($ch);
-
-            //Print error if any
-            if (curl_errno($ch)) {
+            try {
+                $url = $data['url'].$data['pram'].$data['mobile_var'].$mobile.$data['text_var'].$text;
+            
+                // Send GET request
+                $response = Http::withoutVerifying()->get($url);
+            
+                // Get raw response
+                $output = trim($response->body());
+            
+                // If API returns JSON (most common case)
+                $result = json_decode($output);
+            
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \Exception("Invalid JSON response: " . json_last_error_msg());
+                }
+            
+                $message_id = $result->data[0]->id ?? null;
+            
+            } catch (\Exception $e) {
                 $isError = true;
-                $errorMessage = curl_error($ch).'-'.curl_errno($ch);
+                $errorMessage = $e->getMessage();
             }
-            curl_close($ch);
         } else {
             $isError = 1;
             $errorMessage = "Please add api details first.";
@@ -169,20 +177,21 @@ class send_sms_parents_controller extends Controller
         if ($isError) {
             $responce = ['error' => 1, 'message' => $errorMessage];
         } else {
-            $responce = ['error' => 0];
+            $responce = ['error' => 0, 'message' => $message_id];
         }
 
         return $responce;
     }
 
-    public function saveParentLog($student_id, $msg, $number, $sub_institute_id, $syear)
+    public function saveParentLog($student_id, $msg, $number, $sub_institute_id, $syear,$message_id)
     {
         DB::table('sms_sent_parents')->insert([
-            'SYEAR'            => $syear,
-            'STUDENT_ID'       => $student_id,
-            'SMS_TEXT'         => $msg,
-            'SMS_NO'           => $number,
-            'MODULE_NAME'      => 'SENT SMS PARENT',
+            'syear'            => $syear,
+            'student_id'       => $student_id,
+            'sms_text'         => $msg,
+            'sms_no'           => $number,
+            'module_name'      => 'Parent',
+            'message_id'       => $message_id,
             'sub_institute_id' => $sub_institute_id,
         ]);
     }
@@ -215,7 +224,8 @@ class send_sms_parents_controller extends Controller
                 if ($response1['error'] == 1) {
                     break;
                 } else {
-                    $this->saveParentLog($student_id, $sms_text, $number, $sub_institute_id, $syear);
+                    $message_id = $response1['message'];
+                    $this->saveParentLog($student_id, $sms_text, $number, $sub_institute_id, $syear,$message_id);
                 }
             }
 

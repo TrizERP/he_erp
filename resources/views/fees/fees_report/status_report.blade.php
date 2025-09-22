@@ -273,6 +273,7 @@
             },
             'pageLength' 
         ], 
+        order: [[1, "asc"]],
         }); 
         //table.buttons().container().appendTo('#example_wrapper .col-md-6:eq(0)');
 
@@ -298,7 +299,7 @@
     // SEND SMS
     $(document).ready(function(){
         $('#remain_fees_sms').on('click', function(){
-            alert('Please wait for a while');
+            confirm('Are you sure to send SMS?');
             // get checked sudend ids
             var studentsData = [];
             $('.remain_fees:checked').each(function() {
@@ -317,7 +318,7 @@
 
             // send sms using ajax
             var path = "{{ route('remainFeesNotification') }}";
-            console.warn('ajax path', path);
+            //console.warn('ajax path', path);
             $.ajax({
                 url: path,
                 type: 'POST',

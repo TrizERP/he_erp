@@ -8,6 +8,7 @@ use GenTux\Jwt\GetsJwtToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -171,7 +172,8 @@ class send_sms_staff_controller extends Controller
                         $id = $arr['id'];
                     }
                 }
-                $this->saveStaffLog($id, $text, $number);
+                $message_id = $responce['message'];
+                $this->saveStaffLog($id, $text, $number,$message_id);
             }
         }
 
@@ -203,25 +205,30 @@ class send_sms_staff_controller extends Controller
 
         if ($data) {
             $data = $data->toArray();
-            $url = $data['url'].$data['pram'].$data['mobile_var'].$mobile.$data['text_var'].$text.$data['last_var'];
-
-            $ch = curl_init();
-
-            //Ignore SSL certificate verification
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_URL, $url);
-
-            //get response
-            $output = curl_exec($ch);
-
-            //Print error if any
-            if (curl_errno($ch)) {
+            try {
+                $url = $data['url'] . $data['pram'] . $data['mobile_var'] . $mobile . $data['text_var'] . $text;
+            
+                // Send GET request
+                $response = Http::withoutVerifying()->get($url);
+            
+                // Raw response body (string)
+                $output = trim($response->body());
+            
+                // If JSON, decode it
+                $result = json_decode($output, true);
+            
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    // Not JSON, maybe plain text or XML
+                    $result = $output;
+                }
+            
+                // Example: if API sends back { "data": [ { "id": "123" } ] }
+                $message_id = $result['data'][0]['id'] ?? null;
+            
+            } catch (\Exception $e) {
                 $isError = true;
-                $errorMessage = curl_error($ch);
+                $errorMessage = $e->getMessage();
             }
-            curl_close($ch);
         } else {
             $isError = 1;
             $errorMessage = "Please add api details first.";
@@ -232,13 +239,13 @@ class send_sms_staff_controller extends Controller
         if ($isError) {
             $responce = ['error' => 1, 'message' => $errorMessage];
         } else {
-            $responce = ['error' => 0];
+            $responce = ['error' => 0, 'message' => $message_id];
         }
 
         return $responce;
     }
 
-    public function saveStaffLog($student_id, $msg, $number)
+    public function saveStaffLog($student_id, $msg, $number,$message_id)
     {
         DB::table('sms_sent_staff')->insert([
             'syear'            => session()->get('syear'),
@@ -246,7 +253,8 @@ class send_sms_staff_controller extends Controller
             'staff_id'         => $student_id,
             'sms_text'         => $msg,
             'sms_no'           => $number,
-            'module_name'      => 'SENT SMS STAFF',
+            'module_name'      => 'Staff',
+            'message_id'       => $message_id,
         ]);
     }
 

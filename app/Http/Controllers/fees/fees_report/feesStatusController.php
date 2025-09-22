@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Psr\Container\ContainerExceptionInterface;
@@ -173,6 +174,10 @@ class feesStatusController extends Controller
             $sub_institute_id = session()->get('sub_institute_id');
             $syear = session()->get('syear');
 
+            $data = manage_sms_api::where(['sub_institute_id' => $sub_institute_id])
+            ->get()->first();
+            $data = $data->toArray();
+
             $message_sent = [];
             foreach ($studentsData as $student) {
 
@@ -181,7 +186,7 @@ class feesStatusController extends Controller
                 $mobile = $student['student_mobile'];
                 $remain_fees = $student['student_remain_fees'];
 
-                $message = 'Dear '.$name.', Your unpaid fees Rs. '.$remain_fees.'. So please pay them at the earliest';
+                $message = 'Dear '.$name.', Your unpaid fees Rs. '.$remain_fees.'. So please pay them at the earliest.'.$data['last_var'];
 
                 $responce = $this->sendSMS($mobile, $message, $sub_institute_id);
                 if ($responce['error'] == 1) {
@@ -196,7 +201,8 @@ class feesStatusController extends Controller
                     // 		$student_id = $arr['student_id'];
                     // 	}
                     // }
-                    $this->saveParentLog($id, $message, $mobile,$sub_institute_id,$syear);
+                    $message_id = $responce['message'];
+                    $this->saveParentLog($id, $message, $mobile,$sub_institute_id,$syear,$message_id);
                 }
             }
             if ($response['status'] == 200) {
@@ -224,29 +230,30 @@ class feesStatusController extends Controller
             $errorMessage = true;
 
             $text = urlencode($text);
-            $data['last_var'] = urlencode($data['last_var']);
 
-            $url = $data['url'] . $data['pram'] . $data['mobile_var'] . $mobile . $data['text_var'] . $text . $data['last_var'];
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $output = curl_exec($ch);
-
-
-            //Ignore SSL certificate verification
-            // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            // curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            // curl_setopt($ch, CURLOPT_URL, $url);
-            // $output = curl_exec($ch);
-
-            //Print error if any
-            if (curl_errno($ch)) {
+            try {
+                $url = $data['url'].$data['pram'].$data['mobile_var'].$mobile.$data['text_var'].$text;
+            
+                // Send GET request
+                $response = Http::withoutVerifying()->get($url);
+            
+                // Get raw response
+                $output = trim($response->body());
+            
+                // If API returns JSON (most common case)
+                $result = json_decode($output);
+            
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \Exception("Invalid JSON response: " . json_last_error_msg());
+                }
+            
+                $message_id = $result->data[0]->id ?? null;
+            
+            } catch (\Exception $e) {
                 $isError = true;
-                $errorMessage = curl_error($ch);
+                $errorMessage = $e->getMessage();
             }
-            curl_close($ch);
+
         } else {
             $isError = 1;
             $errorMessage = "Please add api details first.";
@@ -255,19 +262,20 @@ class feesStatusController extends Controller
         if ($isError) {
             $responce = array('error' => 1, 'message' => $errorMessage);
         } else {
-            $responce = array('error' => 0);
+            $responce = array('error' => 0, 'message' => $message_id);
         }
         return $responce;
     }
 
-    public function saveParentLog($student_id, $msg, $number, $sub_institute_id, $syear)
+    public function saveParentLog($student_id, $msg, $number, $sub_institute_id, $syear,$message_id)
     {
         DB::table('sms_sent_parents')->insert([
-            'SYEAR'            => $syear,
-            'STUDENT_ID'       => $student_id,
-            'SMS_TEXT'         => $msg,
-            'SMS_NO'           => $number,
-            'MODULE_NAME'      => 'FEES PENDING SMS',
+            'syear'            => $syear,
+            'student_id'       => $student_id,
+            'sms_text'         => $msg,
+            'sms_no'           => $number,
+            'module_name'      => 'Fees',
+            'message_id'       => $message_id,
             'sub_institute_id' => $sub_institute_id,
         ]);
     }
