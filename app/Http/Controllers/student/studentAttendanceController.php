@@ -35,10 +35,10 @@ class studentAttendanceController extends Controller
 
             $result = DB::table('class_teacher as ct')
                 ->join('standard as s', function ($join) {
-                    $join->whereRaw('ct.standard_id = s.id AND ct.sub_institute_id = s.sub_institute_id')
-                    ->when($marking_period_id,function($query) use ($marking_period_id){
-                        $query->where('s.marking_period_id',$marking_period_id);
-                    });
+                    $join->whereRaw('ct.standard_id = s.id AND ct.sub_institute_id = s.sub_institute_id');
+                    // ->when($marking_period_id,function($query) use ($marking_period_id){
+                    //     $query->where('s.marking_period_id',$marking_period_id);
+                    // });
                 })->join('division as d', function ($join) {
                     $join->whereRaw('d.id = ct.division_id AND d.sub_institute_id = ct.sub_institute_id');
                 })

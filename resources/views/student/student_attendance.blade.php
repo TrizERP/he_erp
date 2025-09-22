@@ -122,8 +122,8 @@
                         <div class="row">
                             <div class="col-md-12 form-group">
                                 <center>
-                                    <input type="hidden" name="date" @if(isset($data['date'])) value="{{$data['date']}}" @endif">
-                                    <input type="hidden" name="standard_division" @if(isset($data['standard_division'])) value="{{$data['standard_division']}}" @endif">
+                                    <input type="hidden" name="date" @if(isset($data['date'])) value="{{$data['date']}}" @endif>
+                                    <input type="hidden" name="standard_division" @if(isset($data['standard_division'])) value="{{$data['standard_division']}}" @endif>
                                     <input type="submit" name="submit" value="Submit" class="btn btn-success" >
                                 </center>
                             </div>
