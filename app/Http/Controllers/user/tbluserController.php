@@ -25,8 +25,11 @@ class tbluserController extends Controller
     {
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
-        $user_data = tbluserModel::select('tbluser.*', 'tbluserprofilemaster.name as profile_name',
-            DB::raw('if(tbluser.status = 1,"Active","Inactive") as status'))
+        $user_data = tbluserModel::select(
+            'tbluser.*',
+            'tbluserprofilemaster.name as profile_name',
+            DB::raw('if(tbluser.status = 1,"Active","Inactive") as status')
+        )
             ->join('tbluserprofilemaster', 'tbluser.user_profile_id', '=', 'tbluserprofilemaster.id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id]) //, 'tbluser.status' => "1"
             ->get();
@@ -45,7 +48,9 @@ class tbluserController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $data = tbluserprofilemasterModel::where(['sub_institute_id' => $sub_institute_id, 'status' => '1'])->get()->toArray();
         $dataCustomFields = tblcustomfieldsModel::where([
-            'sub_institute_id' => $sub_institute_id, 'status' => "1", 'table_name' => "tbluser",
+            'sub_institute_id' => $sub_institute_id,
+            'status' => "1",
+            'table_name' => "tbluser",
         ])
             ->get();
 
@@ -64,11 +69,11 @@ class tbluserController extends Controller
 
         // auto increament 20-04-24
         $maxEmpCode = DB::table('tbluser')->selectRaw("MAX(CAST(employee_no AS INT)) AS new_emp_code")
-        ->where('sub_institute_id', $sub_institute_id)->whereRaw('employee_no is not null')->limit(1)->orderBy('id')->get()->toArray();
+            ->where('sub_institute_id', $sub_institute_id)->whereRaw('employee_no is not null')->limit(1)->orderBy('id')->get()->toArray();
 
-            $maxEmpCode = array_map(function ($value) {
-                return (array) $value;
-            }, $maxEmpCode);
+        $maxEmpCode = array_map(function ($value) {
+            return (array) $value;
+        }, $maxEmpCode);
 
         $new_emp_code = ($maxEmpCode['0']['new_emp_code'] + 1) ?? 1;
 
@@ -77,7 +82,7 @@ class tbluserController extends Controller
         if (count($finalfieldsData) > 0) {
             view()->share('data_fields', $finalfieldsData);
         }
-        
+
         view()->share('new_emp_code', $new_emp_code);
         view()->share('custom_fields', $dataCustomFields);
         view()->share('subject_data', $subject_data);
@@ -228,14 +233,16 @@ class tbluserController extends Controller
         $professional_details = DB::table('tbluser_professional_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $salary_details = DB::table('tbluser_salary_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $document_details = DB::table('tbluser_staff_document_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
-        $sub_std_map = DB::table('sub_std_map')->where(['sub_institute_id'=>$sub_institute_id])->get();
+        $sub_std_map = DB::table('sub_std_map')->where(['sub_institute_id' => $sub_institute_id])->get();
 
         if (isset($subject_data_selected)) {
             $subject_data_selected_arr = explode(",", $subject_data_selected);
         }
 
         $dataCustomFields = tblcustomfieldsModel::where([
-            'sub_institute_id' => $sub_institute_id, 'status' => "1", 'table_name' => "tbluser",
+            'sub_institute_id' => $sub_institute_id,
+            'status' => "1",
+            'table_name' => "tbluser",
         ])
             ->get();
 
@@ -251,16 +258,16 @@ class tbluserController extends Controller
         if (count($finalfieldsData) > 0) {
             $res['data_fields'] = $finalfieldsData;
         }
-        
-        $empCode = DB::table('tbluser')->where('id',$id)->first();
+
+        $empCode = DB::table('tbluser')->where('id', $id)->first();
         $new_emp_code = $empCode->employee_no;
 
         $departments = DB::table('hrms_departments')->where('sub_institute_id', $sub_institute_id)->where('status', 1)->get()->toArray();
         // 23-10-2024
-        $categorties=DB::table('cast')->where('sub_institute_id', $sub_institute_id)->orderBy('sort_order')->get()->toArray();
-        $religions=DB::table('religion')->get()->toArray();
-        $bloodgroups=DB::table('blood_group')->get()->toArray();
-        $maretial_status = ['Yes','No'];
+        $categorties = DB::table('cast')->where('sub_institute_id', $sub_institute_id)->orderBy('sort_order')->get()->toArray();
+        $religions = DB::table('religion')->get()->toArray();
+        $bloodgroups = DB::table('blood_group')->get()->toArray();
+        $maretial_status = ['Yes', 'No'];
         $res['categorties'] = $categorties;
         $res['religions'] = $religions;
         $res['bloodgroups'] = $bloodgroups;
@@ -412,7 +419,7 @@ class tbluserController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
         /*$columns = DB::getSchemaBuilder()->getColumnListing('tbluser_past_educations');
         return $columns;*/
-        $i=0;
+        $i = 0;
         if ($request->user_id) {
             if ($request->dataType == 'education_data') {
                 foreach ($request->degree as $key => $degree) {
@@ -432,12 +439,11 @@ class tbluserController extends Controller
                     ];
 
                     if (isset($request->get('past_education_id')[$key]) && $request->get('past_education_id')[$key] != 0) {
-                        $prepareData['updated_at']=now();
+                        $prepareData['updated_at'] = now();
                         DB::table('tbluser_past_educations')->where('id', $request->get('past_education_id')[$key])->update($prepareData);
                         // DB::table('tbluser_past_educations')->whereNotIn('id', $request->get('past_education_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
 
-                    } 
-                    else if(isset($degree) || isset($request->get('medium')[$key]) || isset($request->get('university_name')[$key]) || isset($request->get('passing_year')[$key]) || (isset($request->get('main_subject')[$key]) && $request->get('main_subject')[$key]!=0)|| isset($request->get('secondary_subject')[$key]) || isset($request->get('percentage')[$key]) || isset($request->get('cpi')[$key]) || isset($request->get('remarks')[$key])) {
+                    } else if (isset($degree) || isset($request->get('medium')[$key]) || isset($request->get('university_name')[$key]) || isset($request->get('passing_year')[$key]) || (isset($request->get('main_subject')[$key]) && $request->get('main_subject')[$key] != 0) || isset($request->get('secondary_subject')[$key]) || isset($request->get('percentage')[$key]) || isset($request->get('cpi')[$key]) || isset($request->get('remarks')[$key])) {
                         // if ($degree == null && $request->get('medium')[$key] == null && $request->get('university_name')[$key] == null && $request->get('passing_year')[$key] == null
                         //     && $request->get('main_subject')[$key] == null && $request->get('secondary_subject')[$key] == null && $request->get('percentage')[$key] == null && $request->get('cpi')[$key] == null && $request->get('cgpa')[$key] == null && $request->get('remarks')[$key] == null
                         // ) {
@@ -445,21 +451,19 @@ class tbluserController extends Controller
                         // } else {
                         //     DB::table('tbluser_past_educations')->insert($prepareData);
                         // }
-                        $prepareData['created_at']=now();
+                        $prepareData['created_at'] = now();
                         DB::table('tbluser_past_educations')->insert($prepareData);
                     }
-                    
                 }
-                
+
                 $res['success'] = "Data Added Succesfully";
-                
+
                 return redirect()->back()->with($res);
                 // echo "<pre>";print_r($prepareData);exit;
                 // exit;
                 // DB::table('tbluser_past_educations')->whereNotIn('id', $request->get('past_education_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
             } else if ($request->dataType == 'experience_detail') {
-                foreach ($request->teching_type as $key => $teching_type)
-                {
+                foreach ($request->teching_type as $key => $teching_type) {
                     $prepareData = [
                         'user_id' => $request->user_id,
                         'teching_type' => $teching_type,
@@ -473,15 +477,13 @@ class tbluserController extends Controller
                     ];
                     if (isset($request->get('experience_detail_id')[$key]) && $request->get('experience_detail_id')[$key] != 0) {
                         DB::table('tbluser_experience_details')->where('id', $request->get('experience_detail_id')[$key])->update($prepareData);
-
-                    } 
-                    elseif(isset($teching_type) || isset($request->get('institutional_name')[$key]) || isset($request->get('designation_name')[$key]) || isset($request->get('joining_date')[$key]) || isset($request->get('leaving_date')[$key]) || isset($request->get('experience_type')[$key])) {
+                    } elseif (isset($teching_type) || isset($request->get('institutional_name')[$key]) || isset($request->get('designation_name')[$key]) || isset($request->get('joining_date')[$key]) || isset($request->get('leaving_date')[$key]) || isset($request->get('experience_type')[$key])) {
                         DB::table('tbluser_experience_details')->insert($prepareData);
                     }
                 }
-                
+
                 $res['success'] = "Data Added Succesfully";
-            
+
                 return redirect()->back()->with($res);
             } else if ($request->dataType == 'training_details') {
                 foreach ($request->training_name as $key => $training_name) {
@@ -498,183 +500,223 @@ class tbluserController extends Controller
                     if (isset($request->get('training_detail_id')[$key]) && $request->get('training_detail_id')[$key] != 0) {
                         DB::table('tbluser_training_details')->where('id', $request->get('training_detail_id')[$key])->update($prepareData);
                         DB::table('tbluser_training_details')->whereNotIn('id', $request->get('training_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
-                    } 
-                    else if(isset($training_name) || isset($request->get('training_subject')[$key]) || isset($request->get('training_place')[$key]) || isset($request->get('start_date')[$key]) || isset($request->get('end_date')[$key])) {
+                    } else if (isset($training_name) || isset($request->get('training_subject')[$key]) || isset($request->get('training_place')[$key]) || isset($request->get('start_date')[$key]) || isset($request->get('end_date')[$key])) {
                         DB::table('tbluser_training_details')->insert($prepareData);
                     }
-             }
-             
-             $res['success'] = "Data Added Succesfully";
-                
-             return redirect()->back()->with($res);
+                }
+
+                $res['success'] = "Data Added Succesfully";
+
+                return redirect()->back()->with($res);
             } else if ($request->dataType == 'professional_details') {
                 foreach ($request->designation as $key => $designation) {
-                    if(isset($designation) && $designation!=null && $designation!=''){
-                    $prepareData = [
-                        'user_id' => $request->user_id,
-                        'designation' => $designation,
-                        'appointment_type' => isset($request->get('appointment_type')[$key]) ? $request->get('appointment_type')[$key] : 0,
-                        'doctorate_degree' => isset($request->get('doctorate_degree')[$key]) ? $request->get('doctorate_degree')[$key] : 0,
-                        'doctorate_degree_percentage' => isset($request->get('doctorate_degree_percentage')[$key]) ? $request->get('doctorate_degree_percentage')[$key] : 0,
-                        'pg_degree' => isset($request->get('pg_degree')[$key]) ? $request->get('pg_degree')[$key] : 0,
-                        'pg_degree_percentage' => isset($request->get('pg_degree_percentage')[$key]) ? $request->get('pg_degree_percentage')[$key] : 0,
-                        'ug_degree' => isset($request->get('ug_degree')[$key]) ? $request->get('ug_degree')[$key] : 0,
-                        'ug_degree_percentage' => isset($request->get('ug_degree_percentage')[$key]) ? $request->get('ug_degree_percentage')[$key] : 0,
-                        'other_qualification' => isset($request->get('other_qualification')[$key]) ? $request->get('other_qualification')[$key] : 0,
-                        'other_qualification_percentage' => isset($request->get('other_qualification_percentage')[$key]) ? $request->get('other_qualification_percentage')[$key] : 0,
-                        'specification' => isset($request->get('specification')[$key]) ? $request->get('specification')[$key] : 0,
-                        'national_publication' => isset($request->get('national_publication')[$key]) ? $request->get('national_publication')[$key] : 0,
-                        'international_publication' => isset($request->get('international_publication')[$key]) ? $request->get('international_publication')[$key] : 0,
-                        'no_of_books_published' => isset($request->get('no_of_books_published')[$key]) ? $request->get('no_of_books_published')[$key] : 0,
-                        'no_of_patents' => isset($request->get('no_of_patents')[$key]) ? $request->get('no_of_patents')[$key] : 0,
-                        'teaching_experience' => isset($request->get('teaching_experience')[$key]) ? $request->get('teaching_experience')[$key] : 0,
-                        'total_work_experience' => isset($request->get('total_work_experience')[$key]) ? $request->get('total_work_experience')[$key] : 0,
-                        'research_experience' => isset($request->get('research_experience')[$key]) ? $request->get('research_experience')[$key] : 0,
-                        'no_of_projects_guided' => isset($request->get('no_of_projects_guided')[$key]) ? $request->get('no_of_projects_guided')[$key] : 0,
-                        'no_of_doctorate_students_guided' => isset($request->get('no_of_doctorate_students_guided')[$key]) ? $request->get('no_of_doctorate_students_guided')[$key] : 0,
-                        'sub_institute_id' => $sub_institute_id,
-                    ];
-                    if ($request->get('professional_detail_id')[$key] != 0) {
-                        DB::table('tbluser_professional_details')->where('id', $request->get('professional_detail_id')[$key])->update($prepareData);
-                        DB::table('tbluser_professional_details')->whereNotIn('id', $request->get('professional_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
-
-                    } else {
-                        DB::table('tbluser_professional_details')->insert($prepareData);
-                    }
-                }else{
-                    $i++;
-                }
-             }
-            } else if ($request->dataType == 'salary_details') {
-                foreach ($request->pay_scale as $key => $pay_scale) {
-                    if(isset($pay_scale) && $pay_scale!=null && $pay_scale!=''){
-                    $prepareData = [
-                        'user_id' => $request->user_id,
-                        'pay_scale' => $pay_scale,
-                        'increment_date' => $request->get('increment_date')[$key],
-                        'salary_mode' => $request->get('salary_mode')[$key],
-                        'basic' => $request->get('basic')[$key],
-                        'grade_pay' => $request->get('grade_pay')[$key],
-                        'basic_pay' => $request->get('basic_pay')[$key],
-                        'da' => $request->get('da')[$key],
-                        'da_percentage' => $request->get('da_percentage')[$key],
-                        'cla' => $request->get('cla')[$key],
-                        'hra' => $request->get('hra')[$key],
-                        'hra_percentage' => $request->get('hra_percentage')[$key],
-                        'vehicle_allowances' => $request->get('vehicle_allowances')[$key],
-                        'medical_allowances' => $request->get('medical_allowances')[$key],
-                        'other_allowances' => $request->get('other_allowances')[$key],
-                        'gross_salary' => $request->get('gross_salary')[$key],
-                        'bank_account_number' => $request->get('bank_account_number')[$key],
-                        'bank_name' => $request->get('bank_name')[$key],
-                        'bank_ifsc_code' => $request->get('bank_ifsc_code')[$key],
-                        'bank_branch' => $request->get('bank_branch')[$key],
-                        'pf_number' => $request->get('pf_number')[$key],
-                        'sub_institute_id' => $sub_institute_id,
-                    ];
-                    if ($request->get('salary_detail_id')[$key] != 0) {
-                        DB::table('tbluser_salary_details')->where('id', $request->get('salary_detail_id')[$key])->update($prepareData);
-                        DB::table('tbluser_salary_details')->whereNotIn('id', $request->get('salary_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
-
-                    } else {
-                        if ($pay_scale == null && $request->get('increment_date')[$key] == null && $request->get('salary_mode')[$key] == null && $request->get('basic')[$key] == null
-                            && $request->get('grade_pay')[$key] == null && $request->get('basic_pay')[$key] == null
-                            && $request->get('da')[$key] == null && $request->get('da_percentage')[$key] == null
-                            && $request->get('cla')[$key] == null && $request->get('hra')[$key] == null
-                            && $request->get('hra_percentage')[$key] == null && $request->get('vehicle_allowances')[$key] == null
-                            && $request->get('medical_allowances')[$key] == null && $request->get('other_allowances')[$key] == null
-                            && $request->get('gross_salary')[$key] == null && $request->get('bank_account_number')[$key] == null
-                            && $request->get('bank_name')[$key] == null && $request->get('bank_ifsc_code')[$key] == null
-                            && $request->get('bank_branch')[$key] == null && $request->get('pf_number')[$key] == null
-                        ) {
-                            DB::table('tbluser_salary_details')->whereNotIn('id', $request->get('salary_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
-                        } else {
-                            DB::table('tbluser_salary_details')->insert($prepareData);
-                        }
-                    }
-                }else{
-                    $i++;
-                }
-             }
-            } else if ($request->dataType == 'document_details') {
-                // echo "<pre>";print_r($request->all());exit;
-                foreach ($request->document_title as $key => $document_title) {
-                    if(isset($document_title) && $document_title!=null && $document_title!=''){
-                    if ($request->hasFile('file') || $request->hasFile('new_file')) {
-                        $filename = "";
-                        if (!empty($request->file('file')[$key])) {
-                            $file = $request->file('file')[$key];
-                            $filename = rand(111111111, 9999999999) . '-' . $file->getClientOriginalName();
-                        //     $path = $file->storeAs('uploads', $filename, 'public');
-                        }
-                        else if (!empty($request->file('new_file')[$key])) {
-                            // echo "h";exit;
-                            $file = $request->file('new_file')[$key];
-                            $filename = rand(111111111, 9999999999) . '-' . $file->getClientOriginalName();
-                        //     $path = $file->storeAs('uploads', $filename, 'public');
-                        }
-
-                        if(isset($filename) && $filename!=''){
-                            $storagePath = 'public/he_staff_document/' . $filename;
-                            $disk = Storage::disk('digitalocean');
-                            if (Storage::disk('digitalocean')->exists($storagePath)) {
-                                Storage::disk('digitalocean')->delete($storagePath);
-                                // Store the file
-                            } 
-                            Storage::disk('digitalocean')->putFileAs('public/he_staff_document/', $file, $filename, 'public');
-                        }
+                    if (isset($designation) && $designation != null && $designation != '') {
                         $prepareData = [
                             'user_id' => $request->user_id,
-                            'document_title' => $document_title,
-                            'file' => $filename,
+                            'designation' => $designation,
+                            'appointment_type' => isset($request->get('appointment_type')[$key]) ? $request->get('appointment_type')[$key] : 0,
+                            'doctorate_degree' => isset($request->get('doctorate_degree')[$key]) ? $request->get('doctorate_degree')[$key] : 0,
+                            'doctorate_degree_percentage' => isset($request->get('doctorate_degree_percentage')[$key]) ? $request->get('doctorate_degree_percentage')[$key] : 0,
+                            'pg_degree' => isset($request->get('pg_degree')[$key]) ? $request->get('pg_degree')[$key] : 0,
+                            'pg_degree_percentage' => isset($request->get('pg_degree_percentage')[$key]) ? $request->get('pg_degree_percentage')[$key] : 0,
+                            'ug_degree' => isset($request->get('ug_degree')[$key]) ? $request->get('ug_degree')[$key] : 0,
+                            'ug_degree_percentage' => isset($request->get('ug_degree_percentage')[$key]) ? $request->get('ug_degree_percentage')[$key] : 0,
+                            'other_qualification' => isset($request->get('other_qualification')[$key]) ? $request->get('other_qualification')[$key] : 0,
+                            'other_qualification_percentage' => isset($request->get('other_qualification_percentage')[$key]) ? $request->get('other_qualification_percentage')[$key] : 0,
+                            'specification' => isset($request->get('specification')[$key]) ? $request->get('specification')[$key] : 0,
+                            'national_publication' => isset($request->get('national_publication')[$key]) ? $request->get('national_publication')[$key] : 0,
+                            'international_publication' => isset($request->get('international_publication')[$key]) ? $request->get('international_publication')[$key] : 0,
+                            'no_of_books_published' => isset($request->get('no_of_books_published')[$key]) ? $request->get('no_of_books_published')[$key] : 0,
+                            'no_of_patents' => isset($request->get('no_of_patents')[$key]) ? $request->get('no_of_patents')[$key] : 0,
+                            'teaching_experience' => isset($request->get('teaching_experience')[$key]) ? $request->get('teaching_experience')[$key] : 0,
+                            'total_work_experience' => isset($request->get('total_work_experience')[$key]) ? $request->get('total_work_experience')[$key] : 0,
+                            'research_experience' => isset($request->get('research_experience')[$key]) ? $request->get('research_experience')[$key] : 0,
+                            'no_of_projects_guided' => isset($request->get('no_of_projects_guided')[$key]) ? $request->get('no_of_projects_guided')[$key] : 0,
+                            'no_of_doctorate_students_guided' => isset($request->get('no_of_doctorate_students_guided')[$key]) ? $request->get('no_of_doctorate_students_guided')[$key] : 0,
                             'sub_institute_id' => $sub_institute_id,
                         ];
-                        if ($request->get('document_detail_id')[$key] != 0 && $filename!='') {
-                            $prepareData['updated_at'] = now();
-                            DB::table('tbluser_staff_document_details')->where('id', $request->get('document_detail_id')[$key])->update($prepareData);
-                            DB::table('tbluser_staff_document_details')->whereNotIn('id', $request->get('document_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
-
+                        if ($request->get('professional_detail_id')[$key] != 0) {
+                            DB::table('tbluser_professional_details')->where('id', $request->get('professional_detail_id')[$key])->update($prepareData);
+                            DB::table('tbluser_professional_details')->whereNotIn('id', $request->get('professional_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
                         } else {
-                            $prepareData['created_at'] = now();
-                            if ($document_title != null && isset($request->get('file')[$key]) && !empty($request->get('file')[$key])) {
-                                DB::table('tbluser_staff_document_details')->insert($prepareData);
+                            DB::table('tbluser_professional_details')->insert($prepareData);
+                        }
+                    } else {
+                        $i++;
+                    }
+                }
+            } else if ($request->dataType == 'salary_details') {
+                foreach ($request->pay_scale as $key => $pay_scale) {
+                    if (isset($pay_scale) && $pay_scale != null && $pay_scale != '') {
+                        $prepareData = [
+                            'user_id' => $request->user_id,
+                            'pay_scale' => $pay_scale,
+                            'increment_date' => $request->get('increment_date')[$key],
+                            'salary_mode' => $request->get('salary_mode')[$key],
+                            'basic' => $request->get('basic')[$key],
+                            'grade_pay' => $request->get('grade_pay')[$key],
+                            'basic_pay' => $request->get('basic_pay')[$key],
+                            'da' => $request->get('da')[$key],
+                            'da_percentage' => $request->get('da_percentage')[$key],
+                            'cla' => $request->get('cla')[$key],
+                            'hra' => $request->get('hra')[$key],
+                            'hra_percentage' => $request->get('hra_percentage')[$key],
+                            'vehicle_allowances' => $request->get('vehicle_allowances')[$key],
+                            'medical_allowances' => $request->get('medical_allowances')[$key],
+                            'other_allowances' => $request->get('other_allowances')[$key],
+                            'gross_salary' => $request->get('gross_salary')[$key],
+                            'bank_account_number' => $request->get('bank_account_number')[$key],
+                            'bank_name' => $request->get('bank_name')[$key],
+                            'bank_ifsc_code' => $request->get('bank_ifsc_code')[$key],
+                            'bank_branch' => $request->get('bank_branch')[$key],
+                            'pf_number' => $request->get('pf_number')[$key],
+                            'sub_institute_id' => $sub_institute_id,
+                        ];
+                        if ($request->get('salary_detail_id')[$key] != 0) {
+                            DB::table('tbluser_salary_details')->where('id', $request->get('salary_detail_id')[$key])->update($prepareData);
+                            DB::table('tbluser_salary_details')->whereNotIn('id', $request->get('salary_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
+                        } else {
+                            if (
+                                $pay_scale == null && $request->get('increment_date')[$key] == null && $request->get('salary_mode')[$key] == null && $request->get('basic')[$key] == null
+                                && $request->get('grade_pay')[$key] == null && $request->get('basic_pay')[$key] == null
+                                && $request->get('da')[$key] == null && $request->get('da_percentage')[$key] == null
+                                && $request->get('cla')[$key] == null && $request->get('hra')[$key] == null
+                                && $request->get('hra_percentage')[$key] == null && $request->get('vehicle_allowances')[$key] == null
+                                && $request->get('medical_allowances')[$key] == null && $request->get('other_allowances')[$key] == null
+                                && $request->get('gross_salary')[$key] == null && $request->get('bank_account_number')[$key] == null
+                                && $request->get('bank_name')[$key] == null && $request->get('bank_ifsc_code')[$key] == null
+                                && $request->get('bank_branch')[$key] == null && $request->get('pf_number')[$key] == null
+                            ) {
+                                DB::table('tbluser_salary_details')->whereNotIn('id', $request->get('salary_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
                             } else {
-                                // DB::table('tbluser_staff_document_details')->insert($prepareData);
-                                DB::table('tbluser_staff_document_details')->whereNotIn('id', $request->get('document_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
+                                DB::table('tbluser_salary_details')->insert($prepareData);
                             }
                         }
-
+                    } else {
+                        $i++;
                     }
-                }else{
-                    $i++;
                 }
-             }
+            } else if ($request->dataType == 'document_details') {
+                $j=0;
+                foreach ($request->document_title as $key => $document_title) {
+                    // Skip if document title is empty
+                    if (empty($document_title)) {
+                        continue;
+                    }
+
+                    $filename = null;
+                    $document_detail_id = $request->get('document_detail_id')[$key] ?? 0;
+
+                    // Handle file upload
+                    if ($request->hasFile('file.' . $key) || $request->hasFile('new_file.' . $key)) {
+                        $file = null;
+
+                        // Check for file in 'file' array
+                        if ($request->hasFile('file.' . $key)) {
+                            $file = $request->file('file')[$key];
+                        }
+                        // Check for file in 'new_file' array
+                        else if ($request->hasFile('new_file.' . $key)) {
+                            $file = $request->file('new_file')[$key];
+                        }
+
+                        if ($file && $file->isValid()) {
+                            // Generate unique filename
+                            $filename = rand(111111111, 9999999999) . '-' . $file->getClientOriginalName();
+
+                            // Store file on DigitalOcean
+                            $storagePath = 'public/he_staff_document/' . $filename;
+
+                            // Delete existing file if it exists
+                            if (Storage::disk('digitalocean')->exists($storagePath)) {
+                                Storage::disk('digitalocean')->delete($storagePath);
+                            }
+
+                            // Store the new file
+                            Storage::disk('digitalocean')->putFileAs('public/he_staff_document/', $file, $filename, 'public');
+                        }
+                    }
+
+                    // Prepare data for database
+                    $prepareData = [
+                        'user_id' => $request->user_id,
+                        'document_title' => $document_title,
+                        'sub_institute_id' => $sub_institute_id,
+                    ];
+
+                    // Only add file to data if we have a filename
+                    if ($filename) {
+                        $prepareData['file'] = $filename;
+                    }
+
+                    // Update existing record or insert new one
+                    if ($document_detail_id != 0) {
+                        // Update existing record
+                        if ($filename) {
+                            // Only update if we have a new file
+                            $prepareData['updated_at'] = now();
+                            $update = DB::table('tbluser_staff_document_details')
+                                ->where('id', $document_detail_id)
+                                ->update($prepareData);
+                            if($update){
+                                $j++;
+                            }
+                        }
+                    } else {
+                        // Insert new record only if we have a file
+                        if ($filename) {
+                            $prepareData['created_at'] = now();
+                            $insert=DB::table('tbluser_staff_document_details')->insert($prepareData);
+                            if($insert){
+                                $j++;
+                            }
+                        }
+                    }
+                }
+
+                // Clean up records that are no longer needed
+                $existingIds = array_filter($request->get('document_detail_id', []));
+                if (!empty($existingIds)) {
+                    DB::table('tbluser_staff_document_details')
+                        ->where('user_id', $request->user_id)
+                        ->where('sub_institute_id', $sub_institute_id)
+                        ->whereNotIn('id', $existingIds)
+                        ->delete();
+                }
+
+                if ($j > 0) {
+                    $res['success'] = "Data Added Succesfully";
+                } else {
+                    $res['error'] = "Failed to add that Data!";
+                }
+                return redirect()->back()->with($res);
+                // echo "<pre>";print_r($request->all());exit;
                 // DB::table('tbluser_staff_document_details')->whereNotIn('id', $request->get('document_detail_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
             }
         }
-
+        // exit;
         // $res['status_code'] = "1";
-        if($i=0){
+        if ($i = 0) {
             $res['success'] = "Data Added Succesfully";
-        }else{
+        } else {
             $res['error'] = "Found Some Null Inputs. Failed to add that Data!";
         }
 
         return redirect()->back()->with($res);
     }
 
-    public function deleteData(Request $request,$id){
+    public function deleteData(Request $request, $id)
+    {
         // return $id;
         $delete = '';
-        if(isset($request->table_name)){
-           $delete = DB::table($request->table_name)->where('id',$id)->delete();
+        if (isset($request->table_name)) {
+            $delete = DB::table($request->table_name)->where('id', $id)->delete();
         }
 
-        if($delete!=''){
+        if ($delete != '') {
             $res['status'] = 1;
             $res['message'] = "Data Deleted Successfully";
-        }
-        else{
+        } else {
             $res['status'] = 0;
             $res['message'] =  "Something went wrong !";
         }

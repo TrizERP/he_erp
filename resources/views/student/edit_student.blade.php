@@ -143,7 +143,7 @@ br {
                                             <input type="text" id='father_name' name="father_name" value="{{ $student_data->father_name }}" class="form-control">
                                         </div>
                                         <div class="col-md-4 form-group">
-                                            <label>Mobile</label>
+                                            <label>{{App\Helpers\get_string('mobile','request')}}</label>
                                             <input type="text" id='mobile' required  pattern="[1-9]{1}[0-9]{9}" name="mobile" value="{{ $student_data->mobile }}" class="form-control">
                                         </div>
                                         <div class="col-md-4 form-group">

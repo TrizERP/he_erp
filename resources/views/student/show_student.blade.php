@@ -44,7 +44,7 @@
                         </div>
                     </div>
                     <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">Mobile</label>
+                        <label class="box-title after-none mb-0">{{App\Helpers\get_string('mobile','request')}}</label>
                         <input type="text" name="mobile" value="@if(isset($data['mobile'])) {{$data['mobile']}} @endif" class="form-control">
                     </div>
                     <div class="col-md-4 form-group">
@@ -102,7 +102,7 @@
                                     <th>{{App\Helpers\get_string('standard','request')}}</th>
                                     <th>{{App\Helpers\get_string('division','request')}}</th>
                                     <th>Gender</th>
-                                    <th>Mobile</th>
+                                    <th>{{App\Helpers\get_string('mobile','request')}}</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
