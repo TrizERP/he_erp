@@ -886,7 +886,7 @@
                                                     <th>Exp.Type</th>
                                                     <th>Joining Date</th>
                                                     <th>Leaving Date</th>
-                                                    <th>Experirnce</th>
+                                                    <th>Experience</th>
                                                     <th>Remarks</th>
                                                     <th class="text-left">Action</th>
                                                 </tr>
@@ -918,10 +918,10 @@
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        <input type="date" name="joining_date[]" value="@if(isset($experience_detail->joining_date)){{$experience_detail->joining_date}}@endif" class="form-control mb-0" data-new="1">
+                                                        <input type="text" class="form-control mydatepicker" name="joining_date[]" placeholder="dd/mm/yyyy" value="@if(isset($experience_detail->joining_date)){{$experience_detail->joining_date}}@endif" autocomplete="off" data-new="1"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
-                                                        <input type="date" name="leaving_date[]" value="@if(isset($experience_detail->leaving_date)){{$experience_detail->leaving_date}}@endif" class="form-control mb-0" data-new="1" onchange="validateDates(this)">
+                                                        <input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" value="@if(isset($experience_detail->leaving_date)){{$experience_detail->leaving_date}}@endif" autocomplete="off" data-new="1" onchange="validateDates(this)"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="experience[]" value="@if(isset($experience_detail->experience)){{$experience_detail->experience}}@endif" class="form-control mb-0" data-new="1">
@@ -963,10 +963,10 @@
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        <input type="date" name="joining_date[]" class="form-control mb-0" data-new="1" onchange=" (this)">
+                                                        <input type="text" class="form-control mydatepicker" name="joining_date[]" placeholder="dd/mm/yyyy" autocomplete="off" data-new="1" onchange=" (this)"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
-                                                        <input type="date" name="leaving_date[]" class="form-control mb-0" data-new="1" onchange="validateDates(this)">
+                                                        <input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" autocomplete="off" data-new="1" onchange="validateDates(this)"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="experience[]" class="form-control mb-0" data-new="1">
@@ -2172,9 +2172,9 @@
 
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Institutional Name</label><input type="text" name="institutional_name[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Designation Name</label><input type="text" name="designation_name[]" value="" class="form-control mb-0"/></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Exp. Type</label> <select name="experience_type[]" id="experience_type" class="form-control mb-0"  data-new="1"><option value="">N/A</option><option value="School Exp.">School Exp.</option><option value="Diploma Exp.">Diploma Exp.</option><option value="Degree Exp."></option><option value="Industrial Exp.">Industrial Exp.</option></select></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Joining Date</label><input type="date" name="joining_date[]" value="" class="form-control mb-0"/></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Leaving Date</label><input type="text" name="leaving_date[]" value="" class="form-control mb-0"/></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Exp. Type</label> <select name="experience_type[]" id="experience_type" class="form-control mb-0" data-new="1"><option value="">N/A</option><option value="School Exp.">School Exp.</option><option value="Diploma Exp.">Diploma Exp.</option><option value="Degree Exp."></option><option value="Industrial Exp.">Industrial Exp.</option></select></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Joining Date</label><input type="text" class="form-control mydatepicker" name="joining_date[]" placeholder="dd/mm/yyyy" value="" autocomplete="off" data-new="1"/><span class="input-group-addon"><i class="icon-calender"></i></span></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Leaving Date</label><input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" value="" autocomplete="off" data-new="1"/><span class="input-group-addon"><i class="icon-calender"></i></span></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Experience</label><input type="text" name="experience[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Remarks</label><input type="text" name="remarks[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-1 mt-3"><a href="javascript:void(0);" onclick="removeNewRowWithChainExperience();" class="d-inline btn btn-danger"><i class="mdi mdi-minus"></i></a></div></div>';
@@ -2311,7 +2311,7 @@ htmlcontent += '</select>';
 htmlcontent += '</div></div>';
 
         // htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">No of Books Published</label><input type="text" name="no_of_books_published[]" value="" class="form-control mb-0"/></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2">';
+htmlcontent += '<div class="col-md-2 my-2">';
 htmlcontent += '<div class="form-group mb-0">';
 htmlcontent += '<label for="control-label">No of Books Published</label>';
 htmlcontent += '<select name="no_of_books_published[]" class="form-control mb-0" data-new="1">';
@@ -2403,7 +2403,7 @@ htmlcontent += '</div></div>';
 
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Increment Date Type</label><input type="date" name="increment_date[]" value="" class="form-control mb-0"/></div></div>';
         // htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Salary Mode</label><input type="text" name="salary_mode[]" value="" class="form-control mb-0"/></div></div>';
-          htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Salary Mode</label><select name="salary_mode[]" value="" class="form-control mb-0"><option value="">N/A</option><option value="1">Cash</option><option value="2">Cheque</option><option value="3">DD</option><option value="4">Online Transfer</option></select></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Salary Mode</label><select name="salary_mode[]" value="" class="form-control mb-0"><option value="">N/A</option><option value="1">Cash</option><option value="2">Cheque</option><option value="3">DD</option><option value="4">Online Transfer</option></select></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Basic</label><input type="text" name="basic[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Grade Pay</label><input type="text" name="grade_pay[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Basic Pay</label><input type="text" name="basic_pay[]" value="" class="form-control mb-0"/></div></div>';
@@ -2590,13 +2590,12 @@ htmlcontent += '</div></div>';
 
         if (!joiningDate) {
             alert('Please select the joining date first.');
-            $(leavingInput).val(''); // Optional: reset the leaving date
+            $(leavingInput).val('');
             return;
         }
 
-        // Calculate experience in years
-        var start = new Date(joiningDate);
-        var end = new Date(leavingDate);
+        var start = parseDMY(joiningDate);
+        var end = parseDMY(leavingDate);
 
         if (start > end) {
             alert('Leaving date cannot be before joining date.');
@@ -2609,17 +2608,16 @@ htmlcontent += '</div></div>';
         var months = end.getMonth() - start.getMonth();
         var days = end.getDate() - start.getDate();
 
-        // Adjust months and years if necessary
         if (days < 0) {
             months--;
-            days += new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(); // Adjust days
+            days += new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
         }
         if (months < 0) {
             years--;
-            months += 12; // Adjust months
+            months += 12;
         }
 
-        var experience = years + '.' + months; // Combine years and months
+        var experience = years + '.' + months; // e.g. 0.0, 0.1, 1.5 etc.
         $row.find('input[name="experience[]"]').val(experience);
     }
 
@@ -2649,6 +2647,11 @@ htmlcontent += '</div></div>';
         var diffDays = (Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1); // Calculate difference in days
 
         $row.find('input[name="days[]"]').val(diffDays);
+    }
+    function parseDMY(dateStr) {
+        // Expecting DD-MM-YYYY
+        var parts = dateStr.split('-');
+        return new Date(parts[2], parts[1] - 1, parts[0]); // new Date(year, monthIndex, day)
     }
 
     function deleteData(delete_type,table_name,dataId){

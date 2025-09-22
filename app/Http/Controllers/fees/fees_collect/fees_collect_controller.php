@@ -1802,7 +1802,6 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $html_content = str_replace(htmlspecialchars("<<bank_branch>>"),$bank_branch,$html_content);
             $html_content = str_replace(htmlspecialchars("<<payment_mode_type>>"),$payment_modes,$html_content);
 
-            // $studentDetailsArr = SearchStudent("", "", "", $sub_institute_id, $syear , "",  "", "", "", "", $_REQUEST['student_id'] , "",""); 
             $studentArr[]=$_REQUEST['student_id'];
             $studentDetailsArr = getStudents($studentArr);
             // echo "<pre>";print_r($studentDetailsArr);exit;

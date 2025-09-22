@@ -50,8 +50,8 @@
                         <input type="text" id="uniqueid" placeholder="{{App\Helpers\get_string('uniqueid')}}" name="uniqueid" class="form-control" @if(isset($data['uniqueid'])) value="{{$data['uniqueid']}}" @endif>
                     </div>
                     <div class="col-md-4 form-group">
-                        <label>Mobile</label>
-                        <input type="text" id="mobile" placeholder="Mobile" name="mobile" class="form-control" @if(isset($data['mobile'])) value="{{$data['mobile']}}" @endif>
+                        <label>Father Mobile</label>
+                        <input type="text" id="mobile" placeholder="Father Mobile" name="mobile" class="form-control" @if(isset($data['mobile'])) value="{{$data['mobile']}}" @endif>
                     </div>                        
                     <div class="col-md-4 form-group">
                         <label>{{App\Helpers\get_string('grno')}}<i class="mdi mdi-lead-pencil"></i></label>
@@ -64,7 +64,7 @@
                         <div class="d-inline">
                             <input type="checkbox" name="including_inactive" value="Yes"
                                    @if(isset($data['including_inactive'])) @if($data['including_inactive'] == 'Yes') checked @endif @endif>
-                            <span>Including In-active Students</span>
+                            <span>In-active Students</span>
                         </div>
                     </div>
                     <div class="col-md-12 form-group">
@@ -95,7 +95,7 @@
                             <th>{{ App\Helpers\get_string('standard')}}</th>
                             <th>{{ App\Helpers\get_string('division')}}</a></th>                            
                             <th>{{ App\Helpers\get_string('studentquota')}}</th>
-                            <th>Mobile</th>
+                            <th>Father Mobile</th>
                             <th>{{App\Helpers\get_string('uniqueid')}}</th>
                             <th>Remaining Fees</th>
                             <th>Action</th>

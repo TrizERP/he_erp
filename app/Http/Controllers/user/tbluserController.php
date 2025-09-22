@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use function App\Helpers\is_mobile;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class tbluserController extends Controller
 {
@@ -228,7 +229,7 @@ class tbluserController extends Controller
         $subject_data_selected = $editData['subject_ids'];
 
         $past_educations = DB::table('tbluser_past_educations')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
-        $experience_details = DB::table('tbluser_experience_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
+        $experience_details = DB::table('tbluser_experience_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->orderBy('joining_date')->get();
         $training_details = DB::table('tbluser_training_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $professional_details = DB::table('tbluser_professional_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $salary_details = DB::table('tbluser_salary_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
@@ -459,21 +460,30 @@ class tbluserController extends Controller
                 $res['success'] = "Data Added Succesfully";
 
                 return redirect()->back()->with($res);
-                // echo "<pre>";print_r($prepareData);exit;
+                //echo "<pre>";print_r($prepareData);exit;
                 // exit;
                 // DB::table('tbluser_past_educations')->whereNotIn('id', $request->get('past_education_id'))->where([['user_id', $request->user_id], ['sub_institute_id', $sub_institute_id]])->delete();
             } else if ($request->dataType == 'experience_detail') {
+                //echo "<pre>";print_r($request->teching_type);exit;
                 foreach ($request->teching_type as $key => $teching_type) {
+                    $joiningDateRaw = $request->get('joining_date')[$key] ?? null;
+                    $leavingDateRaw = $request->get('leaving_date')[$key] ?? null;
+
                     $prepareData = [
-                        'user_id' => $request->user_id,
-                        'teching_type' => $teching_type,
-                        'institutional_name' => $request->get('institutional_name')[$key] ?? '',
-                        'designation_name' => $request->get('designation_name')[$key] ?? '',
-                        'experience_type' => $request->get('experience_type')[$key] ?? '',
-                        'joining_date' => $request->get('joining_date')[$key] ?? '',
-                        'leaving_date' => $request->get('leaving_date')[$key] ?? '',
-                        'experience' => isset($request->get('experience')[$key]) ? $request->get('experience')[$key] : 0,
-                        'sub_institute_id' => $sub_institute_id,
+                        'user_id'           => $request->user_id,
+                        'teching_type'      => $teching_type,
+                        'institutional_name'=> $request->get('institutional_name')[$key] ?? '',
+                        'designation_name'  => $request->get('designation_name')[$key] ?? '',
+                        'experience_type'   => $request->get('experience_type')[$key] ?? '',
+                        'joining_date'      => $joiningDateRaw 
+                                                ? Carbon::createFromFormat('d-m-Y', $joiningDateRaw)->format('Y-m-d') 
+                                                : null,
+                        'leaving_date'      => $leavingDateRaw 
+                                                ? Carbon::createFromFormat('d-m-Y', $leavingDateRaw)->format('Y-m-d') 
+                                                : null,
+                        'experience'        => $request->get('experience')[$key] ?? 0,
+                        'remarks'           => $request->get('remarks')[$key] ?? '',
+                        'sub_institute_id'  => $sub_institute_id,
                     ];
                     if (isset($request->get('experience_detail_id')[$key]) && $request->get('experience_detail_id')[$key] != 0) {
                         DB::table('tbluser_experience_details')->where('id', $request->get('experience_detail_id')[$key])->update($prepareData);
