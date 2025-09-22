@@ -139,7 +139,6 @@ class send_sms_report_controller extends Controller
             $query->whereDate('s.created_on', '<=', $request->input('to_date'));
         })
         ->select(
-            DB::raw('ROW_NUMBER() OVER (ORDER BY s.created_on DESC) as sr_no'),
             'u.enrollment_no',
             'u.first_name',
             'u.middle_name',
@@ -159,7 +158,7 @@ class send_sms_report_controller extends Controller
 
         // Step 4: Prepare response array
         foreach ($reportData as $id => $arr) {
-            $responce_arr[$id]['sr.no']              = $arr->sr_no;//$id + 1;
+            $responce_arr[$id]['sr.no']              = $id + 1;
             $responce_arr[$id]['enrollment_no']      = $arr->enrollment_no ?? '';
             $responce_arr[$id]['name']               = ($arr->first_name ?? '') . ' ' . ($arr->middle_name ?? '') . ' ' . ($arr->last_name ?? '');
             $responce_arr[$id]['syear']              = $arr->syear ?? '';
