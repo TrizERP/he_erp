@@ -216,182 +216,110 @@ class marks_entry_controller extends Controller
      * @throws NotFoundExceptionInterface
      * @return Response
      */
-    public function create(Request $request)
-    {
-        $where = [
-            'id' => $_REQUEST["exam"],
-        ];
-        $working_day = exam_creation::select('points')
-            ->where($where)->get()->toArray();
+public function create(Request $request)
+{
+    // Get exam creations based on exam or exam_master
+    $exam_creations = exam_creation::select('id', 'points')
+        ->when($request->exam != '', function($q) use($request) {
+            $q->where('id', $request->exam);
+        }, function($q) use($request) {
+            $q->where('exam_id', $request->exam_master);
+        })->get();
 
-        $student_data = SearchStudent($_REQUEST['grade'], $_REQUEST['standard'], $_REQUEST['division']);
-        $grd_data = $this->getGreadData($_REQUEST['standard']);
-       
-        
-        //marks_entry
-        $type = $request->input('type');
+    $student_data = SearchStudent($request->grade, $request->standard, $request->division);
+    $grd_data = $this->getGreadData($request->standard);
 
-        $where = [
-            'exam_id'          => $_REQUEST["exam"],
-            'sub_institute_id' => session()->get('sub_institute_id'),
-        ];
+    // Get marks entries
+    $marks_entries = marks_entry::where('sub_institute_id', session()->get('sub_institute_id'))
+        ->when($request->exam != '', function($q) use($request) {
+            $q->where('exam_id', $request->exam); 
+        })->get();
 
-        $marks_entry = marks_entry::where($where)->get()->toArray();
+    // Build response array
+    $responce_arr = [
+        'term_id' => $request->term,
+        'standard' => $request->standard,
+        'grade' => $request->grade,
+        'division' => $request->division,
+        'subject_dd' => $this->getSubjectDD($request->standard),
+        'subject' => $request->subject,
+        'exam_master' => $request->exam_master,
+        'exam_dd' => $this->getExamDD($request->term, $request->standard, $request->subject, $request->exam_master),
+        'exam' => $request->exam,
+        'grd_data' => $grd_data
+    ];
 
-        $responce_arr['term_id'] = $_REQUEST["term"];
-        $responce_arr['standard'] = $_REQUEST["standard"];
-        $responce_arr['grade'] = $_REQUEST['grade'];
-        $responce_arr['division'] = $_REQUEST['division'];
-        $responce_arr['subject_dd'] = $this->getSubjectDD($_REQUEST["standard"]);
-        $responce_arr['subject'] = $_REQUEST['subject'];
-        $responce_arr['exam_master'] = $_REQUEST['exam_master']; // added by uma on 20-04-2025
-        $responce_arr['exam_dd'] = $this->getExamDD($_REQUEST["term"], $_REQUEST["standard"], $_REQUEST['subject'],$_REQUEST['exam_master']);
-        $responce_arr['exam'] = $_REQUEST['exam'];
-        $responce_arr['grd_data'] = $grd_data;
+    // Check approval status
+    $approve_status = [
+        "subject_id" => $request->subject,
+        "standard_id" => $request->standard,
+        "division_id" => $request->division,
+        "exam_id" => $request->exam,
+        "term_id" => $request->term,
+        "sub_institute_id" => session()->get('sub_institute_id'),
+        "module_name" => "result_mark"
+    ];
+    
+    $check_approve = DB::table('result_exam_approve')->where($approve_status)->first();
+    if(isset($check_approve->created_by)) {
+        $approved_user = DB::table('tbluser')
+            ->where('id', $check_approve->created_by)
+            ->where('status', 1)
+            ->first();
+    }
+    
+    $responce_arr['approve_status'] = $check_approve;
+    $responce_arr['approved_user'] = $approved_user ?? '';
 
-        $approve_status=[
-            "subject_id"=>$_REQUEST['subject'],
-            "standard_id"=>$_REQUEST["standard"],
-            "division_id"=>$_REQUEST['division'],
-            "exam_id"=>$_REQUEST['exam'],
-            "term_id"=>$_REQUEST["term"],      
-            "sub_institute_id"=>session()->get('sub_institute_id'),      
-            "module_name"=>"result_mark",
-        ];
-        $check_approve = DB::table('result_exam_approve')->where($approve_status)->first();
-        if(isset($check_approve->created_by)){
-            $approved_user = DB::table('tbluser')->where('id',$check_approve->created_by)->where('status',1)->first();   // 23-04-24 by uma
-        }
-        $responce_arr['approve_status'] = $check_approve;
-        $responce_arr['approved_user'] = $approved_user ?? '';        
-        $attendance_data = "";
-        if (! empty($student_data)) {
-            foreach ($student_data as $id => $arr) {
-                $temp_arr = [];
-                foreach ($marks_entry as $data_id => $data_arr) {
-                    if ($data_arr['student_id'] == $arr['student_id']) {
-                        $temp_arr = $data_arr;
-                    }
-                }
+    // Process student data
+    if (!empty($student_data)) {
+        foreach ($student_data as $student) {
+            $student_id = $student['student_id'];
+            $responce_arr['stu_data'][$student_id] = [];
+            $responce_arr['stu_data'][$student_id]['enrollment_no'] = $student['enrollment_no'];
+            $responce_arr['stu_data'][$student_id]['name'] = $student['first_name'].' '.$student['middle_name'].' '.$student['last_name'];
+            // Check if student has elective subject
+            $has_elective = DB::table("sub_std_map as sm")
+                ->where([
+                    "sm.sub_institute_id" => session()->get('sub_institute_id'),
+                    "sm.standard_id" => $request->standard,
+                    "sm.subject_id" => $request->subject,
+                    "sm.allow_grades" => 'Yes',
+                    "sm.elective_subject" => 'Yes'
+                ])->exists();
 
-                $responce_arr['term_id'] = $_REQUEST["term"];
-                $responce_arr['standard'] = $_REQUEST["standard"];
-                $responce_arr['grade'] = $_REQUEST['grade'];
-                $responce_arr['division'] = $_REQUEST['division'];
-                $responce_arr['subject_dd'] = $this->getSubjectDD($_REQUEST["standard"]);
-                $responce_arr['subject'] = $_REQUEST['subject'];
-                $responce_arr['exam_master'] = $_REQUEST['exam_master']; // added by uma on 20-04-2025
-                $responce_arr['exam_master'] = $_REQUEST['exam_master']; // added by uma on 20-04-2025
-                $responce_arr['exam_dd'] = $this->getExamDD($_REQUEST["term"], $_REQUEST["standard"], $_REQUEST['subject'],$_REQUEST['exam_master']);
-                $responce_arr['exam'] = $_REQUEST['exam'];
-                $responce_arr['grd_data'] = $grd_data;
+            if ($has_elective) {
+                $is_opted = DB::table("student_optional_subject")
+                    ->where([
+                        "student_id" => $student_id,
+                        "subject_id" => $request->subject,
+                        "syear" => session()->get('syear')
+                    ])->exists();
 
-                $get_elective_subjects = DB::table("sub_std_map as sm")
-                    ->selectRaw('sm.subject_id,sm.standard_id,sm.allow_grades,sm.elective_subject,sm.display_name')
-                    ->where("sm.sub_institute_id", "=", session()->get('sub_institute_id'))
-                    ->where("sm.standard_id", "=", $_REQUEST["standard"])
-                    ->where("sm.subject_id", "=", $_REQUEST["subject"])
-                    ->where("sm.allow_grades", "=", 'Yes')
-                    ->get()->toArray();
-
-                $get_elective_subjects = json_decode(json_encode($get_elective_subjects), true);
-                // $check_map_student = 0;
-                if (!empty($get_elective_subjects) && $get_elective_subjects[0]['elective_subject'] == 'Yes') {
-                    $check_optional_subject_with_student = DB::table("student_optional_subject")
-                        ->where("student_id", "=", $arr['student_id'])
-                        ->where("subject_id", "=", $_REQUEST['subject'])
-                        ->where("syear", "=", session()->get('syear'))
-                        ->get()->toArray();
-
-                    $check_optional_subject_with_student = json_decode(json_encode($check_optional_subject_with_student),
-                        true);
-
-                    if (count($check_optional_subject_with_student) != 0) {
-                        // $check_map_student = 1;
-                        $responce_arr['stu_data'][$id]['sr.no'] = $id + 1;
-                        $responce_arr['stu_data'][$id]['name'] = $arr['first_name'].' '.$arr['middle_name'].' '.$arr['last_name'];
-                        $responce_arr['stu_data'][$id]['roll_no'] = $arr['roll_no'];
-
-                        if (count($temp_arr) > 0) {
-                            //START BY RAJESH REMOVE DECIMAL .00
-                            if ($temp_arr["points"] == '-1') {
-                                $points = '*';
-                            } elseif (strpos($temp_arr["points"], '.')) {
-                                $points = rtrim(rtrim($temp_arr["points"], '0'), '.');
-                            } else {
-                                $points = $temp_arr["points"];
-                            }
-                            //END BY RAJESH REMOVE DECIMAL .00
-
-                            if ($temp_arr['is_absent'] == "AB") {
-                                $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-                            }elseif($temp_arr['is_absent'] == "N.A."){
-                                $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-
-                            }elseif($temp_arr['is_absent'] == "EX"){
-                                $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-                                
-                            }else {
-                                $responce_arr['stu_data'][$id]['points'] = $points;
-                            }
-                            $responce_arr['stu_data'][$id]['outof'] = $working_day[0]["points"];
-                            $responce_arr['stu_data'][$id]['per'] = $temp_arr["per"];
-                            $responce_arr['stu_data'][$id]['grade'] = $temp_arr["grade"];
-                            $responce_arr['stu_data'][$id]['comment'] = $temp_arr["comment"];
-                        } else {
-                            $responce_arr['stu_data'][$id]['points'] = 0;
-                            $responce_arr['stu_data'][$id]['outof'] = $working_day[0]["points"];
-                            $responce_arr['stu_data'][$id]['per'] = 0;
-                            $responce_arr['stu_data'][$id]['grade'] = "-";
-                            $responce_arr['stu_data'][$id]['comment'] = "";
-                        }
-                        $responce_arr['stu_data'][$id]['student_id'] = $arr['student_id'];
-                    }
-
-                } else {
-                    // $check_map_student = 0;
-                    $responce_arr['stu_data'][$id]['sr.no'] = $id + 1;
-                    $responce_arr['stu_data'][$id]['name'] = $arr['first_name'].' '.$arr['middle_name'].' '.$arr['last_name'];
-                    $responce_arr['stu_data'][$id]['roll_no'] = $arr['roll_no'];
-
-                    if (count($temp_arr) > 0) {
-                        //START BY RAJESH REMOVE DECIMAL .00
-                        if ($temp_arr["points"] == '-1') {
-                            $points = '*';
-                        } elseif (strpos($temp_arr["points"], '.')) {
-                            $points = rtrim(rtrim($temp_arr["points"], '0'), '.');
-                        } else {
-                            $points = $temp_arr["points"];
-                        }
-                        //END BY RAJESH REMOVE DECIMAL .00
-
-                        if ($temp_arr['is_absent'] == "AB") {
-                            $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-                        }elseif($temp_arr['is_absent'] == "N.A."){
-                             $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-                        }elseif($temp_arr['is_absent'] == "EX"){
-                             $responce_arr['stu_data'][$id]['points'] = $temp_arr['is_absent'];
-                        }else {
-                            $responce_arr['stu_data'][$id]['points'] = $points;
-                        }
-                        $responce_arr['stu_data'][$id]['outof'] = $working_day[0]["points"];
-                        $responce_arr['stu_data'][$id]['per'] = $temp_arr["per"];
-                        $responce_arr['stu_data'][$id]['grade'] = $temp_arr["grade"];
-                        $responce_arr['stu_data'][$id]['comment'] = $temp_arr["comment"];
-                    } else {
-                        $responce_arr['stu_data'][$id]['points'] = 0;
-                        $responce_arr['stu_data'][$id]['outof'] = $working_day[0]["points"];
-                        $responce_arr['stu_data'][$id]['per'] = 0;
-                        $responce_arr['stu_data'][$id]['grade'] = "-";
-                        $responce_arr['stu_data'][$id]['comment'] = "";
-                    }
-                    $responce_arr['stu_data'][$id]['student_id'] = $arr['student_id'];
+                if (!$is_opted) {
+                    continue;
                 }
             }
-        }
 
-        return is_mobile($type, "result/marks_entry/add", $responce_arr, "view");
+            // Map exam results for student
+            foreach ($exam_creations as $exam) {
+                $marks = $marks_entries->where('student_id', $student_id)
+                    ->where('exam_id', $exam->id)
+                    ->first();
+                $responce_arr['stu_data'][$student_id][$exam->id] = [
+                    'points' => $marks ? $marks->points : 0,
+                    'outof' => $exam->points,
+                    'is_absent' => $marks ? $marks->is_absent : null,
+                    'per' => $marks ? $marks->per : 0,
+                    'grade' => $marks ? $marks->grade : '-',
+                    'comment' => $marks ? $marks->comment : ''
+                ];
+            }
+        }
     }
+    // return $responce_arr['stu_data'];
+    return is_mobile($request->input('type'), "result/marks_entry/add", $responce_arr, "view");
+}
 
     public function getSubjectDD($std)
     {
@@ -423,7 +351,7 @@ class marks_entry_controller extends Controller
         return DB::table('result_create_exam as re')
             ->join('lo_category as lc', 'lc.id', '=', 're.co_id')
             ->where($where)
-            ->pluck('lc.title', 're.id');
+            ->pluck('re.title', 're.id');
     }
 
     public function get_result(Request $request)
@@ -593,142 +521,135 @@ class marks_entry_controller extends Controller
      * @throws NotFoundExceptionInterface
      * @return Response
      */
-    public function store(Request $request)
-    {
+public function store(Request $request)
+{
+    $sub_institute_id = session()->get('sub_institute_id');
+    $all_data = [];
 
-        $sub_institute_id = session()->get('sub_institute_id');
-        $all_data = [];
+    if (isset($_REQUEST["type"]) && $_REQUEST["type"] == "API") {
+        $sub_institute_id = $_REQUEST["sub_institute_id"];
+        $all_data = json_decode($_REQUEST["data"], 1);
+    } else {
+        $all_data = $_REQUEST['values'];
+    }
 
-        if (isset($_REQUEST["type"]) && $_REQUEST["type"] == "API") {
-            $sub_institute_id = $_REQUEST["sub_institute_id"];
-            $all_data = json_decode($_REQUEST["data"], 1);
-        } else {
-            $all_data = $_REQUEST['values'];
-        }
-
-        foreach ($all_data as $student_id => $arr) {
-           $check = marks_entry::where([
+    foreach ($all_data as $student_id => $exam_data) {
+        foreach ($exam_data as $exam_id => $arr) {
+            $check = marks_entry::where([
                 'sub_institute_id' => $sub_institute_id,
-                'student_id'       => $student_id,
-                'exam_id'          => $arr['exam_id'],
+                'student_id' => $student_id,
+                'exam_id' => $exam_id,
             ])->get()->toArray();
-            if(!empty($check) && $check>0){
-                if ($arr['points'] != '') {
-                if (preg_match("/[a-z]/i", $arr['points']) ) {
-                    if (strtoupper($arr['points']) == "AB" || strtoupper($arr['points']) == "N.A." || strtoupper($arr['points']) == "EX") {
-                    $data =[
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                        'points'           => 0,
-                        'per'              => 0,
-                        'grade'            => $arr['grade'],
-                        'comment'          => $arr['comment'],
-                        'is_absent'        => $arr['points'],
-                        'sub_institute_id' => $sub_institute_id,
-                    ]; 
-                }else{
-                    $data =[
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                        'points'           => 0,
-                        'per'              => 0,
-                        'grade'            => $arr['grade'],
-                        'comment'          => $arr['comment'],
-                        'is_absent'        => "AB",
-                        'sub_institute_id' => $sub_institute_id,
-                    ];   
-                    }
-                    marks_entry::where([
-                        'sub_institute_id' => $sub_institute_id,
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                    ])
-                    ->update($data);
-                    
-                }else{
-                    $arr['per'] = rtrim($arr['per'], '%');
-                    $data =[
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                        'points'           => $arr['points'],
-                        'per'              => $arr['per'],
-                        'grade'            => $arr['grade'],
-                        'is_absent'        => '',
-                        'comment'          => $arr['comment'],
-                        'sub_institute_id' => $sub_institute_id,
-                    ];
-                    marks_entry::where([
-                        'sub_institute_id' => $sub_institute_id,
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                    ])
-                    ->update($data);
-                }
-            }
-            $res = [
-                "status_code" => 1,
-                "message"     => "Data Updated",
-                "class"       => "success",
-            ];
-            }else{
-                
-            if ($arr['points'] != '') {
-                if (preg_match("/[a-z]/i", $arr['points'])) {
-                    if (strtoupper($arr['points']) == "AB" || strtoupper($arr['points']) == "N.A." || strtoupper($arr['points']) == "EX") {
 
+            if (!empty($check) && $check > 0) {
+                if ($arr['points'] != '') {
+                    if (preg_match("/[a-z]/i", $arr['points'])) {
+                        if (strtoupper($arr['points']) == "AB" || strtoupper($arr['points']) == "N.A." || strtoupper($arr['points']) == "EX") {
+                            $data = [
+                                'student_id' => $student_id,
+                                'exam_id' => $exam_id,
+                                'points' => 0,
+                                // 'per' => 0,
+                                // 'grade' => $arr['grade'],
+                                // 'comment' => $arr['comment'],
+                                'is_absent' => $arr['points'],
+                                'sub_institute_id' => $sub_institute_id,
+                            ];
+                        } else {
+                            $data = [
+                                'student_id' => $student_id,
+                                'exam_id' => $exam_id,
+                                'points' => 0,
+                                // 'per' => 0,
+                                // 'grade' => $arr['grade'],
+                                // 'comment' => $arr['comment'],
+                                'is_absent' => "AB",
+                                'sub_institute_id' => $sub_institute_id,
+                            ];
+                        }
+                        marks_entry::where([
+                            'sub_institute_id' => $sub_institute_id,
+                            'student_id' => $student_id,
+                            'exam_id' => $exam_id,
+                        ])->update($data);
+                    } else {
+                        // $arr['per'] = rtrim($arr['per'], '%');
+                        $data = [
+                            'student_id' => $student_id,
+                            'exam_id' => $exam_id,
+                            'points' => $arr['points'],
+                            'is_absent' => '',
+                            // 'per' => $arr['per'],
+                            // 'grade' => $arr['grade'],
+                            // 'comment' => $arr['comment'],
+                            'sub_institute_id' => $sub_institute_id,
+                        ];
+                        marks_entry::where([
+                            'sub_institute_id' => $sub_institute_id,
+                            'student_id' => $student_id,
+                            'exam_id' => $exam_id,
+                        ])->update($data);
+                    }
+                }
+                $res = [
+                    "status_code" => 1,
+                    "message" => "Data Updated",
+                    "class" => "success",
+                ];
+            } else {
+                if ($arr['points'] != '') {
+                    if (preg_match("/[a-z]/i", $arr['points'])) {
+                        if (strtoupper($arr['points']) == "AB" || strtoupper($arr['points']) == "N.A." || strtoupper($arr['points']) == "EX") {
                             $data = new marks_entry([
                                 'student_id' => $student_id,
-                                'exam_id' => $arr['exam_id'],
+                                'exam_id' => $exam_id,
                                 'points' => 0,
-                                'per' => 0,
-                                'grade' => "-",
-                                'comment' => $arr['comment'],
-                                'is_absent'=> $arr['points'],
+                                // 'per' => 0,
+                                // 'grade' => "-",
+                                // 'comment' => $arr['comment'],
+                                'is_absent' => $arr['points'],
                                 'sub_institute_id' => $sub_institute_id,
                             ]);
                             $data->save();
-                    }
-                  else{
+                        } else {
+                            $data = new marks_entry([
+                                'student_id' => $student_id,
+                                'exam_id' => $exam_id,
+                                'points' => 0,
+                                // 'per' => 0,
+                                // 'grade' => '-',
+                                // 'comment' => $arr['comment'],
+                                'is_absent' => "AB",
+                                'sub_institute_id' => $sub_institute_id,
+                            ]);
+                            $data->save();
+                        }
+                    } else {
+                        // $arr['per'] = rtrim($arr['per'], '%');
                         $data = new marks_entry([
                             'student_id' => $student_id,
-                            'exam_id' => $arr['exam_id'],
-                            'points' => 0,
-                            'per' => 0,
-                            'grade' => '-',
-                            'comment' => $arr['comment'],
-                            'is_absent' => "AB",
+                            'exam_id' => $exam_id,
+                            'points' => $arr['points'],
+                            // 'per' => $arr['per'],
+                            // 'grade' => $arr['grade'],
+                            // 'comment' => $arr['comment'],
                             'sub_institute_id' => $sub_institute_id,
                         ]);
                         $data->save();
                     }
-                } else {
-                    $arr['per'] = rtrim($arr['per'], '%');
-                    $data = new marks_entry([
-                        'student_id'       => $student_id,
-                        'exam_id'          => $arr['exam_id'],
-                        'points'           => $arr['points'],
-                        'per'              => $arr['per'],
-                        'grade'            => $arr['grade'],
-                        'comment'          => $arr['comment'],
-                        'sub_institute_id' => $sub_institute_id,
-                    ]); //'is_absent' => "-",
-                    $data->save();
                 }
+                $res = [
+                    "status_code" => 1,
+                    "message" => "Data Saved",
+                    "class" => "success",
+                ];
             }
-            $res = [
-                "status_code" => 1,
-                "message"     => "Data Saved",
-                "class"       => "success",
-            ];
         }
     }
-     
 
-        $type = $request->input('type');
-
-        return is_mobile($type, "marks_entry.index", $res, "redirect");
-    }
-
+    $type = $request->input('type');
+    return is_mobile($type, "marks_entry.index", $res, "redirect");
+}
     // marks approval report
     public function show(Request $request){
         if (session()->has('data')) { // check if it exists

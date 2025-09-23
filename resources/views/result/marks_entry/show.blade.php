@@ -40,7 +40,7 @@
                         {{-- Exam Selection --}}
                         <div class="col-md-3 form-group">
                             <label for="exam">Select Exam:</label>
-                            <select name="exam" id="exam" class="form-control" required>
+                            <select name="exam" id="exam" class="form-control">
                                 <option value="">Select</option>
                             </select>
                         </div>
@@ -74,7 +74,7 @@
 
 <script>
     // Set required fields
-    $("#grade, #standard, #division, #subject, #exam").prop('required', true);
+    $("#grade, #standard, #division, #subject").prop('required', true);
     $('#term').change(function () {
         $('#grade').val('');
         resetDropdowns(['#standard','#exam_master','#division','#subject', '#exam']);
