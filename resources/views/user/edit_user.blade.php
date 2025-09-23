@@ -52,8 +52,7 @@
                                 <li class="nav-item"><a href="#section-linemove-5" class="nav-link" aria-selected="false" data-toggle="tab"><span>Professional Details</span></a>
                                 </li>
                                 <li class="nav-item"><a href="#section-linemove-6" class="nav-link" aria-selected="false" data-toggle="tab"><span>Salary Details</span></a></li>
-                                <li class="nav-item"><a href="#section-linemove-7" class="nav-link" aria-selected="false" data-toggle="tab"><span> Staff Document</span></a>
-                                </li>
+                                <li class="nav-item"><a href="#section-linemove-7" class="nav-link" aria-selected="false" data-toggle="tab"><span>Upload Document</span></a></li>
                                 <li class="nav-item"><a href="#section-linemove-8" class="nav-link" aria-selected="false" data-toggle="tab"><span>My Skills & Certifications</span></a></li>
 
                             </ul>
@@ -76,7 +75,8 @@
                         $sub_std_map = $data['sub_std_map'];
                         $professional_details = $data['professional_details'];
                         $salary_details = $data['salary_details'];
-                        $document_details = $data['document_details'];
+                        $documentTypeLists = $data['documentTypeLists'];
+                        $documentLists = $data['documentLists'];
                         $categorties = $data['categorties'];
                         $religions = $data['religions'];
                         $bloodgroups = $data['bloodgroups'];
@@ -2040,80 +2040,7 @@
 
                         </div>
                         <div class="tab-pane p-3" id="section-linemove-7" role="tabpanel">
-                            Staff Document and General Information
-                            <form action="{{ route('edi_tbl_user.store', [ 'id' => isset($data['id']) ? $data['id'] : 0 , 'dataType' => 'document_details'] ) }}"
-                                  method="post" enctype="multipart/form-data">
-                                <input type="hidden" name="user_id" value="{{isset($data['id']) ? $data['id']: 0}}"/>
-                                @csrf
-
-
-                                @foreach($document_details as $document_detail)
-                                    <div class="col-md-12 form-group">
-                                        <div class="addButtonCheckboxDocument">
-                                            <div class="row align-items-center document_detail_id_{{$document_detail->id}}">
-                                                <input type="hidden" name="document_detail_id[]"
-                                                       value="{{$document_detail->id}}">
-                                                <div class="col-md-2 my-2">
-                                                    <div class="form-group mb-0">
-                                                        <label for="control-label">Document Title</label>
-                                                        <input type="text" name="document_title[]"
-                                                               value="@if(isset($document_detail->document_title)){{$document_detail->document_title}}@endif"
-                                                               class="form-control mb-0" data-new="1">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2 my-2">
-                                                    <div class="form-group mb-0">
-                                                        <label for="control-label">File</label>
-                                                        <input type="file" name="new_file[]"
-                                                               class="form-control mb-0" data-new="1">
-                                                        <a href="https://s3-triz.fra1.cdn.digitaloceanspaces.com/public/he_staff_document/{{$document_detail->file}}" target="_blank" style="color:blue">view</a>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-1 mt-3"><a href="javascript:void(0);"
-                                                                              onclick="removeDocument({{$document_detail->id}});"
-                                                                              class="d-inline btn btn-danger"><i
-                                                                class="mdi mdi-minus"></i></a></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                <div class="col-md-12 form-group">
-                                    <div class="addButtonCheckboxDocument">
-                                        <div class="row align-items-center">
-                                            <input type="hidden" name="document_detail_id[]" value="0">
-                                            <div class="col-md-2 my-2">
-                                                <div class="form-group mb-0">
-                                                    <label for="control-label">Document Title</label>
-                                                    <input type="text" name="document_title[]"
-                                                           value=""
-                                                           class="form-control mb-0" data-new="1">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-2 my-2">
-                                                <div class="form-group mb-0">
-                                                    <label for="control-label">File</label>
-                                                    <input type="file" name="file[]"
-                                                           value=""
-                                                           class="form-control mb-0" data-new="1">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-1 mt-3">
-                                                <a href="javascript:void(0);" onclick="addNewRowWithDocument();"
-                                                   class="d-inline-block btn btn-success mr-2"><i
-                                                            class="mdi mdi-plus"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 form-group mt-2">
-                                    <center>
-                                        <input type="submit" name="submit" value="Update" class="btn btn-success">
-                                    </center>
-                                </div>
-
-                            </form>
+                            @include('user.documentModel')
                         </div>
                         <div class="tab-pane p-3" id="section-linemove-8" role="tabpanel">
                             @include('lms.triz_skills')

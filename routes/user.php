@@ -37,6 +37,7 @@ Route::group(['prefix' => 'user', 'middleware' => ['session', 'menu', 'logRoute'
     Route::post('add_user/{id}/edit', [tbluserController::class,'storePastEducation'])->name('edi_tbl_user.store');
 
     Route::get('delete_data/{id}', [tbluserController::class,'deleteData'])->name('deleteData.destroy');
+    Route::post('user_document/{id}',[tbluserController::class, 'addUserDocument'])->name('user_document');
 });
 
 
