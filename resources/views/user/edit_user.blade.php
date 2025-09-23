@@ -500,7 +500,7 @@
                                     </div>
 
                                     <div class="col-md-12 form-group">
-                                        <h4>Report To</h4>
+                                        <h4>Reporting</h4>
                                     </div>
 
                                     <div class="col-md-4 form-group">
