@@ -26,6 +26,7 @@ use function App\Helpers\get_string;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use function App\Helpers\is_mobile;
+use function App\Helpers\getSubCordinates;
 
 class AJAXController extends Controller
 {
