@@ -233,7 +233,6 @@ class tbluserController extends Controller
         $training_details = DB::table('tbluser_training_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $professional_details = DB::table('tbluser_professional_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $salary_details = DB::table('tbluser_salary_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
-        $document_details = DB::table('tbluser_staff_document_details')->where([['user_id', $id], ['sub_institute_id', $sub_institute_id]])->get();
         $sub_std_map = DB::table('sub_std_map')->where(['sub_institute_id' => $sub_institute_id])->get();
 
         if (isset($subject_data_selected)) {
@@ -279,7 +278,12 @@ class tbluserController extends Controller
         $res['professional_details'] = $professional_details;
         $res['training_details'] = $training_details;
         $res['salary_details'] = $salary_details;
-        $res['document_details'] = $document_details;
+        $res['documentTypeLists'] = DB::table('student_document_type')->where('status',1)->where('user_type','staff')->get()->toArray();
+        $res['documentLists'] = DB::table('staff_document')->select('staff_document.*', 'd.document_type')
+        ->join('student_document_type as d', 'd.id', 'staff_document.document_type_id')
+        ->where(['sub_institute_id' => $sub_institute_id, 'user_id' => $id])
+        ->get()
+        ->toArray();
         $res['sub_std_map'] = $sub_std_map;
         $res['employees'] = tbluserModel::where('sub_institute_id', $sub_institute_id)->get();
         $res['job_titles'] = HrmsJobTitle::where('sub_institute_id', $sub_institute_id)->get();
@@ -713,6 +717,46 @@ class tbluserController extends Controller
         }
 
         return redirect()->back()->with($res);
+    }
+
+    function addUserDocument(Request $request,$id){
+        $type = $request->type;
+        $document = $request->document;
+        $doc_type= $request->document_type_id; 
+        $document_title = $request->document_title;
+        $sub_institute_id = session()->get('sub_institute_id');
+        if($type=="API"){
+            $sub_institute_id= $request->sub_institute_id;
+        }
+        $filename='';
+        if($request->hasFile('document')){
+            $file = $request->file('document');
+            $originalname = $file->getClientOriginalName();
+            $name = $id.date('YmdHis');
+            $ext = File::extension($originalname);
+            $file_name = $name.'.'.$ext;
+            Storage::disk('digitalocean')->putFileAs('public/he_staff_document/', $file, $file_name, 'public');
+        }
+
+        $data = [
+            'user_id'          => $id,
+            'document_title'   => $request->get('document_title'),
+            'document_type_id' => $request->get('document_type_id'),
+            'file_name'        => $file_name,
+            'sub_institute_id' => $sub_institute_id,
+            'created_at'       => now(),
+        ];
+
+        $insert = DB::table('staff_document')->insert($data);
+
+        if($insert){
+            $res['success'] = 1;
+            $res['message'] = "Document Added successfully";
+        }else{
+            $res['fail'] = 0;
+            $res['message'] = "Failed to Add Document";
+        }
+        return redirect()->back()->with('success', 'Document updated successfully');
     }
 
     public function deleteData(Request $request, $id)
