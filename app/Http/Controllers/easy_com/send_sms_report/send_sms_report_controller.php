@@ -139,7 +139,7 @@ class send_sms_report_controller extends Controller
             $query->whereDate('s.created_on', '<=', $request->input('to_date'));
         })
         ->select(
-            'u.enrollment_no',
+            DB::raw(($request->input('tbl') == 'parent') ? 'u.enrollment_no' : "'' as enrollment_no"),
             'u.first_name',
             'u.middle_name',
             'u.last_name',

@@ -32,6 +32,10 @@
                 </div>
                 <div class="row">
                     <div class="col-md-4 form-group">
+                        <label class="box-title after-none mb-0">{{App\Helpers\get_string('grno','request')}}</label>
+                        <input type="text" name="gr_no" value="@if(isset($data['gr_no'])) {{$data['gr_no']}} @endif" class="form-control">
+                    </div>
+                    <div class="col-md-4 form-group">
                         <label class="box-title after-none mb-0">Last Name</label>
                         <div class = "ui-widget">
                             <input type="text" name="last_name" id="last_name" value="@if(isset($data['last_name'])) {{$data['last_name']}} @endif" class="form-control" autocomplete="off">
@@ -43,19 +47,16 @@
                             <input type="text" name="first_name" id="first_name" value="@if(isset($data['first_name'])) {{$data['first_name']}} @endif" class="form-control" autocomplete="off">
                         </div>
                     </div>
-                    <div class="col-md-4 form-group">
+<!--                <div class="col-md-4 form-group">
                         <label class="box-title after-none mb-0">{{App\Helpers\get_string('mobile','request')}}</label>
                         <input type="text" name="mobile" value="@if(isset($data['mobile'])) {{$data['mobile']}} @endif" class="form-control">
                     </div>
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">{{App\Helpers\get_string('grno','request')}}</label>
-                        <input type="text" name="gr_no" value="@if(isset($data['gr_no'])) {{$data['gr_no']}} @endif" class="form-control">
-                    </div>
-                    <div class="col-md-4 form-group">
+                   <div class="col-md-4 form-group">
                         <label class="box-title after-none mb-0">{{App\Helpers\get_string('uniqueid','request')}}</label>
                         <input type="text" name="unique_id" value="@if(isset($data['unique_id'])) {{$data['unique_id']}} @endif"
                                class="form-control">
                     </div>
+-->                    
                     <div class="col-md-4 form-group">
                         <div class="d-inline">
                             <input type="checkbox" name="including_inactive" value="Yes"
@@ -97,12 +98,13 @@
                                     <th>Id</th>
                                     <th>{{App\Helpers\get_string('studentname','request')}}</th>
                                     <th>{{App\Helpers\get_string('grno','request')}}</th>
-                                    <th>{{App\Helpers\get_string('uniqueid','request')}}</th>
+                                    <!--<th>{{App\Helpers\get_string('uniqueid','request')}}</th>-->
                                     <th>Academic Section</th>
                                     <th>{{App\Helpers\get_string('standard','request')}}</th>
                                     <th>{{App\Helpers\get_string('division','request')}}</th>
+                                    <th>{{App\Helpers\get_string('studentquota','request')}}</th>
                                     <th>Gender</th>
-                                    <th>{{App\Helpers\get_string('mobile','request')}}</th>
+                                    <th>{{App\Helpers\get_string('studentmobile','request')}}</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -115,12 +117,13 @@
                                         <td>{{$j}}</td>
                                         <td>{{$data->first_name}} {{$data->middle_name}} {{$data->last_name}}</td>
                                         <td>{{$data->enrollment_no}}</td>
-                                        <td>{{$data->uniqueid}}</td>
+                                        <!--<td>{{$data->uniqueid}}</td>-->
                                         <td>{{$data->grade}}</td>
                                         <td>{{$data->standard}}</td>
                                         <td>{{$data->division}}</td>
+                                        <td>{{$data->student_quota}}</td>
                                         <td>{{$data->gender}}</td>
-                                        <td>{{$data->mobile}}</td>
+                                        <td>{{$data->student_mobile}}</td>
                                         <td>
                                             <div class="d-flex align-items-center justify-content-end">
                                                 <a href="{{ route('add_student.edit',$data->student_id)}}?semId={{$data->standard_id}}"
