@@ -738,10 +738,11 @@ private function groupConsecutivePeriods($periods)
         }
 
         if ($request->has('searchType') && $request->searchType == 'co') {
+            $where['re.subject_id'] = $request->subject_id;
             return DB::table('result_create_exam as re')
                 ->join('lo_category as lc', 'lc.id', '=', 're.co_id')
                 ->where($where)
-                ->pluck('lc.title', 're.id');
+                ->pluck('re.title', 're.id');
         }
 
         $std_sub_map = DB::table('result_create_exam as re')
