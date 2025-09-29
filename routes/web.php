@@ -62,6 +62,7 @@ use App\Http\Controllers\attendance\attendanceController;
 use App\Http\Controllers\attendance\attendanceReportController;
 use App\Http\Controllers\oldDocumentTransfer;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\attendance\monthwiseAttendanceReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -488,6 +489,7 @@ Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'log
     // attendanceController
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
+    Route::resource('monthwise_attendance_report', monthwiseAttendanceReportController::class);
 });
 Route::get('get-lecture-list', [AJAXController::class, 'getLectureList']);
 Route::get('get-batch', [AJAXController::class, 'get_batch']);
