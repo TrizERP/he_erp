@@ -295,35 +295,29 @@
 
         // get subject lists 
         function loadSubjects(selectedStandard, selectedDivision, callback) {
-            var from_date = $('#from_date').val();
-            if (selectedStandard && selectedDivision) {
+                var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
+                $('#subject').find('option').remove().end().append('<option value="">Select Subject</option>').val('');
+
                 $.ajax({
-                    type: "GET",
-                    url: "/api/get-subject-list-timetable?standard_id=" + selectedStandard +
-                        '&division_id=' + selectedDivision + '&date=' + from_date,
-                    success: function(res) {
-                        if (res) {
-                            $("#subject").empty();
-                            $("#subject").append('<option value="">Select</option>');
-                            $.each(res, function(key, value) {
-                                $("#subject").append('<option value="' + value
-                                    .subject_id + '|||' + value.period_id +
-                                    '" data-type="' + value.type +
-                                    '" data-periodid="' + value.period_id +
-                                    '" data-timetableid="' + value.timetable +
-                                    '">' + value.subject + '</option>');
-                            });
-                            if (callback && typeof callback === 'function') {
-                                callback();
-                            }
-                        } else {
-                            $("#subject").empty();
+                    url: path,
+                    data: { std_id: selectedStandard },
+                    success: function(result) {
+                        console.log(result);
+                        for (var i = 0; i < result.length; i++) {
+                            $("#subject").append(
+                                $("<option></option>")
+                                    .val(result[i]['subject_id'])
+                                    .html(result[i]['display_name'])
+                            );
+                        }
+
+                        // ✅ Call the callback after subjects are loaded
+                        if (typeof callback === "function") {
+                            callback();
                         }
                     }
                 });
-            } else {
-                $("#subject").empty();
-            }
+
         }
 
         // On load, if subject is set, trigger division change and select subject

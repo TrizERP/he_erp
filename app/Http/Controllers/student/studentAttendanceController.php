@@ -503,23 +503,23 @@ class studentAttendanceController extends Controller
         if(isset($division_id)){
             $whereAtt['ast.section_id'] = $division_id;    
         }
-     
+        // DB::enableQueryLog();
         $attendanceData = DB::table("attendance_student as ast")
         ->join('timetable as tt', function ($join) use($sub_institute_id,$syear){
             $join->on('ast.timetable_id', '=', 'tt.id')->where(['tt.sub_institute_id'=>$sub_institute_id,'tt.syear'=>$syear]);
         })
             ->where($whereAtt)
             ->whereBetween("ast.attendance_date", [$from_date, $to_date])
-            ->when($request->has('batch_sel') && $request->batch_sel!='',function($query) use($batch){
-                $query->where('tt.batch_id',$batch);
+            ->when($request->has('batch_sel') && $request->batch_sel!='',function($query) use($request){
+                $query->where('tt.batch_id',$request->batch_sel);
             })
             ->when($request->has('subject') && $request->subject!='',function($query) use($request){
-                $query->where('tt.subject_id',$request->subject);
+                $query->whereIn('tt.subject_id',explode('|||',$request->subject));
 
             })
             ->get()
             ->toArray();
-
+        // dd(DB::getQueryLog($attendanceData));
         if (count($attendanceData) == 0) {
             $res['status_code'] = 0;
             $res['message'] = "No attendance taken in this month";
