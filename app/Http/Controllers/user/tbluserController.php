@@ -776,4 +776,24 @@ class tbluserController extends Controller
         }
         return response()->json($res);
     }
+    public function deleteDocument($id)
+    {
+        $sub_institute_id = session()->get('sub_institute_id');
+
+        $document = DB::table('staff_document')
+        ->where(['sub_institute_id' => $sub_institute_id, 'id' => $id])
+        ->first();
+
+        // Delete file from DigitalOcean
+        if ($document->file_name) {
+            Storage::disk('digitalocean')->delete('public/he_staff_document/'.$document->file_name);
+        }
+
+        // Delete record from database
+        DB::table('staff_document')
+        ->where(['sub_institute_id' => $sub_institute_id, 'id' => $id])
+        ->delete();
+
+        return redirect()->back()->with('success', 'Document deleted successfully.');
+    }
 }

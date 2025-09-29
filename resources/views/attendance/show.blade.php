@@ -181,7 +181,7 @@
                                 <thead>
                                     <tr>
                                         <th>Sr No</th>
-                                        <th>Subject</th>
+                                        <th>Subject1</th>
                                         <th>Lecture</th>
                                         <th>{{App\Helpers\get_string('grno','request')}}</th>
                                         <th>Roll No</th>

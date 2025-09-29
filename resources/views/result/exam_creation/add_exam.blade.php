@@ -23,7 +23,7 @@
                         <!-- Term dropdown -->
                         {{ App\Helpers\TermDD() }}
 
-                        <input type="hidden" name="medium" value="CBSE"> 
+                        <input type="hidden" name="medium" value="Institute"> 
 
                         <!-- Grade/Std/Division dropdown -->
                         {{ App\Helpers\SearchChain('4','single','grade,std') }} 

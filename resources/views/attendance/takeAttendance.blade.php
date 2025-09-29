@@ -1,5 +1,13 @@
 @extends('layout')
 @section('container')
+<style>
+        input[type="radio"].Absent {
+            accent-color: red; /* make absent radio red */
+        }
+        input[type="radio"].Present {
+            accent-color: green; /* optional: present radio green */
+        }
+</style>
     <div id="page-wrapper">
         <div class="container-fluid">
 
@@ -137,23 +145,6 @@
 
                 </div>
 
-                {{-- <div class="col-md-2" id="lecture_div">
-                   
-                    <input type="hidden" id="batch_id" name="batch_id"
-                        @if (isset($data['batch_id'])) value="{{ $data['batch_id'] }}" @endif>
-
-                    <label for="lecture">Lectures :</label>
-                    <select class="form-control" id="lecture" name="lecture" required>
-                        @if (!empty($data['all_lecture']))
-                            @foreach ($data['all_lecture'] as $key => $value)
-                                <option value="{{ $value->period_id }}" data-id="{{ $value->timetable_id }}"
-                                    data-batchid="{{ $value->batch_ids }}"
-                                    @if (isset($data['lecture']) && $data['lecture'] == $value->period_id) selected @endif>{{ $value->period_name }}</option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div> --}}
-
                 <div class="col-md-2" id="batch_div">
                     <input type="hidden" id="batch_name" name="batch_name"
                         @if (isset($data['batch_name'])) value="{{ $data['batch_name'] }}" @endif>
@@ -221,16 +212,18 @@
                                 <th>Lecture</th>
                                 <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
                                 <th>Roll No</th>
-                                <th>Last Name</th>
                                 <th>{{ App\Helpers\get_string('studentname', 'request') }}</th>
                                 <th>Middle Name</th>
+                                <th>Last Name</th>
                                 @if (isset($data['batch_id']) && !empty($data['batchs']))
                                     <th>Batch</th>
                                 @endif
-                                <th>Present <input id="checkall" name="attendance" onchange="checkAll(this,'Present');"
-                                        type="radio"></th>
-                                <th>Absent <input id="checkall" name="attendance" onchange="checkAll(this,'Absent');"
-                                        type="radio"></th>
+                                <th>Present 
+                                <!--<input id="checkall" name="attendance" onchange="checkAll(this,'Present');" type="radio"> -->
+                                </th>
+                                <th>Absent
+                                <!--<input id="checkall" name="attendance" onchange="checkAll(this,'Absent');" type="radio"> -->
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -241,9 +234,9 @@
                                     <td> {{ $data['lecture_name'] }} </td>
                                     <td> {{ $value['enrollment_no'] }} </td>
                                     <td> {{ $value['roll_no'] }} </td>
-                                    <td> {{ $value['last_name'] }} </td>
                                     <td> {{ $value['first_name'] }} </td>
                                     <td> {{ $value['middle_name'] }} </td>
+                                    <td> {{ $value['last_name'] }} </td>
                                     @if (isset($data['batch_id']) && !empty($data['batchs']))
                                         <td>{{ $value['batch_title'] }}</td>
                                     @endif
