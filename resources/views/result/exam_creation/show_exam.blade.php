@@ -22,7 +22,6 @@
                         <thead>
                             <tr>
                                 <th>Term</th>
-                                <th>Medium</th>
                                 <th>Exam Type</th>
                                 <th>App Status</th>
                                 <th>{{App\Helpers\get_string('standard','request')}}</th>
@@ -30,7 +29,6 @@
                                 <th>CO</th>
                                 <th>Exam Name</th>
                                 <th>Points</th>
-                                <th>Report Card Status</th>
                                 <th>Sort Order</th>
                                 <th>Exam Date</th>
                                 <th class="text-left">Action</th>
@@ -40,7 +38,6 @@
                             @foreach($data['data'] as $key => $data)
                             <tr>    
                                 <td>{{$data->term_name}}</td>
-                                <td>{{$data->medium}}</td>
                                 <td>{{$data->exam_type}}</td>
                                 <td>{{$data->app_disp_status}}</td>
                                 <td>{{$data->std_name}}</td>
@@ -48,7 +45,6 @@
                                 <td>{{ isset($data->co_order) ? 'CO'.$data->co_order : '-'}}</td>
                                 <td>{{$data->exam_name}}</td>
                                 <td>{{$data->points}}</td>
-                                <td>{{$data->report_card_status}}</td>
                                 <td>{{$data->sort_order}}</td>
                                 <td>{{$data->exam_date}}</td>
                                 <td>

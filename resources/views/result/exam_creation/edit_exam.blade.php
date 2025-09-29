@@ -37,7 +37,7 @@
 
                             <input type="hidden" value="{{$data['con_point']}}" name="con_point">
                             <input type="hidden" value="{{$data['app_disp_status']}}" name="app_disp_status">
-
+                            <!--
                             <div class="col-md-3 form-group hide">
                                 <label for="report_card_status">Report Card Status</label>
                                 <select name="report_card_status" id="report_card_status" class="form-control">
@@ -46,6 +46,7 @@
                                     @endforeach
                                 </select>
                             </div>
+                            -->
                                 <div class="col-md-12 form-group mt-2">
                                 <table id="myTable" class="table table-striped table-bordered">
                                 <thead>

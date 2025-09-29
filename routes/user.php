@@ -38,6 +38,7 @@ Route::group(['prefix' => 'user', 'middleware' => ['session', 'menu', 'logRoute'
 
     Route::get('delete_data/{id}', [tbluserController::class,'deleteData'])->name('deleteData.destroy');
     Route::post('user_document/{id}',[tbluserController::class, 'addUserDocument'])->name('user_document');
+    Route::delete('documents/{id}', [tbluserController::class, 'deleteDocument'])->name('deleteDocument.destroy');
 });
 
 

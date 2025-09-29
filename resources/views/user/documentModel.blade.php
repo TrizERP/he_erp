@@ -47,7 +47,8 @@
                                 <th>Sr No.</th>
                                 <th>Document Type</th>
                                 <th>Document Title</th>
-                                <th class="text-left">File</th>
+                                <th>File</th>
+                                <th class="text-left">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,6 +58,15 @@
                                     <td>{{$value->document_type}}</td>
                                     <td>{{$value->document_title}}</td>
                                     <td><a target="_blank" href="{{ Storage::disk('digitalocean')->url('public/he_staff_document/'.$value->file_name)}}">{{$value->file_name ?? '-'}}</a></td> 
+                                    <td>
+                                        <form action="{{ route('deleteDocument.destroy', $value->id) }}" 
+                                            method="POST" 
+                                            onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            @csrf
+                                            @method('DELETE')
+                                                <button type="submit" class="btn btn-danger" style="padding:4px 6px"><span class="mdi mdi-delete"></span></button>
+                                        </form>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

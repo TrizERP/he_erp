@@ -50,7 +50,7 @@ class attendanceController extends Controller
     }
     public function create(Request $request)
     {
-        // echo "<pre>";print_r($request->all());exit;
+        //echo "<pre>";print_r($request->all());exit;
         $term_id = session()->get('term_id');
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
@@ -175,22 +175,7 @@ class attendanceController extends Controller
             $res['status_code'] = 0;
             $res['message'] = "No Student Data Found";
         }
-
-        $attendanceArray = [
-            'syear' => $syear,
-            'sub_institute_id' => $sub_institute_id,
-            'attendance_date' => $date,
-            'standard_id' => $standard,
-            'section_id' => $division,
-        ];
-        $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
-
-        $attendanceData = [];
-        if (count($data) > 0) {
-            foreach ($data as $key => $value) {
-                $attendanceData[$value->student_id] = $value->attendance_code;
-            }
-        }
+        
         $err = 0;
         if (!empty($holidays) && $holidays[0]->event_type === "holiday") {
             $err = 1;
@@ -225,6 +210,8 @@ class attendanceController extends Controller
             $res['batchs'] = json_decode(json_encode($ajaxController->getBatchTimetable($batch_req)), true);
         }
         $res['batch_id'] = $request->get('batch') ?? '-';
+// Hide by Rajesh 29-09-2025
+/*        
         // get lectures 
         $lect_req = new Request([
             'standard_id' => $standard,
@@ -233,7 +220,13 @@ class attendanceController extends Controller
             'date' => $request->get('from_date')
         ]);
         $res['all_lecture'] = $ajaxController->getLectureList($lect_req);
-        // echo "<pre>";print_r($res['all_lecture']);exit;
+        // echo "<pre>";print_r($request->get('subject'));exit;
+*/
+
+$explode=explode('|||',$request->get('subject') ?? '');
+$subject_id = $explode[0] ?? '';
+$period_id = $explode[1] ?? '';
+
         $res['exampleRadios'] = $request->get('exampleRadios');
         $res['attendance_type'] = $request->get('attendance_type');
         $res['from_date'] = $request->get('from_date');
@@ -245,10 +238,34 @@ class attendanceController extends Controller
         $res['subject_name'] = $request->get('subject_name') ?? '-';
         $res['lecture_name'] = $request->get('lecture_name') ?? '-';
         $res['timetable_id'] = $request->get('timetable_id');
-        $res['period_id'] = $request->get('period_id');
+        $res['period_id'] = $period_id;//$request->get('period_id');
         $res['batch_name'] = $request->get('batch_name');
 
-        // echo "<pre>";print_r($res);exit;
+
+        $attendanceArray = [
+            'syear'             => $syear,
+            'sub_institute_id'  => $sub_institute_id,
+            'attendance_date'   => $date,
+            'standard_id'       => $standard,
+            'section_id'        => $division,
+            'subject_id'        => $subject_id,//$request->get('subject'),
+            'attendance_type'   => $request->get('exampleRadios'),
+            'attendance_for'    => $request->get('attendance_type'),
+            'timetable_id'      => $request->get('timetable_id'),
+        ];
+
+        $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
+
+        $attendanceData = [];
+        if (count($data) > 0) {
+            foreach ($data as $key => $value) {
+                $attendanceData[$value->student_id] = $value->attendance_code;
+            }
+        }
+
+        $res['attendance_data'] = $attendanceData;
+
+        //echo "<pre>";print_r($res);exit;
         if ($err == 1) {
             return is_mobile($type, "students_attendance.index", $res);
         } else {
@@ -415,16 +432,9 @@ class attendanceController extends Controller
                         $attendanceArray['syear'] = $syear;
                         $attendanceArray['sub_institute_id'] = $sub_institute_id;
                         $attendanceArray['student_id'] = $student_id;
-                        //$attendanceArray['term_id'] = $term_id;
                         $attendanceArray['attendance_date'] = $date;
                         $attendanceArray['standard_id'] = $standard;
                         $attendanceArray['section_id'] = $division;
-
-
-                        $attendanceArray['attendance_code'] = $attendance;
-                        $attendanceArray['teacher_id'] = $user_id;
-                        $attendanceArray['user_group_id'] = $user_profile_id;
-                        $attendanceArray['created_by'] = $user_id;
 
                         // new fields added like sasit 
                         $attendanceArray['term_id'] = $term_id;
@@ -432,15 +442,22 @@ class attendanceController extends Controller
                         $attendanceArray['subject_id'] = $timetable->subject_id ?? 0;
                         $attendanceArray['timetable_id'] = $timetable->id ?? 0;
                         $attendanceArray['attendance_type'] = $att_type;
-                        $attendanceArray['attendance_teacher_code'] = $attendance;
                         $attendanceArray['attendance_for'] = $att_for;
+                        //$attendanceArray['attendance_teacher_code'] = $attendance;
+                        
                         // echo "<pre>";print_r($attendanceArray);
                         $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
                         // echo "<pre>";print_r($data);
                         if (count($data) > 0) {
+                            $attendanceArray['attendance_code'] = $attendance;
+                            $attendanceArray['created_by'] = $user_id;
                             $attendanceArray['updated_at'] = now();
                             DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
                         } else {
+                            $attendanceArray['attendance_code'] = $attendance;
+                            $attendanceArray['teacher_id'] = $user_id;
+                            $attendanceArray['user_group_id'] = $user_profile_id;
+                            $attendanceArray['created_by'] = $user_id;
                             $attendanceArray['created_at'] = now();
                             DB::table("attendance_student")->insert($attendanceArray);
                         }
@@ -454,16 +471,9 @@ class attendanceController extends Controller
                 $attendanceArray['syear'] = $syear;
                 $attendanceArray['sub_institute_id'] = $sub_institute_id;
                 $attendanceArray['student_id'] = $student_id;
-                //$attendanceArray['term_id'] = $term_id;
                 $attendanceArray['attendance_date'] = $date;
                 $attendanceArray['standard_id'] = $standard;
                 $attendanceArray['section_id'] = $division;
-
-
-                $attendanceArray['attendance_code'] = $attendance;
-                $attendanceArray['teacher_id'] = $user_id;
-                $attendanceArray['user_group_id'] = $user_profile_id;
-                $attendanceArray['created_by'] = $user_id;
 
                 // new fields added like sasit 
                 $attendanceArray['term_id'] = $term_id;
@@ -471,14 +481,21 @@ class attendanceController extends Controller
                 $attendanceArray['subject_id'] = $subjects_id;
                 $attendanceArray['timetable_id'] = $timetables_id;
                 $attendanceArray['attendance_type'] = $att_type;
-                $attendanceArray['attendance_teacher_code'] = $attendance;
                 $attendanceArray['attendance_for'] = $att_for;
+                //$attendanceArray['attendance_teacher_code'] = $attendance;
+
                 $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
                 // echo "<pre>";print_r($attendanceArray);exit;
                 if (count($data) > 0) {
+                    $attendanceArray['attendance_code'] = $attendance;
+                    $attendanceArray['created_by'] = $user_id;
                     $attendanceArray['updated_at'] = now();
                     DB::table("attendance_student")->where(['id' => $data[0]->id])->update($attendanceArray);
                 } else {
+                    $attendanceArray['attendance_code'] = $attendance;
+                    $attendanceArray['teacher_id'] = $user_id;
+                    $attendanceArray['user_group_id'] = $user_profile_id;
+                    $attendanceArray['created_by'] = $user_id;
                     $attendanceArray['created_at'] = now();
                     DB::table("attendance_student")->insert($attendanceArray);
                 }
