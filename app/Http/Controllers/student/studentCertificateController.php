@@ -80,9 +80,9 @@ class studentCertificateController extends Controller
 
         // START Dynamic Template Logic
         $tData = DB::table('template_master')
-            ->where('module_name', $template)
+            ->where('title', $template)
             ->whereRaw('sub_institute_id = IFNULL(
-                (SELECT sub_institute_id FROM template_master WHERE module_name ="'.$template.'" AND 
+                (SELECT sub_institute_id FROM template_master WHERE title ="'.$template.'" AND 
                     sub_institute_id = "'.session()->get('sub_institute_id').'"
                 ),0)')->get()->toArray();
         
@@ -465,9 +465,9 @@ class studentCertificateController extends Controller
         $data = getStudents($student_ids);
 
         $tData = DB::table('template_master')
-            ->where('module_name', $template)
+            ->where('title', $template)
             ->whereRaw('sub_institute_id = IFNULL(
-                (SELECT sub_institute_id FROM template_master WHERE module_name ="'.$template.'" AND 
+                (SELECT sub_institute_id FROM template_master WHERE title ="'.$template.'" AND 
                     sub_institute_id = "'.session()->get('sub_institute_id').'"
                 ),0)')->get()->toArray();
         $tData = json_decode(json_encode($tData), true);
