@@ -148,7 +148,7 @@ class attendanceReportController extends Controller
 
             // get total percent
         if ($report_type == "pw") {
-            $totalPercentage = (($courseatt / $coursetotday) * 100);
+            $totalPercentage = ($coursetotday> 0) ? (($courseatt / $coursetotday) * 100) : 0;
             $stuArr[$stuId]['TOTAL'] = ($blankCnt < $headerCnt) ? number_format($totalPercentage, 2) : '-';
             $stuArr[$stuId]['TOTAL_PERCENTAGE'] = ($blankCnt < $headerCnt) ? number_format($totalPercentage, 2) : '-';
         } else {

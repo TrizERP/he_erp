@@ -435,6 +435,7 @@ class studentAttendanceController extends Controller
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
+        $res['types'] = ["Lecture", "Lab", "Tutorial"];
 
         return is_mobile($type, "student/monthwise_attendance_report", $res, "view");
     }
@@ -467,20 +468,20 @@ class studentAttendanceController extends Controller
 
         $sundays = getCountDays($from_date, $to_date);
 
-        $whereAtt['syear'] = $syear;
-        $whereAtt['sub_institute_id'] = $sub_institute_id;
+        $whereAtt['ast.syear'] = $syear;
+        $whereAtt['ast.sub_institute_id'] = $sub_institute_id;
        
         $holidays = DB::table("calendar_events")
             ->selectRaw("DATE_FORMAT(school_date,'%d') AS DATE")
-            ->where($whereAtt)
             ->where('event_type', '=', 'holiday')
             ->whereRaw("month(school_date) = " . $month)
+            ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
             ->pluck('DATE')
             ->toArray();
             
         $events = DB::table("calendar_events")
             ->selectRaw("DATE_FORMAT(school_date,'%d') AS DATE, event_type")
-            ->where($whereAtt)
+            ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
             ->where('event_type', '=', 'event')
             ->whereRaw("month(school_date) = " . $month)
             ->get();
@@ -497,18 +498,28 @@ class studentAttendanceController extends Controller
 
         // $whereAtt['term_id'] = $term_id;
         if(isset($standard_id)){
-            $whereAtt['standard_id'] = $standard_id;
+            $whereAtt['ast.standard_id'] = $standard_id;
         }
         if(isset($division_id)){
-            $whereAtt['section_id'] = $division_id;    
+            $whereAtt['ast.section_id'] = $division_id;    
         }
-     
-        $attendanceData = DB::table("attendance_student")
+        // DB::enableQueryLog();
+        $attendanceData = DB::table("attendance_student as ast")
+        ->join('timetable as tt', function ($join) use($sub_institute_id,$syear){
+            $join->on('ast.timetable_id', '=', 'tt.id')->where(['tt.sub_institute_id'=>$sub_institute_id,'tt.syear'=>$syear]);
+        })
             ->where($whereAtt)
-            ->whereBetween("attendance_date", [$from_date, $to_date])
+            ->whereBetween("ast.attendance_date", [$from_date, $to_date])
+            ->when($request->has('batch_sel') && $request->batch_sel!='',function($query) use($request){
+                $query->where('tt.batch_id',$request->batch_sel);
+            })
+            ->when($request->has('subject') && $request->subject!='',function($query) use($request){
+                $query->whereIn('tt.subject_id',explode('|||',$request->subject));
+
+            })
             ->get()
             ->toArray();
-
+        // dd(DB::getQueryLog($attendanceData));
         if (count($attendanceData) == 0) {
             $res['status_code'] = 0;
             $res['message'] = "No attendance taken in this month";
@@ -539,6 +550,10 @@ class studentAttendanceController extends Controller
         $res['holidays'] = $holidays;
         $res['events'] = $eventsArray;
         $res['to_date'] = date('d', strtotime($to_date));
+        $res['types'] = ["Lecture", "Lab", "Tutorial"];
+        $res['lecture_type'] = $request->lecture_type;
+        $res['subject'] = $request->subject;
+        $res['batch'] = $request->batch_sel;
 
         return is_mobile($type, "student/monthwise_attendance_report", $res, "view");
     }
