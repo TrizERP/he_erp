@@ -594,6 +594,19 @@ private function groupConsecutivePeriods($periods)
         $standard_id = $request->standard_id;
         $division_id = $request->division_id;
 
+        if($request->has('type') && $request->type == 'divisionWise') {
+        // return $request->all();
+        // DB::enableQueryLog();
+            $data = DB::table('batch')->where([
+                'standard_id' => $standard_id,
+                'division_id' => $division_id,
+                'syear' => session()->get('syear'),
+                'sub_institute_id' =>  session()->get('sub_institute_id'),
+            ])->get()->toArray();
+            // dd(DB::getQueryLog($data));
+            return $data;
+        }
+
         $explode = explode(',', $request->standard_id);
 
         $arr = $request->server;
@@ -725,10 +738,11 @@ private function groupConsecutivePeriods($periods)
         }
 
         if ($request->has('searchType') && $request->searchType == 'co') {
+            $where['re.subject_id'] = $request->subject_id;
             return DB::table('result_create_exam as re')
                 ->join('lo_category as lc', 'lc.id', '=', 're.co_id')
                 ->where($where)
-                ->pluck('lc.title', 're.id');
+                ->pluck('re.title', 're.id');
         }
 
         $std_sub_map = DB::table('result_create_exam as re')

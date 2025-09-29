@@ -72,12 +72,18 @@ class exam_creation_controller extends Controller
             ->join('academic_section', 'academic_section.id', '=', 'standard.grade_id')
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
             ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
-            ->select('result_create_exam.id', 'academic_year.title as term_name', 'result_create_exam.medium',
-                'result_exam_master.ExamTitle as exam_type', 'result_create_exam.app_disp_status',
+            ->select(
+                'result_create_exam.id',
+                'academic_year.title as term_name',
+                'result_create_exam.medium',
+                'result_exam_master.ExamTitle as exam_type',
+                'result_create_exam.app_disp_status',
                 'standard.name as std_name',
-                'subject.subject_name as sub_name', 'result_create_exam.title as exam_name',
+                'subject.subject_name as sub_name',
+                'result_create_exam.title as exam_name',
                 'result_create_exam.points',
-                'result_create_exam.marks_type', 'result_create_exam.report_card_status',
+                'result_create_exam.marks_type',
+                'result_create_exam.report_card_status',
                 'result_create_exam.sort_order',
                 DB::raw('DATE_FORMAT(result_create_exam.exam_date,"%d-%m-%Y") as exam_date'),
                 'lo_category.id as co_id',
@@ -100,108 +106,189 @@ class exam_creation_controller extends Controller
      * @throws NotFoundExceptionInterface
      * @return Response
      */
+    // public function store(Request $request)
+    // {
+    //     // echo "<pre>";
+    //     // print_r($request->all());
+    //     // exit;
+    //     $eroor = false;
+    //     $con_points = "";
+    //     $error_reson = "";
+    //     $sub_val = $request->get('subject');
+    //     $value = $request->get('title');
+    //     // commented on 24-04-2025 by uma for co_id
+    //     // foreach ($request->get('subject') as $sub_id => $sub_val) 
+    //     // {
+    //         // foreach ($request->get('title') as $key => $value) 
+    //         // {
+    //             $data = exam_creation::where([
+    //                 'syear'            => session()->get('syear'),
+    //                 'sub_institute_id' => session()->get('sub_institute_id'),
+    //                 'term_id'          => $request->get('term'),
+    //                 'exam_id'          => $request->get('exam'),
+    //                 'standard_id'      => $request->get('standard'),
+    //                 'subject_id'       => $sub_val,
+    //                 'co_id'             => $request->get('co_id'),
+    //                 'title'            => $value,
+    //             ])->get()->toArray();
+
+    //             if (count($data)) {
+    //                 $eroor = true;
+    //                 $error_reson = "Given Standard Have Exams.";
+    //             } 
+    //             else 
+    //             {
+    //                 $data = exam_creation::where([
+    //                     'syear'            => session()->get('syear'),
+    //                     'sub_institute_id' => session()->get('sub_institute_id'),
+    //                     'term_id'          => $request->get('term'),
+    //                     'exam_id'          => $request->get('exam'),
+    //                     'standard_id'      => $request->get('standard'),
+    //                     'subject_id'       => $sub_val,
+    //                     'co_id'             => $request->get('co_id'),
+    //                 ])->get()->toArray();
+    //             }
+    //         // }
+    //     // }
+
+    //     if ($eroor == false) {
+    //         $sort = $request->get('sort_order');
+
+    //         $error_co_point = false;
+
+    //         // foreach ($request->get('subject') as $sub_id => $sub_val) 
+    //         // {
+    //             // foreach ($request->get('title') as $key => $value) 
+    //             // {
+    //                 if ($error_co_point == false) 
+    //                 {
+    //                     $data = new exam_creation([
+    //                         'syear'              => session()->get('syear'),
+    //                         'sub_institute_id'   => session()->get('sub_institute_id'),
+    //                         'term_id'            => $request->get('term'),
+    //                         'medium'             => $request->get('medium'),
+    //                         'exam_id'            => $request->get('exam'),
+    //                         'standard_id'        => $request->get('standard'),
+    //                         'app_disp_status'    => $request->get('app_disp_status'),
+    //                         'subject_id'         => $sub_val,
+    //                         'title'              => $value,
+    //                         'points'             => $request->get('points') ?? 0,
+    //                         'con_point'          => $request->get('con_point'),
+    //                         'marks_type'         => $request->get('marks_type'),
+    //                         'report_card_status' => $request->get('report_card_status'),
+    //                         'sort_order'         => $sort ?? 0,
+    //                         'co_id'              => $request->get('co_id'),
+    //                         'exam_date'          => null !== $request->get('exam_date') ? date("Y-m-d", strtotime($request->get('exam_date'))) : null,
+    //                         'created_by'         => session()->get('user_id'),
+    //                         'created_at'         => now()
+    //                     ]);
+    //                     // echo "<pre>";
+    //     // print_r($data);
+    //                         $data->save();
+    //                 }
+    //             // }
+    //         // }
+    //     }
+    //     // echo "error<pre>";
+    //     // print_r($eroor);
+    //     // exit;
+    //     if ($eroor || $error_co_point) {
+    //         $res = [
+    //             "status_code" => 0,
+    //             "message"     => $error_reson,
+    //         ];
+    //     } else {
+    //         $res = [
+    //             "status_code" => 1,
+    //             "message"     => "Data Saved",
+    //         ];
+    //     }
+
+    //     $type = $request->input('type');
+
+    //     return is_mobile($type, "exam_creation.index", $res, "redirect");
+    // }
+
+    // below code changed on 24-04-2025 by uma for co_id
     public function store(Request $request)
     {
-        // echo "<pre>";
-        // print_r($request->all());
-        // exit;
         $eroor = false;
-        $con_points = "";
         $error_reson = "";
-        $sub_val = $request->get('subject');
-        $value = $request->get('title');
-        // commented on 24-04-2025 by uma for co_id
-        // foreach ($request->get('subject') as $sub_id => $sub_val) 
-        // {
-            // foreach ($request->get('title') as $key => $value) 
-            // {
-                $data = exam_creation::where([
-                    'syear'            => session()->get('syear'),
-                    'sub_institute_id' => session()->get('sub_institute_id'),
-                    'term_id'          => $request->get('term'),
-                    'exam_id'          => $request->get('exam'),
-                    'standard_id'      => $request->get('standard'),
-                    'subject_id'       => $sub_val,
-                    'co_id'             => $request->get('co_id'),
-                    'title'            => $value,
-                ])->get()->toArray();
 
-                if (count($data)) {
-                    $eroor = true;
-                    $error_reson = "Given Standard Have Exams.";
-                } 
-                else 
-                {
-                    $data = exam_creation::where([
-                        'syear'            => session()->get('syear'),
-                        'sub_institute_id' => session()->get('sub_institute_id'),
-                        'term_id'          => $request->get('term'),
-                        'exam_id'          => $request->get('exam'),
-                        'standard_id'      => $request->get('standard'),
-                        'subject_id'       => $sub_val,
-                        'co_id'             => $request->get('co_id'),
-                    ])->get()->toArray();
+        $subject_id = $request->get('subject');
+        $titles     = $request->get('title', []);
+        $points     = $request->get('points', []);
+        $sortOrders = $request->get('sort_order', []);
+        $examDates  = $request->get('exam_date', []);
+        $coIds      = $request->get('co_id', []);
+        $marksTypes = $request->get('marks_type', []);
+        $reportStatuses = $request->get('report_card_status', []);
+
+        // Loop through rows
+        foreach ($titles as $key => $title) {
+            if (empty($title)) {
+                continue; // skip empty rows
+            }
+
+            $check = exam_creation::where([
+                'syear'            => session()->get('syear'),
+                'sub_institute_id' => session()->get('sub_institute_id'),
+                'term_id'          => $request->get('term'),
+                'exam_id'          => $request->get('exam'),
+                'standard_id'      => $request->get('standard'),
+                'subject_id'       => $subject_id,
+                'co_id'            => $coIds[$key] ?? null,
+                'title'            => $title,
+            ])->exists();
+
+            if ($check) {
+                $eroor = true;
+                $error_reson = "Exam already exists for selected Standard/Subject/CO with title '{$title}'.";
+                break;
+            }
+        }
+
+        if ($eroor === false) {
+            foreach ($titles as $key => $title) {
+                if (empty($title)) {
+                    continue;
                 }
-            // }
-        // }
 
-        if ($eroor == false) {
-            $sort = $request->get('sort_order');
-            
-            $error_co_point = false;
+                $exam = new exam_creation([
+                    'syear'              => session()->get('syear'),
+                    'sub_institute_id'   => session()->get('sub_institute_id'),
+                    'term_id'            => $request->get('term'),
+                    'medium'             => $request->get('medium'),
+                    'exam_id'            => $request->get('exam'),
+                    'standard_id'        => $request->get('standard'),
+                    'app_disp_status'    => $request->get('app_disp_status'),
+                    'subject_id'         => $subject_id,
+                    'title'              => $title,
+                    'points'             => $points[$key] ?? 0,
+                    'con_point'          => $request->get('con_point'),
+                    'marks_type'         => $marksTypes[$key] ?? 'MARKS',
+                    'report_card_status' => $reportStatuses[$key] ?? 'Y',
+                    'sort_order'         => $sortOrders[$key] ?? 0,
+                    'co_id'              => $coIds[$key] ?? null,
+                    'exam_date'          => !empty($examDates[$key])
+                        ? date("Y-m-d", strtotime($examDates[$key]))
+                        : null,
+                    'created_by'         => session()->get('user_id'),
+                    'created_at'         => now(),
+                ]);
+                $exam->save();
+            }
+        }
 
-            // foreach ($request->get('subject') as $sub_id => $sub_val) 
-            // {
-                // foreach ($request->get('title') as $key => $value) 
-                // {
-                    if ($error_co_point == false) 
-                    {
-                        $data = new exam_creation([
-                            'syear'              => session()->get('syear'),
-                            'sub_institute_id'   => session()->get('sub_institute_id'),
-                            'term_id'            => $request->get('term'),
-                            'medium'             => $request->get('medium'),
-                            'exam_id'            => $request->get('exam'),
-                            'standard_id'        => $request->get('standard'),
-                            'app_disp_status'    => $request->get('app_disp_status'),
-                            'subject_id'         => $sub_val,
-                            'title'              => $value,
-                            'points'             => $request->get('points') ?? 0,
-                            'con_point'          => $request->get('con_point'),
-                            'marks_type'         => $request->get('marks_type'),
-                            'report_card_status' => $request->get('report_card_status'),
-                            'sort_order'         => $sort ?? 0,
-                            'co_id'              => $request->get('co_id'),
-                            'exam_date'          => null !== $request->get('exam_date') ? date("Y-m-d", strtotime($request->get('exam_date'))) : null,
-                            'created_by'         => session()->get('user_id'),
-                            'created_at'         => now()
-                        ]);
-                        // echo "<pre>";
-        // print_r($data);
-                            $data->save();
-                    }
-                // }
-            // }
-        }
-        // echo "error<pre>";
-        // print_r($eroor);
-        // exit;
-        if ($eroor || $error_co_point) {
-            $res = [
-                "status_code" => 0,
-                "message"     => $error_reson,
-            ];
-        } else {
-            $res = [
-                "status_code" => 1,
-                "message"     => "Data Saved",
-            ];
-        }
+        $res = [
+            "status_code" => $eroor ? 0 : 1,
+            "message"     => $eroor ? $error_reson : "Exam Created Successfully !",
+        ];
 
         $type = $request->input('type');
-
         return is_mobile($type, "exam_creation.index", $res, "redirect");
     }
+
 
     /**
      * Display the specified resource.
@@ -226,13 +313,24 @@ class exam_creation_controller extends Controller
     public function edit(Request $request, $id)
     {
         $type = $request->input('type');
-        $data = exam_creation:: select('result_create_exam.id', 'result_create_exam.term_id',
+        $data = exam_creation::select(
+            'result_create_exam.id',
+            'result_create_exam.term_id',
             'result_create_exam.medium',
-            'result_create_exam.exam_id', 'result_create_exam.app_disp_status', 'standard.grade_id as grade',
-            'result_create_exam.standard_id', 'result_create_exam.subject_id', 'result_create_exam.title',
+            'result_create_exam.exam_id',
+            'result_create_exam.app_disp_status',
+            'standard.grade_id as grade',
+            'result_create_exam.standard_id',
+            'result_create_exam.subject_id',
+            'result_create_exam.title',
             'result_create_exam.points',
-            'result_create_exam.marks_type', 'result_create_exam.report_card_status', 'result_create_exam.sort_order',
-            'result_create_exam.exam_date', 'result_create_exam.con_point','result_create_exam.co_id')
+            'result_create_exam.marks_type',
+            'result_create_exam.report_card_status',
+            'result_create_exam.sort_order',
+            'result_create_exam.exam_date',
+            'result_create_exam.con_point',
+            'result_create_exam.co_id'
+        )
             ->join('standard', 'standard.id', '=', 'result_create_exam.standard_id')
             ->where([
                 'result_create_exam.sub_institute_id' => session()->get('sub_institute_id'),
@@ -245,7 +343,7 @@ class exam_creation_controller extends Controller
             ->where("SubInstituteId", session()->get('sub_institute_id'))
             ->pluck("ExamTitle", "Id")->toArray();
         $data['exams'] = $exams;
-        $data['report_card_status_arr']=["Y"=>"Yes","N"=>"No"];
+        $data['report_card_status_arr'] = ["Y" => "Yes", "N" => "No"];
 
         return is_mobile($type, "result/exam_creation/edit_exam", $data, "view");
     }
@@ -279,16 +377,15 @@ class exam_creation_controller extends Controller
             $eroor = true;
             $error_reson = "Given Standard Have Exams.";
         } else {
-            $data = exam_creation::
-            where([
-                'syear'            => session()->get('syear'),
-                'sub_institute_id' => session()->get('sub_institute_id'),
-                'term_id'          => $request->get('term'),
-                'exam_id'          => $request->get('exam_id'),
-                'standard_id'      => $request->get('standard'),
-                'subject_id'       => $request->get('subject'),
-                'co_id'            => $request->get('co_id'),
-            ])
+            $data = exam_creation::where([
+                    'syear'            => session()->get('syear'),
+                    'sub_institute_id' => session()->get('sub_institute_id'),
+                    'term_id'          => $request->get('term'),
+                    'exam_id'          => $request->get('exam_id'),
+                    'standard_id'      => $request->get('standard'),
+                    'subject_id'       => $request->get('subject'),
+                    'co_id'            => $request->get('co_id'),
+                ])
                 ->get()->toArray();
             // if (count($data)) {
             //     foreach ($data as $id1 => $arr) {
@@ -339,7 +436,7 @@ class exam_creation_controller extends Controller
             $res = [
                 "status_code" => 1,
                 "message"     => "Data Saved",
-            ];  
+            ];
         }
 
         $type = $request->input('type');
@@ -364,5 +461,4 @@ class exam_creation_controller extends Controller
 
         return is_mobile($type, "exam_creation.index", $res, "redirect");
     }
-
 }

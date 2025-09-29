@@ -59,7 +59,7 @@
                                         if ($data['exampleRadios'] == "Proxy") {
                                             $proxy = 'checked';
                                             $checked = '';
-                                        } elseif ($data['exampleRadios'] == '') {
+                                        } elseif ($data['exampleRadios'] == 'Extra') {
                                             $extra = 'checked';
                                             $checked = '';
                                         }
@@ -246,7 +246,7 @@
     //         $('#batch_div').show();
     //     }
 	$('#attendanceTypeSelect').hide();
-    if(type=="Proxy"){
+    if(type!=="Regular"){
     $('#attendanceTypeSelect').show();
     }
   	// $('#lecture_div').hide();
@@ -254,7 +254,8 @@
 
   	//chek for type
    $('input[name="exampleRadios"]').on('change', function () {
-    if ($(this).val() == "Proxy") {
+    if ($(this).val() !== "Regular") {
+        // console.log('type',$(this).val());
         $('#attendanceTypeSelect').show();
     } else {
         $('#attendanceTypeSelect').hide(); 
