@@ -63,6 +63,7 @@ use App\Http\Controllers\attendance\attendanceReportController;
 use App\Http\Controllers\oldDocumentTransfer;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\attendance\monthwiseAttendanceReportController;
+use App\Http\Controllers\easy_com\send_sms_parents\send_sms_parents_controller;
 
 /*
 |--------------------------------------------------------------------------
@@ -528,3 +529,4 @@ Route::any('check_access', [AJAXController::class, 'check_access'])->name('check
 
 Route::any('chat', [AJAXController::class, 'chat'])->name('chat');
 Route::get('studentLists', [AJAXController::class, 'studentLists'])->name('studentLists');
+Route::post('sendSMSCommon',[send_sms_parents_controller::class,'send_SMS_Common'])->name('sendSMSCommon.store');

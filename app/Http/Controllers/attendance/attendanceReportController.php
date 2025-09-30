@@ -7,8 +7,9 @@ use Illuminate\Http\Request;
 use function App\Helpers\is_mobile;
 use App\Http\Controllers\AJAXController;
 use App\Models\student\tblstudentModel;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Date;
+use function App\Helpers\SearchStudent;
 
 class attendanceReportController extends Controller
 {
@@ -200,5 +201,21 @@ class attendanceReportController extends Controller
         $res['details']=$stuArr;
 
         return is_mobile($type, 'attendance/semwiseReport', $res, 'view');
+    }
+
+    public function store(Request $request){
+        // return $request;
+        $type= $request->get('type');
+        $sub_institute_id = session()->get('sub_institute_id');
+        $syear = session()->get('syear');
+        $grade= $request->get('grade_id');
+        $res['status_code']=1;
+        $studentData=[];
+        foreach ($request->get('student') as $stud_id => $check) {
+            $studentData[$stud_id] = SearchStudent("", "", "", "","", "","", "", "", "", $stud_id, "","");
+        }
+        $res['studentData']=$studentData;
+        // return $res['studentData']; 
+        return is_mobile($type, 'attendance/sendSms', $res, 'view');
     }
 }
