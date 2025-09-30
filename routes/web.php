@@ -490,7 +490,7 @@ Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'log
     // attendanceController
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
-    Route::resource('monthwise_attendance_report', monthwiseAttendanceReportController::class);
+    Route::resource('month_to_month_report', monthwiseAttendanceReportController::class);
 });
 Route::get('get-lecture-list', [AJAXController::class, 'getLectureList']);
 Route::get('get-batch', [AJAXController::class, 'get_batch']);
