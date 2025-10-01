@@ -21,9 +21,15 @@ class monthwiseAttendanceReportController extends Controller
         $batch = $request->get('batch');
         $from_date = $request->get('from_month');
         $to_date = $request->get('to_month');
-        $res['from_date'] = now();
-        $res['to_date'] = now();
-        $monthTotals = $student_data = [];
+        // Convert the format from d-m-Y to Y-m-d for internal use
+        $res['from_date'] = ($request->has('from_month') && !empty($request->from_month)) 
+            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->from_month)->format('Y-m-d') 
+            : now()->format('Y-m-d');
+
+        $res['to_date'] = ($request->has('to_month') && !empty($request->to_month)) 
+            ? \Carbon\carbon::createFromFormat('d-m-Y', $request->to_month)->format('Y-m-d') 
+            : now()->format('Y-m-d');
+        $monthTotals = $students_data = [];
 
         if($request->has('submit')){
             // Fetch raw attendance rows
@@ -119,6 +125,11 @@ class monthwiseAttendanceReportController extends Controller
         $res['reportType'] = ["Percentage wise","Number of Lecture wise"];
         $res['month_totals'] = $monthTotals;
         $res['student_data'] = $students_data;
+        $res['grade_id'] = $request->grade;
+        $res['standard_id'] = $request->standard;
+        $res['division_id'] = $request->division;
+        $res['subject'] = $request->subject;
+        $res['lecture_type'] = $request->lecture_type;
 
         return is_mobile($type, 'attendance/monthwiseAttendanceReport', $res, 'view');
     }

@@ -11,12 +11,18 @@
 
         </div>
         @php
-            $grade_id = $standard_id = $division_id = '';
+            $grade_id = $standard_id = $division_id = $from_date = $to_date = '';
 
             if (isset($data['grade_id'])) {
                 $grade_id = $data['grade_id'];
                 $standard_id = $data['standard_id'];
                 $division_id = $data['division_id'];
+            }
+            if (isset($data['from_date'])) {
+                $from_date = $data['from_date'];
+            }
+            if (isset($data['to_date'])) {
+                $to_date = $data['to_date'];
             }
             $getInstitutes = session()->get('getInstitutes');
             $academicYears = session()->get('academicYears');
@@ -79,11 +85,11 @@
 
                 <div class="col-md-3 form-group">
                     <label for="">From</label>
-                    <input type="text" class="form-control mydatepicker" name="from_month" autocomplete="off">
+                    <input type="text" class="form-control mydatepicker" name="from_month" autocomplete="off" value="{{$from_date}}">
                 </div>
                 <div class="col-md-3 form-group">
                     <label for="">To</label>
-                    <input type="text" class="form-control mydatepicker" name="to_month" autocomplete="off">
+                    <input type="text" class="form-control mydatepicker" name="to_month" autocomplete="off" value="{{$to_date}}">
                 </div>
                 <div class="col-md-12 form-group">
                     <center>
