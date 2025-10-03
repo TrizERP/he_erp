@@ -238,4 +238,32 @@ class send_sms_parents_controller extends Controller
 
         return json_encode($res);
     }
-}
+
+    public function send_SMS_Common(Request $request){
+        // return $request;
+        $sub_institute_id = session()->get('sub_institute_id');
+        $chkstudent   = $request->input('student');
+        $student_mobile    = $request->input('student_mobile');
+        $parent_mobile    = $request->input('parent_mobile');
+        $SMS_NAME     = $request->input('SMS_NAME'); // student name
+        $SMS_PNAME    = $request->input('SMS_PNAME'); // parent name
+        $smsnumber    = $request->input('smsnumber'); // student or parent
+        $sendSmsNumber   = ($smsnumber && $smsnumber==="parent_mobile_no") ? $parent_mobile : $student_mobile;
+        $messageInput = $request->input('DESC', '');
+
+            foreach ($chkstudent as $stuRow =>$studentId) {
+                $SMS_TEXT = $messageInput;
+
+                if ($smsnumber !== 'parent_mobile_no') {
+                    $SMS_TEXT = str_replace('[STUDENT_NAME]', $SMS_NAME[$stuRow] ?? '', $SMS_TEXT);
+                } else {
+                    $SMS_TEXT = str_replace('[PARENT_NAME]', $SMS_PNAME[$stuRow] ?? '', $SMS_TEXT);
+                }
+
+                $this->sendSMS($sendSmsNumber, $messageInput, $sub_institute_id);
+                // send sms to parent or student
+            }
+
+        return redirect()->back()->with('message', 'SMS Sent Successfully');
+    }
+}   

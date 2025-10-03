@@ -166,12 +166,18 @@ class templateMasterController extends Controller
             'sub_institute_id' => $sub_institute_id,
         );
 
-        templateMasterModel::insert($content);
-
+        $i = templateMasterModel::insert($content);
+        if($i){
         $res = array(
             "status_code" => 1,
             "message"     => "Template Added Successfully",
         );
+    }else{
+        $res = array(
+            "status_code" => 0,
+            "message"     => "Something Went Wrong",
+        );
+    }
         $type = $request->input('type');
 
         return is_mobile($type, "templatemaster.index", $res, "redirect");

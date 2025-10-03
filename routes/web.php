@@ -62,6 +62,9 @@ use App\Http\Controllers\attendance\attendanceController;
 use App\Http\Controllers\attendance\attendanceReportController;
 use App\Http\Controllers\oldDocumentTransfer;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\attendance\monthwiseAttendanceReportController;
+use App\Http\Controllers\attendance\subjectDetailAttendanceController;
+use App\Http\Controllers\easy_com\send_sms_parents\send_sms_parents_controller;
 
 /*
 |--------------------------------------------------------------------------
@@ -488,6 +491,8 @@ Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'log
     // attendanceController
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
+    Route::resource('month_to_month_report', monthwiseAttendanceReportController::class);
+    Route::resource('subject_detail_attendance_report', subjectDetailAttendanceController::class);
 });
 Route::get('get-lecture-list', [AJAXController::class, 'getLectureList']);
 Route::get('get-batch', [AJAXController::class, 'get_batch']);
@@ -526,3 +531,4 @@ Route::any('check_access', [AJAXController::class, 'check_access'])->name('check
 
 Route::any('chat', [AJAXController::class, 'chat'])->name('chat');
 Route::get('studentLists', [AJAXController::class, 'studentLists'])->name('studentLists');
+Route::post('sendSMSCommon',[send_sms_parents_controller::class,'send_SMS_Common'])->name('sendSMSCommon.store');
