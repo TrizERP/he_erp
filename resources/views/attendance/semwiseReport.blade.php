@@ -108,6 +108,7 @@
                     @csrf
                     <div class="row">
                         <div class="table-responsive">
+                            {!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}
                             <table id="example" class="table table-striped">
                                 <thead>
                                     <tr>
@@ -251,10 +252,29 @@
 					   exportOptions: {
 						   columns: ':visible'
 					   },
+					   customize: function (doc) {
+						   var headerContent = `{!! htmlspecialchars_decode(App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id")) !!}`;
+
+						   var tmp = document.createElement("div");
+						   tmp.innerHTML = headerContent;
+						   var decodeHeader = tmp.textContent || tmp.innerText;
+
+						   doc.content.unshift({
+							   text: decodeHeader,
+							   alignment: 'center',
+						   });
+					   }
 				   },
 				   {extend: 'csv', text: ' CSV', title: 'All subject report'},
 				   {extend: 'excel', text: ' EXCEL', title: 'All subject report'},
-				   {extend: 'print', text: ' PRINT', title: 'All subject report'},
+				   {
+					   extend: 'print',
+					   text: ' PRINT',
+					   title: 'All subject report',
+					   customize: function (win) {
+						   $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
+					   }
+				   },
 				   'pageLength'
 			   ],
 		   });
