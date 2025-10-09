@@ -33,7 +33,7 @@
                              <thead>
                                 <tr>
                                     <th>Standard</th>
-                                    <th>Roll No.</th>
+                                    <!--<th>Roll No.</th>-->
                                     <th>Student Name</th>
                                         @if(isset($data['date_arr']))
                                             @foreach($data['date_arr'] as $k => $date_point)
@@ -52,7 +52,7 @@
                                     @endphp                                    
                                     <tr>
                                         <td>{{$all_data['standard_name']}} - {{$all_data['division_name']}}</td>
-                                        <td>{{$all_data['roll_no']}}</td>    
+                                        <!--<td>{{$all_data['roll_no']}}</td>    -->
                                         <td>{{$all_data['first_name']}} {{$all_data['middle_name']}} {{$all_data['last_name']}}</td>
                                         @if(isset($data['date_arr']))
                                         @foreach($data['date_arr'] as $k => $date_point)
@@ -109,10 +109,26 @@
                 exportOptions: {                   
                      columns: ':visible'                             
                 },
+                customize: function (doc) {
+                        var headerContent = `{!! htmlspecialchars_decode(App\Helpers\get_school_details("", "", "")) !!}`;
+
+                        var tmp = document.createElement("div");
+                        tmp.innerHTML = headerContent;
+                        var decodeHeader = tmp.textContent || tmp.innerText;
+                        //var header = doc.content[0];
+                        //header.text += 'Student Report' + headerContent;
+
+                        doc.content.unshift({
+                            text: decodeHeader,
+                            alignment: 'center',
+                        });
+                    }
             }, 
             { extend: 'csv', text: ' CSV', title: 'Classwise Report' }, 
             { extend: 'excel', text: ' EXCEL', title: 'Classwise Report' }, 
-            { extend: 'print', text: ' PRINT', title: 'Classwise Report' }, 
+            { extend: 'print', text: ' PRINT', title: 'Classwise Report',customize: function (win) {
+                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
+                    }}, 
             'pageLength' 
         ], 
         }); 
