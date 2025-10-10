@@ -16,10 +16,22 @@
                 <strong>{{ $sessionData['message'] }}</strong>
             </div>
             @endif
-            <div class="row">                
+            <div class="row">  
+                @php
+                $addPermission = "no";
+                if(!empty(session()->get('menu_permissions'))) {
+
+                    $permissions = session()->get('menu_permissions');
+                    if($permissions->can_add == 1){
+                        $addPermission = "yes";
+                    }
+                }
+                @endphp	
+                 @if($addPermission == "yes")
                 <div class="col-lg-3 col-sm-3 col-xs-3">
                     <a href="{{ route('add_user.create') }}" class="btn btn-info add-new"><i class="fa fa-plus"></i> Add New User </a>
                 </div>
+                @endif	
                 <div class="col-lg-12 col-sm-12 col-xs-12">
                     <div class="table-responsive">
                         <table id="example" class="table table-striped">
@@ -52,11 +64,13 @@
                                         <div class="d-inline">
                                             <a href="{{ route('add_user.edit',$data->id)}}" class="btn btn-info btn-outline"><i class="ti-pencil-alt"></i></a>
                                         </div>
+                                        @if(in_array(session()->get('user_profile_name'),["Admin","Super Admin"]))              
                                         <form class="d-inline" action="{{ route('add_user.destroy', $data->id)}}" method="post">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-info btn-outline-danger"><i class="ti-trash"></i></button>
                                         </form>
+                                        @endif
                                     </td>  
                                 </tr>
                                 @php

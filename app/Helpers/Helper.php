@@ -138,7 +138,7 @@ if (!function_exists('SearchChain')) {
         );
 
         // START 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-        if (session()->get('user_profile_name') == 'Lecturer') {
+        if (session()->get('profile_parent_id') == 2) {
             $teacher_id = session()->get('user_id');
             $sub_institute_id = session()->get('sub_institute_id');
             $syear = session()->get('syear');
@@ -166,7 +166,31 @@ if (!function_exists('SearchChain')) {
             Session::put('subjectTeacherDivArr', $subjectTeacherDivArr);
         }
         // END 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-
+        
+        // 10-01-2025 start supervisor rights
+        else if (!in_array(session()->get('user_profile_name'),['Super Admin','Admin','Lecturer','LMS Teacher','Student']))
+        {
+            $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
+            if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
+                $getAllocatedStandard = DB::table('standard')->whereRaw('id IN ('.$getUserData->allocated_standards.')')
+                ->get()->toArray();
+            
+                $subjectTeacherGrdArr = $subjectTeacherStdArr = array();
+                if (count($getAllocatedStandard) > 0) {
+                    foreach ($getAllocatedStandard as $k => $v) {
+                        if(!in_array($v->grade_id,$subjectTeacherGrdArr)){
+                            $subjectTeacherGrdArr[] = $v->grade_id;
+                        }
+                        if(!in_array($v->id,$subjectTeacherStdArr)){
+                            $subjectTeacherStdArr[] = $v->id;
+                        }
+                    }
+                }
+                Session::put('subjectTeacherGrdArr', $subjectTeacherGrdArr);
+                Session::put('subjectTeacherStdArr', $subjectTeacherStdArr);
+            }
+        }
+        // 10-01-2025 end supervisor rights
 
         $explod_list = explode(',', $listed_drop);
         $grade_name = 'grade';
