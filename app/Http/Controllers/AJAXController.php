@@ -27,6 +27,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use function App\Helpers\is_mobile;
 use function App\Helpers\getSubCordinates;
+use App\Traits\Helpers;
 
 class AJAXController extends Controller
 {
@@ -2371,20 +2372,20 @@ private function groupConsecutivePeriods($periods)
         $userId = session()->get('user_id');
         $userProfileName = session()->get('user_profile_name');
         $SubCordinates = [];
-        $profileArr = ["Admin", "Super Admin", "School Admin", "Assistant Admin"];
+        $profileArr = Helpers::adminProfile();
         if (!in_array($userProfileName, $profileArr)) {
             $SubCordinates = getSubCordinates($sub_institute_id, $userId);
         }
         // end 02-08-2024
         $employees = DB::table('tbluser')->join('tbluserprofilemaster as upm', 'upm.id', '=', 'tbluser.user_profile_id')
-            ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.first_name, "-"),COALESCE(tbluser.last_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
+            ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.last_name, "-"),COALESCE(tbluser.first_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
             ->where('tbluser.sub_institute_id', $sub_institute_id)
             ->whereRaw('tbluser.department_id in (' . implode(',', $department_id) . ') ')
             ->where('tbluser.status', 1)
             ->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
                 $q->whereIn('tbluser.id', $SubCordinates);
             })
-            ->orderBy('tbluser.first_name')
+            ->orderBy('tbluser.last_name')
             ->groupBy('tbluser.id')
             ->get()
             ->toArray();

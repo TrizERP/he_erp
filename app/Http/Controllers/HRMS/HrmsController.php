@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use function App\Helpers\is_mobile;
 use function App\Helpers\employeeDetails;
 use function App\Helpers\getSubCordinates;
+use App\Traits\Helpers;
 use DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -1108,7 +1109,7 @@ class HrmsController extends Controller
 
         // sub cordinates 02-08-2024
         $SubCordinates =[];
-        $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
+        $profileArr = Helpers::adminProfile();
         if($employee_id==0 && !in_array($userProfileName,$profileArr)){
             $SubCordinates = getSubCordinates($sub_institute_id,$userId);
             if(!empty($SubCordinates)){

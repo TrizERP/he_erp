@@ -16,6 +16,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use function App\Helpers\is_mobile;
 use Illuminate\Support\Facades\Schema;
+use App\Traits\Helpers;
 
 class dashboardController extends Controller
 {
@@ -56,10 +57,7 @@ class dashboardController extends Controller
             $final_userMenuTitle[$val['menu_title']] = $val['menu_id'];
         }
         //END Dynamic Dashboard
-
-        if ($user_profile_name == 'Super Admin' || $user_profile_name == 'Admin' || $user_profile_name == 'ADMIN' ||
-            $user_profile_name == 'admin' || $user_profile_name == 'school admin' || $user_profile_name == 'SCHOOL ADMIN'
-            || $user_profile_name == 'School Admin') {
+        if(in_array($user_profile_name,Helpers::adminProfile())){
             if ($sub_institute_id != 0 && $is_admin == '' || $is_admin == 1) {
 
                 $date = date('Y-m-d');

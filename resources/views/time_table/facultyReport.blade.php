@@ -24,7 +24,7 @@
                             <div class="col-md-6 form-group">
                                 <label>Lecturer</label>
                                 <select class="form-control" name="teacher_id" id="teacher_id">
-                                    <option value="">Select Lecturer</option>
+                                    <option value="">--Select Lecturer--</option>
                                     @if(isset($data['teacher_data']))
                                         @foreach($data['teacher_data'] as $key =>$val)
                                             @php

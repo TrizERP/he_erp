@@ -142,7 +142,7 @@
                                                         ->toArray();
                                                 @endphp
                                                  <td style="width:200px;">
-                                                    <select name="table_branch" class="form-control table_branch" onchange="getEmployeeList(this)">
+                                                    <select name="table_branch1" class="form-control table_branch1" onchange="getEmployeeList(this)">
                                                         <option value="">Select any One</option>
                                                         @if(isset($data['departmentLists']))
                                                         @foreach ($data['departmentLists'] as $key=>$dept )
@@ -156,8 +156,30 @@
                                                         name="teacher_id['{{ $val['date'] }}/{{ $val['timetable_id'] }}']"
                                                         id="teacher_id['{{ $val['date'] }}/{{ $val['timetable_id'] }}']"
                                                         @if (!empty($check)) style="pointer-events:none" readonly @endif>
-                                                        <option value="">Select Lecturer</option>
+                                                        <option value="">--Select Lecturer--</option>
                                                         <!-- Employees will be loaded via AJAX -->
+
+                                                        <!-- ADDED BY RAJESH FOR FREE TEACHER DISPLAY -->
+                                                        @if (isset($val['teacher_data']))
+                                                                @foreach ($val['teacher_data'] as $key => $val2)
+                                                                    @php
+                                                                        $isAbsentTeacher =
+                                                                            isset($data['teacher']) &&
+                                                                            $data['teacher'] == $val2->id;
+                                                                        $isAssigned = isset(
+                                                                            $data['check_data'][$val['date']][
+                                                                                $val['period_id']
+                                                                            ][$val2->id],
+                                                                        );
+                                                                    @endphp
+
+                                                                    @if (!$isAbsentTeacher && !$isAssigned)
+                                                                        <option value="{{ $val2->id }}">
+                                                                            {{ $val2->teacher_name }}</option>
+                                                                    @endif
+                                                                @endforeach
+                                                        @endif
+                                                        <!-- END -->
                                                     </select>
                                                 </td>
                                             </tr>
@@ -257,7 +279,7 @@
                     let currentValue = employee_select.val();
                     
                     // Clear existing options and add default option
-                    employee_select.empty().append('<option value="">Select Lecturer</option>');
+                    employee_select.empty().append('<option value="">--Select Lecturer--</option>');
                     
                     // Add new options
                     if(response && response.length > 0) {
@@ -280,13 +302,13 @@
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching employee list:', error);
-                    employee_select.empty().append('<option value="">Select Lecturer</option>');
+                    employee_select.empty().append('<option value="">--Select Lecturer--</option>');
                     employee_select.selectpicker('destroy');
                     employee_select.selectpicker();
                 }
             });
         } else {
-            employee_select.empty().append('<option value="">Select Lecturer</option>');
+            employee_select.empty().append('<option value="">--Select Lecturer--</option>');
             employee_select.selectpicker('destroy');
             employee_select.selectpicker();
         }

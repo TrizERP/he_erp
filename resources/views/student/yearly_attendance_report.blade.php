@@ -72,7 +72,7 @@
                         <div class="card">
                         @php
                             echo App\Helpers\get_school_details($grade_id,$standard_id,$division_id);
-                            echo '<br><center><span style=" font-size: 14px;font-weight: 600;font-family: Arial, Helvetica, sans-serif !important">From Date : '.date('d-m-Y',strtotime($data['from_date'])) .' - </span><span style=" font-size: 14px;font-weight: 600;font-family: Arial, Helvetica, sans-serif !important">To Date : '.date('d-m-Y',strtotime($data['to_date'])) .'</span></center><br>';
+                            echo '<br><center><span style=" font-size: 14px;font-weight: 600;font-family: Arial, Helvetica, sans-serif !important">From Date : '.date('d-m-Y',strtotime($data['from_date'])) .' - To Date : '.date('d-m-Y',strtotime($data['to_date'])) .'</span></center><br>';
                         @endphp    
                             <div class="table-responsive" id="printPage">
                                 <div class="my-4" id="head-table"></div>
@@ -85,20 +85,17 @@
                                     <tr id="heads"></tr>
                                     <!-- first heading -->
                                     <tr>
-                                        <th>Sr No</th>
-                                        <th>{{App\Helpers\get_string('grno','request')}}</th>
-                                        <th>{{App\Helpers\get_string('studentname','request')}}</th>
+                                        <th rowspan="2">Sr No</th>
+                                        <th rowspan="2">{{App\Helpers\get_string('grno','request')}}</th>
+                                        <th rowspan="2">{{App\Helpers\get_string('studentname','request')}}</th>
                                     <!-- <th>{{ session()->get('sub_institute_id') }}</th> -->
                                         @foreach($data['month'] as $key => $i)
                                             <th>{{$month_name[$i]}}</th>
                                         @endforeach
-                                        <th class="text-left">Total School Year Day</th>
+                                        <th class="text-left">Total Days</th>
                                         @php $working_day = 0; @endphp
                                     </tr>
                                     <tr>
-                                        <th>Sr No</th>
-                                        <th>{{App\Helpers\get_string('grno','request')}}</th>
-                                        <th>{{App\Helpers\get_string('studentname','request')}}</th>
                                         @if(isset($data['month']))
                                         @foreach($data['month'] as $key => $i)
                                             <th style="text-align:center">
@@ -165,7 +162,7 @@
             var d = document.getElementById("division");
             var division = d.options[d.selectedIndex].text;
 
-            $('#head-table').html('<div style="border:none !important;text-align:center;font-weight:700 !important" colspan="18"><h4>Academic Section : ' + grade + ' | Standard : ' + standard + ' | Division : ' + division + '</h4></div>');
+            //$('#head-table').html('<div style="border:none !important;text-align:center;font-weight:700 !important" colspan="18"><h4>Academic Section : ' + grade + ' | Standard : ' + standard + ' | Division : ' + division + '</h4></div>');
 
             $('#grade').attr('required', true);
             $('#standard').attr('required', true);
