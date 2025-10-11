@@ -38,5 +38,13 @@ trait Helpers
             '2023-2024'
         ];
     }
-
+    public static function adminProfile() {
+        return [
+            'Super Admin',
+            'Admin',
+            'Administrative Officer',
+            'Office Superintendent',
+            'Sr.Clerk',
+        ];
+    }
 }

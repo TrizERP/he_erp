@@ -64,7 +64,7 @@
                                         <div class="d-inline">
                                             <a href="{{ route('add_user.edit',$data->id)}}" class="btn btn-info btn-outline"><i class="ti-pencil-alt"></i></a>
                                         </div>
-                                        @if(in_array(session()->get('user_profile_name'),["Admin","Super Admin"]))              
+                                        @if(in_array(session()->get('user_profile_name'),App\Traits\Helpers::adminProfile()))              
                                         <form class="d-inline" action="{{ route('add_user.destroy', $data->id)}}" method="post">
                                         @csrf
                                         @method('DELETE')

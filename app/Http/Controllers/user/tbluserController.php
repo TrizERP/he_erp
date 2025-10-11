@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use  App\Models\school_setup\standardModel;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Traits\Helpers;
 
 class tbluserController extends Controller
 {
@@ -34,7 +35,7 @@ class tbluserController extends Controller
             DB::raw('if(tbluser.status = 1,"Active","Inactive") as status'))
             ->join('tbluserprofilemaster', 'tbluser.user_profile_id', '=', 'tbluserprofilemaster.id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id]) //, 'tbluser.status' => "1"
-            ->when(!in_array($user_profile,["Admin","Super Admin"]),function($q){
+            ->when(!in_array($user_profile,Helpers::adminProfile()),function($q){
                 $q->where('tbluser.id',session()->get('user_id'));
             })
             ->get();
