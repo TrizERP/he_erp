@@ -100,6 +100,7 @@ class createTimetableController extends Controller
             DB::raw('CONCAT_WS(" ",tbluser.last_name,tbluser.first_name,tbluser.middle_name) AS teacher_name,
                 (CASE WHEN total_lecture IS NULL THEN "Unlimited" ELSE tbluser.total_lecture - count(t.id) END) AS remaining_lecture'))
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', '=', 'tbluser.user_profile_id')
+            ->leftJoin('hrms_departments', 'tbluser.department_id', '=', 'hrms_departments.id')
             ->leftjoin("timetable AS t", function ($join) {
                 $join->on("t.teacher_id", "=", "tbluser.id")
                     ->on("t.sub_institute_id", "=", "tbluser.sub_institute_id");
