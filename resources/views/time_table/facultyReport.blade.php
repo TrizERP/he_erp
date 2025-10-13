@@ -66,6 +66,45 @@
                             </thead>
 
                             <tbody id="get_data">
+                            {{--   @if (!empty($data['timetable_data']) && count($data['timetable_data']) > 0) 
+                                @foreach ($data['week_data'] as $wkey => $wval)
+                                    <tr>
+                                        <td style='display: table-cell;'><span class='label label-warning'>{{ $wkey }}</span></td>
+                                        @foreach ($data['period_data'] as $pkey => $pval) 
+                                            @php
+                                                $value = null;
+                                                $colspan = 1;
+                                            @endphp
+                                            @if (isset($data['timetable_data'][$wval][$pval['id']]['SUBJECT'])) 
+                                                @foreach ($data['timetable_data'][$wval][$pval['id']]['SUBJECT'] as $k => $v) 
+                                                    @php
+                                    $currentBatch = $data['timetable_data'][$wval][$pval['id']]['BATCH'][$k] ?? '-';
+                                    $currentSubject = data['timetable_data'][$wval][$pval['id']]['SUBJECT'][$k];
+                                    $currentStd = $data['timetable_data'][$wval][$pval['id']]['STANDARD'][$k];
+                                    $currentType = $data['timetable_data'][$wval][$pval['id']]['TYPE'][$k];
+                                    $currentRoom = $data['timetable_data'][$wval][$pval['id']]['ROOM'][$k];
+                                    
+                                    $value .= $currentSubject .'<br>'. $currentBatch .'<br>'. $currentStd . '<br>' . $currentType . '<br>' . $currentRoom . '<br>';
+                                                    @endphp
+                                                @endforeach
+                                                @if ($colspan > 1)
+                                                    <td align='center' style='font-size:10px;color: black;' colspan="{{ $colspan }}">
+                                                        {!! $value !!}
+                                                    </td>
+                                                @else
+                                                    <td align='center' style='font-size:10px;color: black;'>{!! $value !!}</td>
+                                                @endif
+                                            @else 
+                                                <td colspan="1">
+                                                    <font color='red' style='font-size:10px;'>--No Period--</font>
+                                                </td>
+                                            @endif
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                                @else
+                                <tr><td align='center' style='text-align: center;'>No Records Found!</td></tr>
+                                @endif --}}
                    @if (!empty($data['timetable_data']) && count($data['timetable_data']) > 0)
     @foreach ($data['week_data'] as $wkey => $wval)
         <tr>
