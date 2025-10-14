@@ -59,6 +59,7 @@ class timetableReportsController extends Controller
             ->join('academic_section', 'academic_section.id', "=", 'timetable.academic_section_id')
             ->join('subject', 'subject.id', "=", 'timetable.subject_id')
             ->join('tbluser', 'tbluser.id', "=", 'timetable.teacher_id')
+            ->leftJoin('hrms_departments', 'tbluser.department_id', '=', 'hrms_departments.id')
             ->leftJoin('batch', 'batch.id', "=", 'timetable.batch_id')
             ->leftJoin('hostel_room_master as rm', 'rm.id', "=", 'timetable.room')
             ->where([
@@ -119,7 +120,7 @@ class timetableReportsController extends Controller
     }
 
     public function facultyTimetableCreate(Request $request){
-        $teacher_id = $request->input("teacher_id");
+        $teacher_id = $request->input("teacher_id") ?: $request->input("emp_id");
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
         $type = $request->input('type');

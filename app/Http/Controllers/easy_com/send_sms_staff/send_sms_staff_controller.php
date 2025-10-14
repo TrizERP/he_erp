@@ -59,25 +59,48 @@ class send_sms_staff_controller extends Controller
     public function create(Request $request)
     {
         $type = $request->input('type');
-
-        $alldata = DB::table("tbluser")
+    
+        // Build the query with department join and filters
+        $query = DB::table("tbluser")
+            ->leftJoin('hrms_departments', 'tbluser.department_id', '=', 'hrms_departments.id')
+            ->leftJoin('tbluserprofilemaster', 'tbluser.user_profile_id', '=', 'tbluserprofilemaster.id')
             ->where([
-                'sub_institute_id' => session()->get('sub_institute_id'),
-                'user_profile_id'  => $_REQUEST['staff'],
+                'tbluser.sub_institute_id' => session()->get('sub_institute_id'),
             ])
-            ->get();
+            ->select(
+                'tbluser.*', 
+                'hrms_departments.department as branch', 
+                'tbluserprofilemaster.name as profile'
+            );
+    
+        // Add department filter if department_id is provided
+        if ($request->has('department_id') && !empty($request->input('department_id'))) {
+            $query->where('tbluser.department_id', $request->input('department_id'));
+        }
+    
+        // Add staff filter if staff is provided
+        if ($request->has('staff') && !empty($request->input('staff'))) {
+            $query->where('tbluser.user_profile_id', $request->input('staff'));
+        }
+    
+        $alldata = $query->get();
 
         $data = [];
         foreach ($alldata as $object) {
             $data[] = (array) $object;
         }
 
-        $responce_arr['group_id'] = $_REQUEST['staff'];
+        $responce_arr['group_id'] = $request->input('staff', '');
+        $responce_arr['department_id'] = $request->input('department_id', '');
+    
         foreach ($data as $id => $arr) {
             $responce_arr['stu_data'][$id]['sr.no'] = $id + 1;
             $responce_arr['stu_data'][$id]['name'] = $arr['first_name'].' '.$arr['middle_name'].' '.$arr['last_name'];
             $responce_arr['stu_data'][$id]['student_id'] = $arr['id'];
             $responce_arr['stu_data'][$id]['mobile'] = $arr['mobile'];
+            // You can also access the branch data if needed:
+            $responce_arr['stu_data'][$id]['branch'] = $arr['branch'];
+            $responce_arr['stu_data'][$id]['profile'] = $arr['profile'];
         }
 
         return is_mobile($type, "easy_comm/send_sms_staff/add", $responce_arr, "view");

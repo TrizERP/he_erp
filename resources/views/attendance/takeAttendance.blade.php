@@ -219,10 +219,9 @@
                                     <th>Batch</th>
                                 @endif
                                 <th>Present 
-                                <!--<input id="checkall" name="attendance" onchange="checkAll(this,'Present');" type="radio"> -->
-                                </th>
+                                <input id="checkall" name="attendance" onchange="checkAll(this,'Present');" type="radio"></th>
                                 <th>Absent
-                                <!--<input id="checkall" name="attendance" onchange="checkAll(this,'Absent');" type="radio"> -->
+                                <input id="checkall" name="attendance" onchange="checkAll(this,'Absent');" type="radio">
                                 </th>
                             </tr>
                         </thead>
@@ -509,6 +508,27 @@ $(document).ready(function () {
             })
 
         });
-    </script>
+    </script>   
+<script>
+    $(".mydatepicker").datepicker({  maxDate: '0'});
+
+    function checkAll(ele,name) {
+         var checkboxes = document.getElementsByClassName(name);
+         if (ele.checked) {
+             for (var i = 0; i < checkboxes.length; i++) {
+                 if (checkboxes[i].type == 'radio') {
+                     checkboxes[i].checked = true;
+                 }
+             }
+         } else {
+             for (var i = 0; i < checkboxes.length; i++) {
+                 console.log(i)
+                 if (checkboxes[i].type == 'radio') {
+                     checkboxes[i].checked = false;
+                 }
+             }
+         }
+    }
+</script>    
     @include('includes.footer')
 @endsection

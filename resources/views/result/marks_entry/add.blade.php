@@ -417,7 +417,7 @@
 
         $('.att').on('change blur', function() {
             const row = $(this).closest('tr');
-            updateGradeAndPercentage(row);
+            //updateGradeAndPercentage(row);
         });
 
         function check_input(inputElement, maxMarks) {

@@ -724,7 +724,7 @@ if (!function_exists('SearchStudent')) {
                 se.standard_id,se.section_id,se.student_quota,se.start_date,
                 se.end_date,se.enrollment_code,se.drop_code,se.drop_remarks,
                 se.drop_remarks,se.term_id,se.remarks,se.admission_fees,
-                se.house_id,se.lc_number";
+                se.house_id,se.lc_number,se.roll_no";
         $select_fields = preg_replace('/\s+/', '', $select_fields);
         $where = array(
             'se.syear' => $syear,
