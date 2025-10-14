@@ -77,6 +77,7 @@
                         $salary_details = $data['salary_details'];
                         $documentTypeLists = $data['documentTypeLists'];
                         $documentLists = $data['documentLists'];
+                        $standardLists = $data['standardLists'];
                         $categorties = $data['categorties'];
                         $religions = $data['religions'];
                         $bloodgroups = $data['bloodgroups'];
@@ -147,7 +148,7 @@
                                         <label>Mobile</label>
                                         <input type="text" value="@if(isset($data['mobile'])){{ $data['mobile'] }}@endif" id='mobile' required name="mobile" class="form-control">
                                     </div>
-                                    
+<!--                                    
                                     <div class="col-md-4 form-group">
                                         <label>Subject</label>
                                         <select name="subject_ids[]" id="subject_ids[]" class="form-control" multiple
@@ -164,6 +165,30 @@
                                             @endif
                                         </select>
                                     </div>
+-->
+                                    <!-- // 10-01-2025 start supervisor rights -->
+                                    <div class="col-md-4" class="form-group">
+                                        <label for="allocate_standard">Allocate Semester</label>
+                                        <select name="allocated_standards[]" id="allocated_standards"
+                                            class="form-control resizableVertical" multiple>
+                                            @php
+                                                $allocatedStd =
+                                                    isset($data['allocated_standards']) &&
+                                                    $data['allocated_standards'] != ''
+                                                        ? explode(',', $data['allocated_standards'])
+                                                        : [];
+                                            @endphp
+
+                                            @if (!empty($standardLists))
+                                                @foreach ($standardLists as $sk => $sv)
+                                                    <option value="{{ $sv['id'] }}"
+                                                        @if (in_array($sv['id'], $allocatedStd)) selected @endif>
+                                                        {{ $sv['name'] }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                    <!-- // 10-01-2025 end supervisor rights -->                                    
                                     <div class="col-md-4 form-group">
                                         <label class="control-label">Gender</label>
                                         <div class="radio-list">

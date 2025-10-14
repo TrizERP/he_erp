@@ -41,8 +41,8 @@ class proxyController extends Controller
             'proxy_master.*',
             's.name as standard_name',
             'd.name as division_name',
-            DB::raw('concat(u.first_name," ",u.middle_name," ",u.last_name) as teacher_name'),
-            DB::raw('concat(u1.first_name," ",u1.middle_name," ",u1.last_name) as proxy_teacher_name'),
+            DB::raw('concat(u.last_name," ",u.first_name) as teacher_name'),
+            DB::raw('concat(u1.last_name," ",u1.first_name) as proxy_teacher_name'),
             'p.title as period_name',
             DB::raw('concat(sub.subject_name,"(",sub.subject_code,")") as sub_name')
         )->join('standard as s', function ($join) use ($marking_period_id) {
@@ -92,8 +92,8 @@ class proxyController extends Controller
                 'proxy_master.*',
                 's.name as standard_name',
                 'd.name as division_name',
-                DB::raw('concat(u.first_name," ",u.middle_name," ",u.last_name) as teacher_name'),
-                DB::raw('concat(u1.first_name," ",u1.middle_name," ",u1.last_name) as proxy_teacher_name'),
+                DB::raw('concat(u.last_name," ",u.first_name) as teacher_name'),
+                DB::raw('concat(u1.last_name," ",u1.first_name) as proxy_teacher_name'),
                 'p.title as period_name',
                 DB::raw('concat(sub.subject_name,"(",sub.subject_code,")") as sub_name')
             )
@@ -133,11 +133,11 @@ class proxyController extends Controller
 
         $user_data = tbluserModel::select(
             'tbluser.*',
-            DB::raw('concat(tbluser.first_name," ",tbluser.middle_name," ",tbluser.last_name) as teacher_name')
+            DB::raw('concat(tbluser.last_name," ",tbluser.first_name) as teacher_name')
         )
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2, 'tbluser.status' => 1])
-            ->orderBy('tbluser.first_name')
+            ->orderBy('tbluser.last_name')
             ->get();
         $data['teacher_data'] = $user_data;
 
@@ -149,6 +149,7 @@ class proxyController extends Controller
         $from_date = $request->get('from_date');
         $to_date = $request->get('to_date');
         $proxy_teacher_id = $request->get('emp_id');
+        $department_id = $request->get('department_id');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
         $marking_period_id = session()->get('term_id');
@@ -216,7 +217,7 @@ class proxyController extends Controller
                 //Get free teacher according to period and day
 
                 $teacher_data = DB::table('tbluser as t')
-                    ->select(DB::raw("CONCAT_WS(' ', t.first_name, t.middle_name, t.last_name) as teacher_name, t.id"))
+                    ->select(DB::raw("CONCAT_WS(' ', t.last_name,t.first_name) as teacher_name, t.id"))
                     ->join('tbluserprofilemaster as u', function ($join) use ($syear, $sub_institute_id) {
                         $join->on('u.id', '=', 't.user_profile_id');
                     })
@@ -225,22 +226,24 @@ class proxyController extends Controller
                     // ->where('u.parent_id', '=', '2')
                     ->where(['u.parent_id' => 2])
                     ->where('u.sub_institute_id', '=', $sub_institute_id)
+                    ->where('t.department_id', '=', $department_id)
                     ->where('ti.teacher_id', '<>', $proxy_teacher_id)
                     ->where('ti.syear', '<=', $syear)
                     ->where('ti.sub_institute_id', '=', $sub_institute_id)
                     ->where('t.status', '=', 1)
-                    ->whereNotIn('ti.teacher_id', function ($query) use ($tval, $syear, $sub_institute_id) {
-                        $query->select('tt.teacher_id')
-                            ->from('timetable as tt')
-                            ->where('tt.syear', '=', $syear)
-                            ->where('tt.sub_institute_id', '=', $sub_institute_id)
-                            // ->whereNull('tt.week_day')
-                            ->where('tt.period_id', '=', $tval["period_id"])
-                            ->where('tt.week_day', '=', $tval["week_day"]);
+                    ->where(function ($q) use ($tval, $syear, $sub_institute_id) {
+                        $q->whereNotIn('ti.teacher_id', function ($sub) use ($tval, $syear, $sub_institute_id) {
+                            $sub->select('tt.teacher_id')
+                                ->from('timetable as tt')
+                                ->where('tt.syear', '=', $syear)
+                                ->where('tt.sub_institute_id', '=', $sub_institute_id)
+                                ->where('tt.period_id', '=', $tval["period_id"])
+                                ->where('tt.week_day', '=', $tval["week_day"]);
+                        })
+                        ->orWhereNull('ti.week_day');
                     })
-                    ->orWhere("ti.week_day", null)
                     ->groupBy('ti.teacher_id')
-                    ->orderBy('t.first_name')
+                    ->orderBy('t.last_name')
                     ->get();
 
                 $proxydata[] = [
@@ -263,11 +266,11 @@ class proxyController extends Controller
 
         $user_data = tbluserModel::select(
             'tbluser.*',
-            DB::raw('concat(tbluser.first_name," ",tbluser.middle_name," ",tbluser.last_name) as teacher_name')
+            DB::raw('concat(tbluser.last_name," ",tbluser.first_name) as teacher_name')
         )
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2])
-            ->orderBy('tbluser.first_name')
+            ->orderBy('tbluser.last_name')
             ->get();
 
         $data['teacher_data'] = $user_data;
@@ -412,7 +415,7 @@ class proxyController extends Controller
         //Get free teacher according to period and day
         $user_data = timetableModel::select(
             'timetable.teacher_id as id',
-            DB::raw('concat(tbluser.first_name," ",tbluser.middle_name," ",tbluser.last_name) as teacher_name')
+            DB::raw('concat(tbluser.last_name," ",tbluser.first_name) as teacher_name')
         )
             ->join('tbluser', 'tbluser.id', "=", 'timetable.teacher_id')
             ->where([
@@ -422,7 +425,7 @@ class proxyController extends Controller
             ->where('timetable.teacher_id', '<>', $timetable_data[0]['teacher_id'])
             ->where('timetable.period_id', '<>', $timetable_data[0]['period_id'])
             ->groupBy('timetable.teacher_id')
-            ->orderBy('tbluser.first_name')
+            ->orderBy('tbluser.last_name')
             ->get();
 
         // $user_data = tbluserModel::select('tbluser.*',

@@ -34,7 +34,7 @@
                     $emp_id = $data['selected_emp'];
                 }
 
-                $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
+                $profileArr = \App\Traits\Helpers::adminProfile();
 
                 $readonly= $hide='';
                 if(!in_array(session()->get('user_profile_name'),$profileArr)){

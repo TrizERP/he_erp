@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\Helpers;
 
 if (!defined('BEST_OF')) {
     define('BEST_OF', 2);
@@ -138,7 +139,7 @@ if (!function_exists('SearchChain')) {
         );
 
         // START 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-        if (session()->get('user_profile_name') == 'Lecturer') {
+        if (session()->get('profile_parent_id') == 2) {
             $teacher_id = session()->get('user_id');
             $sub_institute_id = session()->get('sub_institute_id');
             $syear = session()->get('syear');
@@ -166,7 +167,31 @@ if (!function_exists('SearchChain')) {
             Session::put('subjectTeacherDivArr', $subjectTeacherDivArr);
         }
         // END 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-
+        
+        // 10-01-2025 start supervisor rights
+        else if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile()))
+        {
+            $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
+            if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
+                $getAllocatedStandard = DB::table('standard')->whereRaw('id IN ('.$getUserData->allocated_standards.')')
+                ->get()->toArray();
+            
+                $subjectTeacherGrdArr = $subjectTeacherStdArr = array();
+                if (count($getAllocatedStandard) > 0) {
+                    foreach ($getAllocatedStandard as $k => $v) {
+                        if(!in_array($v->grade_id,$subjectTeacherGrdArr)){
+                            $subjectTeacherGrdArr[] = $v->grade_id;
+                        }
+                        if(!in_array($v->id,$subjectTeacherStdArr)){
+                            $subjectTeacherStdArr[] = $v->id;
+                        }
+                    }
+                }
+                Session::put('subjectTeacherGrdArr', $subjectTeacherGrdArr);
+                Session::put('subjectTeacherStdArr', $subjectTeacherStdArr);
+            }
+        }
+        // 10-01-2025 end supervisor rights
 
         $explod_list = explode(',', $listed_drop);
         $grade_name = 'grade';
@@ -2142,7 +2167,7 @@ if (!function_exists('get_string')) {
                 $empData->where('tbluser.status', 1);
             }
 
-            $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
+            $profileArr = Helpers::adminProfile();
             $SubCordinates = [];    
             if($userProfileName!='' && !in_array($userProfileName,$profileArr) && $profileUserId!=''){
                 $SubCordinates = getSubCordinates($sub_institute_id,$profileUserId);
@@ -2195,7 +2220,7 @@ if (!function_exists('get_string')) {
             // dd($dep_idsArr);
             // for subordinates 02-08-2024
             $SubCordinatesDep =[];
-            $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
+            $profileArr = Helpers::adminProfile();
             if(!in_array($userProfileName,$profileArr)){
                 $SubCordinatesDep = getSubCordinates($sub_institute_id,$userId,'dep');
             }
@@ -2252,7 +2277,7 @@ if (!function_exists('get_string')) {
             if(isset($dep_ids) && $dep_ids!=0){
                 // for subordinates 02-08-2024
                 $SubCordinates =[];
-                $profileArr = ["Admin","Super Admin","School Admin","Assistant Admin"];
+                $profileArr = Helpers::adminProfile();
                 if(!in_array($userProfileName,$profileArr)){
                     $SubCordinates = getSubCordinates($sub_institute_id,$userId);
                 }

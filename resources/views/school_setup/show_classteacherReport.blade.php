@@ -34,7 +34,7 @@
                     <div class="col-md-4 form-group"> 
                         <label>Select Lecturer</label>                                                                         
                         <select class="selectpicker form-control" name="teacher_id" id="teacher_id">
-                            <option value="">Select Lecturer</option>                        
+                            <option value="">--Select Lecturer--</option>                        
                             @if(isset($data['teacher_data']))
                             @foreach($data['teacher_data'] as $key =>$val)
                                 @php 
