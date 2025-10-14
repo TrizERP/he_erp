@@ -381,11 +381,14 @@ class result_report_controller extends Controller
                 ->join('sub_std_map as s', function ($join) {
                     $join->whereRaw("s.subject_id = e.subject_id AND s.sub_institute_id = e.sub_institute_id AND s.standard_id = e.standard_id");
                 })
+                ->join('subject as sb', function ($join) {
+                    $join->whereRaw("s.subject_id = sb.id AND s.sub_institute_id = sb.sub_institute_id");
+                })
                 ->leftJoin('result_marks as rm', function ($join) {
                     $join->whereRaw("rm.sub_institute_id = e.sub_institute_id AND rm.exam_id = e.id");
                 })
                 ->selectRaw("e.title as ExamTitle, SUM(e.points) AS total_points,
-                    e.subject_id,s.display_name as subject_name,rm.student_id,SUM(rm.points) as obtained_points")
+                    e.subject_id,s.display_name as subject_name,sb.subject_code,sb.short_name,rm.student_id,SUM(rm.points) as obtained_points")
                 ->where("e.term_id", "=", $term_id)
                 ->where("e.sub_institute_id", "=", $sub_institute_id)
                 ->where("e.syear", "=", $syear)
@@ -411,7 +414,7 @@ class result_report_controller extends Controller
             $date_arr = [];
 
             foreach ($result as $id => $arr) {
-                $date_arr[$arr['subject_name']] = $arr['subject_name'] . '(' . $arr['total_points'] . ')';
+                $date_arr[$arr['subject_name']] = $arr['short_name'] . ' (' . $arr['subject_code'] . ')';
             }
 
             $data['grade_id'] = $grade_id;
