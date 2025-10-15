@@ -6,7 +6,7 @@
 
             <div class="row bg-title">
                 <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                    <h4 class="page-title">Semisterwiase Attendance Report</h4>
+                    <h4 class="page-title">All Subject Semesterwise Report</h4>
                 </div>
             </div>
         </div>
@@ -245,7 +245,7 @@
 			   buttons: [
 				   {
 					   extend: 'pdfHtml5',
-					   title: 'All subject report',
+					   title: 'All Subject Semesterwise Report',
 					   orientation: 'landscape',
 					   pageSize: 'LEGAL',
 					   pageSize: 'A0',
@@ -265,12 +265,12 @@
 						   });
 					   }
 				   },
-				   {extend: 'csv', text: ' CSV', title: 'All subject report'},
-				   {extend: 'excel', text: ' EXCEL', title: 'All subject report'},
+				   {extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report'},
+				   {extend: 'excel', text: ' EXCEL', title: 'All Subject Semesterwise Report'},
 				   {
 					   extend: 'print',
 					   text: ' PRINT',
-					   title: 'All subject report',
+					   title: 'All Subject Semesterwise Report',
 					   customize: function (win) {
 						   $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
 					   }
