@@ -80,59 +80,109 @@
                         echo '</center><br>';
                     }
                 @endphp
+                <h1 style="text-align: center; font-size: 20px; margin-top: 5px;">Mid-Sem Exam Report</h1>
                 <div class="col-lg-12 col-sm-12 col-xs-12">
                     <div class="table-responsive">
                         <table id="example" class="table table-striped">                       
                              <thead>
                                 <tr>
-                                    <!--<th>Standard</th>-->
-                                    <!--<th>Roll No.</th>-->
-                                    <th>Student Name</th>
-                                        @if(isset($data['date_arr']))
-                                            @foreach($data['date_arr'] as $k => $date_point)
-                                                <th>{{$date_point}}</th>
-                                            @endforeach
-                                        @endif
-                                    <th>Total</th>
-                                    <th>Percentage(%)</th>
+                                    <th>Enrollment No.</th>
+                                    @if(isset($data['date_arr']))
+                                        @foreach($data['date_arr'] as $k => $date_point)
+                                            <th style="text-align: center;">{{ $date_point }}</th>
+                                        @endforeach
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    // Initialize subject summary counters
+                                    $subjectSummary = [];
+                                @endphp
+
+                                {{-- Student-wise rows --}}
                                 @foreach($all_student as $key => $all_data)
                                     @php
-                                        $total = $obtained_total = $percentage = 0;
                                         $student_id = $all_data['id'];
-                                    @endphp                                    
+                                    @endphp
                                     <tr>
-                                        <!--<td>{{$all_data['standard_name']}} - {{$all_data['division_name']}}</td>-->
-                                        <!--<td>{{$all_data['roll_no']}}</td>    -->
-                                        <td>{{$all_data['first_name']}} {{$all_data['middle_name']}} {{$all_data['last_name']}}</td>
+                                        <td>{{ $all_data['enrollment_no'] }}</td>
+
                                         @if(isset($data['date_arr']))
-                                        @foreach($data['date_arr'] as $k => $date_point)
-                                            @if(isset($data['WRT_data'][$student_id][$k]) && count($data['WRT_data'][$student_id][$k]) > 0)
-                                                    @if($data['WRT_data'][$student_id][$k]['is_absent'] == 'AB')
-                                                        <td style="font-weight: bold;color:red;">{{$data['WRT_data'][$student_id][$k]['is_absent']}}</td>
-                                                    @else
-                                                        <td>{{$data['WRT_data'][$student_id][$k]['obtained_points']}}</td>
-                                                    @endif
+                                            @foreach($data['date_arr'] as $k => $date_point)
                                                 @php
-                                                    $total = $total + $data['WRT_data'][$student_id][$k]['total_points'];
-                                                    $obtained_total = $obtained_total + $data['WRT_data'][$student_id][$k]['obtained_points'];
-                                                    $per = (($obtained_total * 100) / $total);
-                                                    $percentage = number_format($per,2);
+                                                    if (!isset($subjectSummary[$k])) {
+                                                        $subjectSummary[$k] = [
+                                                            'total' => 0,
+                                                            'pass' => 0,
+                                                            'fail' => 0,
+                                                            'absent' => 0,
+                                                        ];
+                                                    }
                                                 @endphp
+
+                                                @if(isset($data['WRT_data'][$student_id][$k]) && count($data['WRT_data'][$student_id][$k]) > 0)
+                                                    @php $subjectSummary[$k]['total']++; @endphp
+
+                                                    @if($data['WRT_data'][$student_id][$k]['is_absent'] == 'AB')
+                                                        <td style="text-align: center;font-weight:bold; color:red;">AB</td>
+                                                        @php $subjectSummary[$k]['absent']++; @endphp
+                                                    @else
+                                                        @php
+                                                            $marks = $data['WRT_data'][$student_id][$k]['obtained_points'];
+                                                            if ($marks >= 12) {
+                                                                $subjectSummary[$k]['pass']++;
+                                                            } else {
+                                                                $subjectSummary[$k]['fail']++;
+                                                            }
+                                                        @endphp
+                                                        <td style="text-align: center;">{{ $marks }}</td>
+                                                    @endif
                                                 @else
-                                              <td>
-                                                    -
-                                              </td>
-                                            @endif
-                                        @endforeach
+                                                    <td style="text-align: center;">-</td>
+                                                @endif
+                                            @endforeach
                                         @endif
-                                        <td>{{$obtained_total}}/{{$total}}</td>
-                                        <td>{{$percentage}}</td>
                                     </tr>
                                 @endforeach
-                            </tbody>    
+
+                                {{-- Summary Rows --}}
+                                <tr style="font-weight:bold; background:#f9f9f9;">
+                                    <td style="text-align: center;">Total</td>
+                                    @foreach($data['date_arr'] as $k => $date_point)
+                                        <td style="text-align: center;">{{ $subjectSummary[$k]['total'] ?? 0 }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align: center;">Pass</td>
+                                    @foreach($data['date_arr'] as $k => $date_point)
+                                        <td style="text-align: center;">{{ $subjectSummary[$k]['pass'] ?? 0 }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align: center;">Fail</td>
+                                    @foreach($data['date_arr'] as $k => $date_point)
+                                        <td style="text-align: center;">{{ $subjectSummary[$k]['fail'] ?? 0 }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align: center;">Absent</td>
+                                    @foreach($data['date_arr'] as $k => $date_point)
+                                        <td style="text-align: center;">{{ $subjectSummary[$k]['absent'] ?? 0 }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align: center;">Per.(%)</td>
+                                    @foreach($data['date_arr'] as $k => $date_point)
+                                        @php
+                                            $total = $subjectSummary[$k]['total'] ?? 0;
+                                            $pass = $subjectSummary[$k]['pass'] ?? 0;
+                                            $percent = ($total > 0) ? round(($pass / $total) * 100, 2) : 0;
+                                        @endphp
+                                        <td style="text-align: center;">{{ $percent }}%</td>
+                                    @endforeach
+                                </tr>
+                            </tbody>
                         </table>
 
                         <!-- Signature Section -->
@@ -162,16 +212,19 @@
 <script>
     $(document).ready(function() {
     var table = $('#example').DataTable( {
-         select: true,          
-         lengthMenu: [ 
-                        [100, 500, 1000, -1], 
-                        ['100', '500', '1000', 'Show All'] 
-        ],
+        //select: false,          
+        paging: false,          // Enable pagination
+        //pageLength: 500,        // Rows per page
+        //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+        ordering: false,        // Enable sorting
+        searching: false,       // Enable search box
+        info: false,            // Show "Showing 1 to n of n entries"
+        //autoWidth: false,
         dom: 'Bfrtip', 
         buttons: [ 
-            { 
+            /*{ 
                 extend: 'pdfHtml5',
-                title: 'Classwise Report',
+                title: 'Mid-Sem Exam Report',
                 orientation: 'landscape',
                 pageSize: 'LEGAL',                
                 pageSize: 'A0',
@@ -199,12 +252,12 @@
                         doc.content.push({
                             columns: [
                                 {
-                                    text: '_____________________\nSignature of Internal Examiner',
+                                    text: '_________________\nSignature of Internal Examiner',
                                     alignment: 'left',
                                     width: '45%'
                                 },
                                 {
-                                    text: '_____________________\nSignature of External Examiner/HOD',
+                                    text: '_________________\nSignature of External Examiner/HOD',
                                     alignment: 'right',
                                     width: '45%'
                                 }
@@ -212,35 +265,49 @@
                             margin: [20, 0, 20, 0]
                         });
                     }
-            }, 
-            { extend: 'csv', text: ' CSV', title: 'Classwise Report' }, 
-            { extend: 'excel', text: ' EXCEL', title: 'Classwise Report' }, 
-            { extend: 'print', text: ' PRINT', title: 'Classwise Report',customize: function (win) {
-                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
+            }, */
+            { extend: 'csv', text: ' CSV', title: 'Mid-Sem Exam Report' }, 
+            /*{ extend: 'excel', text: ' EXCEL', title: 'Mid-Sem Exam Report' }, */
+            { extend: 'print', text: ' PRINT', title: 'Mid-Sem Exam Report',customize: function (win) {
+                $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
+                $(win.document.body).find('th, td').css('text-align', 'center').css('vertical-align', 'middle');
+                $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
                         
-                        // Add signature section to print view
-                        $(win.document.body).append(`
-                            <div style="margin-top: 80px; padding: 20px 0; width: 100%;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                                    <div style="text-align: left; width: 48%;">
-                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                            Signature of Internal Examiner
-                                        </div>
-                                    </div>
-                                    <div style="text-align: right; width: 48%;">
-                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                            Signature of External Examiner/HOD
-                                        </div>
-                                    </div>
+                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                // Add signature section to print view
+                $(win.document.body).append(`
+                    <div style="margin-top: 80px; padding: 20px 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                            <div style="text-align: left; width: 48%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Signature of Internal Examiner
                                 </div>
                             </div>
-                        `);
-                    }}, 
-            'pageLength' 
+                            <div style="text-align: right; width: 48%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Signature of External Examiner/HOD
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: left; margin-top: 20px;">
+                            Printed on: ${formattedDateTime}
+                        </div>
+                    </div>
+                `);
+                    }},
         ], 
         }); 
-        $('#example thead tr').clone(true).appendTo( '#example thead' );
-        $('#example thead tr:eq(1) th').each( function (i) {
+        //$('#example thead tr').clone(true).appendTo( '#example thead' );
+        /*$('#example thead tr:eq(1) th').each( function (i) {
             var title = $(this).text();
             $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
 
@@ -252,7 +319,7 @@
                         .draw();
                 }
             } );
-        } );
+        } );*/
     } );
 </script>
 

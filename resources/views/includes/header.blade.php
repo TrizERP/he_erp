@@ -153,6 +153,7 @@ $academicTerms = session()->get('academicTerms');
                             <!-- <a class="dropdown-item" href="#">Profile</a> -->
                             <a class="dropdown-item" href="{{route('change_password.index')}}"><i
                                     class="mdi mdi-settings"></i> Change Password</a>
+                            @if(Session::get('user_profile_name') == 'Admin')
                             <a class="dropdown-item" href="{{route('dashboard_setting.index')}}"><i
                                     class="mdi mdi-vector-triangle"></i> Dashboard Setting</a>
                             <a class="dropdown-item" href="{{route('device_check')}}"><i
@@ -163,7 +164,6 @@ $academicTerms = session()->get('academicTerms');
                                     class="mdi mdi-checkerboard"></i> Implementation</a>
                             <a class="dropdown-item" href="{{route('Onboarding')}}"><i
                                     class="mdi mdi-checkerboard"></i> Onboarding</a>
-                            @if(Session::get('user_profile_name') == 'Admin')
                                 <!--<a class="dropdown-item" href="{{route('formbuild.list')}}"><i
                                         class="mdi mdi-wallet-travel"></i> Form Builder</a>-->
                                 <a class="dropdown-item" href="{{route('custom-module.tables')}}"><i
