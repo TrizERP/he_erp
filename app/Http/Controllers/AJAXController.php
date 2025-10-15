@@ -484,7 +484,10 @@ class AJAXController extends Controller
         // Now group by display_name + extend_lab for consecutive period checking
         $grouped_by_subject = [];
         foreach ($merged as $key => $item) {
-            $subject_key = $item['display_name'] . "###" . $item['extend_lab'];
+            if($item['type'] == 'Lecture')
+                $subject_key = $item['display_name'] . "###" . $item['period_id'];
+            else
+                $subject_key = $item['display_name'] . "###" . $item['extend_lab'];
             
             if (!isset($grouped_by_subject[$subject_key])) {
                 $grouped_by_subject[$subject_key] = [

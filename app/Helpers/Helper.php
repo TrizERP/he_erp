@@ -138,11 +138,42 @@ if (!function_exists('SearchChain')) {
             '6' => 'parent_communication',
         );
 
-        // START 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-        if (session()->get('profile_parent_id') == 2) {
-            $teacher_id = session()->get('user_id');
-            $sub_institute_id = session()->get('sub_institute_id');
-            $syear = session()->get('syear');
+        $teacher_id = session()->get('user_id');
+        $sub_institute_id = session()->get('sub_institute_id');
+        $syear = session()->get('syear');
+
+        $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
+
+        if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
+                $getAllocatedStandard = DB::table('standard as s')
+                    ->join('academic_section as a', function ($join) {
+                        $join->on('a.id', '=', 's.grade_id')
+                             ->on('a.sub_institute_id', '=', 's.sub_institute_id');
+                    })
+                    ->select('a.id as academic_section_id', 's.id as standard_id')
+                    ->where('s.sub_institute_id', $sub_institute_id) // e.g., 133
+                    ->whereIn('s.id', explode(',', $getUserData->allocated_standards))
+                    ->get()
+                    ->toArray();
+
+                $subjectTeacherGrdArr = [];
+                $subjectTeacherStdArr = [];
+
+                if (!empty($getAllocatedStandard)) {
+                    foreach ($getAllocatedStandard as $v) {
+                        if (!in_array($v->academic_section_id, $subjectTeacherGrdArr)) {
+                            $subjectTeacherGrdArr[] = $v->academic_section_id;
+                        }
+                        if (!in_array($v->standard_id, $subjectTeacherStdArr)) {
+                            $subjectTeacherStdArr[] = $v->standard_id;
+                        }
+                    }
+                }
+
+                Session::put('subjectTeacherGrdArr', $subjectTeacherGrdArr);
+                Session::put('subjectTeacherStdArr', $subjectTeacherStdArr);
+        
+        } else if (session()->get('profile_parent_id') == 2) {
 
             $subject_teacher = DB::table('subject as s')
                 ->join('timetable as t', function ($join) {
@@ -169,27 +200,10 @@ if (!function_exists('SearchChain')) {
         // END 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
         
         // 10-01-2025 start supervisor rights
-        else if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile()))
+        //else if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile()))
         {
-            $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
-            if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
-                $getAllocatedStandard = DB::table('standard')->whereRaw('id IN ('.$getUserData->allocated_standards.')')
-                ->get()->toArray();
             
-                $subjectTeacherGrdArr = $subjectTeacherStdArr = array();
-                if (count($getAllocatedStandard) > 0) {
-                    foreach ($getAllocatedStandard as $k => $v) {
-                        if(!in_array($v->grade_id,$subjectTeacherGrdArr)){
-                            $subjectTeacherGrdArr[] = $v->grade_id;
-                        }
-                        if(!in_array($v->id,$subjectTeacherStdArr)){
-                            $subjectTeacherStdArr[] = $v->id;
-                        }
-                    }
-                }
-                Session::put('subjectTeacherGrdArr', $subjectTeacherGrdArr);
-                Session::put('subjectTeacherStdArr', $subjectTeacherStdArr);
-            }
+            
         }
         // 10-01-2025 end supervisor rights
 

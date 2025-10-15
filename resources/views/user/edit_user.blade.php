@@ -60,6 +60,10 @@
                     </div>
 
                     @php
+                        $readonly = '';
+                        if(session()->get('user_profile_name') != 'Admin'){
+                            $readonly = 'readonly=readonly';
+                        }
                         $departments = $data['departments'];
                         $new_emp_code = $data['new_emp_code'];
                         $employees = $data['employees'];
@@ -135,14 +139,14 @@
                                         <label>User Name </label>
                                         <input type="text"
                                                value="@if(isset($data['user_name'])){{ $data['user_name'] }}@endif"
-                                               id='user_name' required name="user_name" class="form-control">
+                                               id='user_name' required name="user_name" class="form-control" {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Email</label>
                                         <!--<span><br><b>{{ $data['email'] }}</b></span>-->
                                         <input type="text" id='email'
                                                value="@if(isset($data['email'])){{ $data['email'] }}@endif" required
-                                               name="email" class="form-control">
+                                               name="email" class="form-control" {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Mobile</label>
@@ -309,7 +313,7 @@
                                         <label>Password</label>
                                         <input type="password"
                                                value="@if(isset($data['password'])){{ $data['password'] }}@endif"
-                                               id='password' required name="password" class="form-control">
+                                               id='password' required name="password" class="form-control" {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Birthdate</label>
