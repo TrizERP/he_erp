@@ -25,6 +25,7 @@ class exam_creation extends Model {
         'report_card_status',
         'sort_order',
         'exam_date',
+        'cutoff',
         'created_by',
         'updated_by',
         'created_at',
