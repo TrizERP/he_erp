@@ -109,6 +109,7 @@
                     <div class="row">
                         <div class="table-responsive">
                             {!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}
+                            <h1 style="text-align: center; font-size: 20px; margin-top: 5px;">All Subject Semesterwise Report</h1>
                             <table id="example" class="table table-striped">
                                 <thead>
                                     <tr>
@@ -153,6 +154,25 @@
                                     @endif
                                 </tbody>
                             </table>
+                            <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                    <div style="text-align: left; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of Class Coordinator
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of HOD.
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of Principal
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 						<div class="col-md-12">
 							<center>
@@ -233,66 +253,64 @@
     </script>
     @include('includes.footer')
 
-	<script>
-		$(document).ready(function () {
-		   var table = $('#example').DataTable({
-			   select: true,
-			   lengthMenu: [
-				   [100, 500, 1000, -1],
-				   ['100', '500', '1000', 'Show All']
-			   ],
-			   dom: 'Bfrtip',
-			   buttons: [
-				   {
-					   extend: 'pdfHtml5',
-					   title: 'All Subject Semesterwise Report',
-					   orientation: 'landscape',
-					   pageSize: 'LEGAL',
-					   pageSize: 'A0',
-					   exportOptions: {
-						   columns: ':visible'
-					   },
-					   customize: function (doc) {
-						   var headerContent = `{!! htmlspecialchars_decode(App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id")) !!}`;
-
-						   var tmp = document.createElement("div");
-						   tmp.innerHTML = headerContent;
-						   var decodeHeader = tmp.textContent || tmp.innerText;
-
-						   doc.content.unshift({
-							   text: decodeHeader,
-							   alignment: 'center',
-						   });
-					   }
-				   },
-				   {extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report'},
-				   {extend: 'excel', text: ' EXCEL', title: 'All Subject Semesterwise Report'},
-				   {
-					   extend: 'print',
-					   text: ' PRINT',
-					   title: 'All Subject Semesterwise Report',
-					   customize: function (win) {
-						   $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
-					   }
-				   },
-				   'pageLength'
-			   ],
-		   });
-   
-		   $('#example thead tr').clone(true).appendTo('#example thead');
-		   $('#example thead tr:eq(1) th').each(function (i) {
-			   var title = $(this).text();
-			   $(this).html('<input type="text" placeholder="Search ' + title + '" />');
-   
-			   $('input', this).on('keyup change', function () {
-				   if (table.column(i).search() !== this.value) {
-					   table
-						   .column(i)
-						   .search( this.value )
-						   .draw();
-				   }
-			   } );
-		   } );
-	   } );
-   </script>
+<script>
+    $(document).ready(function() {
+    var table = $('#example').DataTable( {
+        //select: false,          
+        paging: false,          // Enable pagination
+        //pageLength: 500,        // Rows per page
+        //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+        ordering: false,        // Enable sorting
+        searching: false,       // Enable search box
+        info: false,            // Show "Showing 1 to n of n entries"
+        //autoWidth: false,
+        dom: 'Bfrtip', 
+        buttons: [ 
+            { extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report' }, 
+            { extend: 'print', text: ' PRINT', title: 'All Subject Semesterwise Report',customize: function (win) {
+                $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
+                $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
+                $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
+                        
+                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                // Add signature section to print view
+                $(win.document.body).append(`
+                    <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                            <div style="text-align: left; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Coordinator
+                                </div>
+                            </div>
+                            <div style="text-align: center; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of HOD.
+                                </div>
+                            </div>
+                            <div style="text-align: right; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Principal
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <div style="text-align: left; margin-top: 20px;">
+                            Printed on: ${formattedDateTime}
+                        </div>
+                    </div>
+                `);
+                    }},
+        ], 
+        });
+    } );
+</script>
 @endsection

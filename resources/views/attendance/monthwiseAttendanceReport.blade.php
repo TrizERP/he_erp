@@ -6,7 +6,7 @@
     <div class="container-fluid">
         <div class="row bg-title">
             <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
-                <h4 class="page-title">Subject Month to Month Report </h4>
+                <h4 class="page-title">Subject Month to Month Report</h4>
             </div>
 
         </div>
@@ -121,6 +121,7 @@
                          '</span></center><br>';
                 }
             @endphp
+            <h1 style="text-align: center; font-size: 20px; margin-top: 5px;">Subject Month to Month Report</h1>
             <div class="table-responsive">
     <table id="example" class="table display" style="border:none !important">
         <thead>
@@ -162,6 +163,25 @@
             @endforeach
         </tbody>
     </table>
+                            <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                    <div style="text-align: left; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of Class Coordinator
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of HOD.
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right; width: 33%;">
+                                        <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                            Sign of Principal
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>    
 </div>
 
         </div>
@@ -186,41 +206,60 @@
         });
 
         var table = $('#example').DataTable({
-            select: true,
-            lengthMenu: [
-                [100, 500, 1000, -1],
-                ['100', '500', '1000', 'Show All']
-            ],
-            dom: 'Bfrtip',
-            buttons: [{
-                    extend: 'pdfHtml5',
-                    title: 'Monthwise Attendance Report',
-                    orientation: 'landscape',
-                    pageSize: 'Legal',
-                    exportOptions: {
-                        columns: ':visible'
-                    },
-                },
-                {
-                    extend: 'csv',
-                    text: ' CSV',
-                    title: 'Monthwise Attendance Report'
-                },
-                {
-                    extend: 'excel',
-                    text: ' EXCEL',
-                    title: 'Monthwise Attendance Report'
-                },
-                {
-                    extend: 'print',
-                    text: ' PRINT',
-                    title: 'Monthwise Attendance Report',
-                    customize: function(win) {
-                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
-                    }
-                },
-                'pageLength'
-            ],
+            //select: false,          
+        paging: false,          // Enable pagination
+        //pageLength: 500,        // Rows per page
+        //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+        ordering: false,        // Enable sorting
+        searching: false,       // Enable search box
+        info: false,            // Show "Showing 1 to n of n entries"
+        //autoWidth: false,
+        dom: 'Bfrtip', 
+        buttons: [ 
+            { extend: 'csv', text: ' CSV', title: 'Subject Month to Month Report' }, 
+            { extend: 'print', text: ' PRINT', title: 'Subject Month to Month Report',customize: function (win) {
+                $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
+                $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
+                $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
+                        
+                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                // Add signature section to print view
+                $(win.document.body).append(`
+                    <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                            <div style="text-align: left; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Coordinator
+                                </div>
+                            </div>
+                            <div style="text-align: center; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of HOD.
+                                </div>
+                            </div>
+                            <div style="text-align: right; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Principal
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <div style="text-align: left; margin-top: 20px;">
+                            Printed on: ${formattedDateTime}
+                        </div>
+                    </div>
+                `);
+                    }},
+        ],
         });
         var g = document.getElementById("grade");
         var grade = g.options[g.selectedIndex].text;
