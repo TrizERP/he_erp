@@ -6,7 +6,7 @@
     <div class="container-fluid">
         <div class="row bg-title">
             <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
-                <h4 class="page-title">Monthwise Attendance Report</h4>
+                <h4 class="page-title">Subjectwise Detailed Semester Report</h4>
             </div>
         </div>
         @php
@@ -18,21 +18,6 @@
                 $division_id = $data['division_id'];
             }
             $getInstitutes = session()->get('getInstitutes');
-            $academicYears = session()->get('academicYears');
-            $month_name = [
-                1 => 'January',
-                2 => 'February',
-                3 => 'March',
-                4 => 'April',
-                5 => 'May',
-                6 => 'June',
-                7 => 'July',
-                8 => 'August',
-                9 => 'September',
-                10 => 'October',
-                11 => 'November',
-                12 => 'December',
-            ];
         @endphp
         <div class="card">
             @if ($sessionData = Session::get('data'))
@@ -53,7 +38,7 @@
                 <div class="col-md-3 form-group">
                     <label for="">Type</label>
                     <select name="lecture_type" id="lecture_type" class="form-control" required>
-                        <option value="">Select Type</option>
+                        <option value="">-Select Type-</option>
                         @foreach ($data['types'] as $k => $value)
                             <option value="{{ $value }}" @if(isset($data['lecture_type']) && $data['lecture_type']==$value) selected @endif>{{ $value }}</option>
                         @endforeach
@@ -62,12 +47,12 @@
                 <div class="col-md-3 form-group">
                     <label for="">Subject</label>
                     <select name="subject" id="subject" class="form-control" required>
-                        <option value="">Select Subject</option>
+                        <option value="">-Select Subject-</option>
                     </select>
                 </div>
-                @if (isset($data['batch_id']) && !empty($data['batchs']))
+                @if (isset($data['batch']) && !empty($data['batchs']))
                     <div class="col-md-3 form-group" id="batch_div">
-                        <label>Select Batch</label>
+                        <label>-Select Batch-</label>
                         <select name="batch_sel" class="form-control" id="batch_sel" required="">
                             @foreach ($data['batchs'] as $batch)
                                 <option value="{{ $batch->id }}" @if ($data['batch_id'] == $batch->id) selected @endif>
@@ -76,37 +61,6 @@
                         </select>
                     </div>
                 @endif
-                <div class="col-md-3 form-group" id="std_div">
-                    <label>Year</label>
-                    <select class="form-control" name="year" id="year" required>
-                        <option value="">Select Year</option>
-                        @php $nextYear = ''; @endphp
-                        @if (count($academicYears) > 0)
-                            @foreach ($academicYears as $kay => $vay)
-                                <option value="{{ $vay->syear }}"
-                                    @if (isset($data['year'])) @if ($data['year'] == $vay->syear) selected="selected" @endif
-                                    @endif>{{ $vay->syear }}</option>
-                                @php $nextYear = ($vay->syear+1); @endphp
-                            @endforeach
-                            @if ($nextYear != '')
-                                <option value="{{ $nextYear }}"
-                                    @if (isset($data['year'])) @if ($data['year'] == $nextYear) selected="selected" @endif
-                                    @endif>{{ $nextYear }}</option>
-                            @endif
-                        @endif
-                    </select>
-                </div>
-                <div class="col-md-3 form-group">
-                    <label>Month</label>
-                    <select class="form-control" name="month" id="month" required>
-                        <option value="">Select Month</option>
-                        @foreach ($month_name as $key => $val)
-                            <option value="{{ $key }}" @if (isset($data['month']) && $data['month'] == $key) selected @endif>
-                                {{ $val }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <div class="col-md-12 form-group">
                     <center>
                         <input type="submit" name="submit" value="Search" class="btn btn-success">
@@ -126,86 +80,66 @@
         <div class="card">
             @php
                 echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
-                echo '<br><center><span style=" font-size: 14px;font-weight: 600;font-family: Arial, Helvetica, sans-serif !important">Month : ' .
-                    $month_name[$data['month']] .
-                    ' / </span><span style=" font-size: 14px;font-weight: 600;font-family: Arial, Helvetica, sans-serif !important">Year : ' .
-                    $data['year'] .
-                    '</span></center><br>';
             @endphp
+            <h1 style="text-align: center; font-size: 20px; margin-top: 5px;">Subjectwise Detailed Semester Report</h1>
             <div class="table-responsive">
                 <table id="example" class="table display" style="border:none !important">
                     <thead>
                         <!--<tr id="head-table" style="border:none !important"></tr>-->
                         <tr id="heads">
-                            <th>Sr.No</th>
-                            <th>Month/Year</th>
-                            <th>{{ App\Helpers\get_string('standard', 'request') }}/{{ App\Helpers\get_string('division', 'request') }}
-                            </th>
                             <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
                             <th>{{ App\Helpers\get_string('studentname', 'request') }}</th>
-                            @if (isset($data['batch_id']) && !empty($data['batchs']))
-                                <th>Batch</th>
-                            @endif
-                            @for ($i = 1; $i <= $data['to_date']; $i++)
-                                <th>{{ $i }}</th>
-                            @endfor
-                            <th>Total Working Days</th>
-                            <th>Total Presant</th>
-                            <th>Total Absent</th>
+                            @foreach($data['dateArr'] as $key => $date)
+                                <th>{{ \Carbon\Carbon::parse($date)->format('d/m') }}</th>
+                            @endforeach
+                            <th>Total</th>
+                            <th>Present</th>
+                            <th>Absent</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($student_data as $key => $value)
-                            <tr>
+                    @foreach($student_data as $stu)
+                        @php
+                            $total = $present = $absent = 0;
+                        @endphp
+                        <tr>
+                            <td>{{ $stu->enrollment_no }}</td>
+                            <td>{{ $stu->student_name }}</td>
+                            @foreach($data['dateArr'] as $key => $date)
                                 @php
-                                    $totalWorkingDays = 0;
-                                    $totalP = 0;
-                                    $totalA = 0;
+                                    $code = $data['studentArr'][$stu->student_id][$key] ?? '-';
+                                    if($code != '-') $total++;
+                                    if($code == 'P') $present++;
+                                    if($code == 'A') $absent++;
                                 @endphp
-                                <td>{{ $j++ }}</td>
-                                <td>@php echo $month_name[$data['month']] .'/'. $data['year']; @endphp</td>
-                                <td>{{ $value['standard_name'] . ' / ' . $value['division_name'] }}</td>
-                                <td>{{ $value['enrollment_no'] }}</td>
-                                <td>{{ $value['first_name'] . ' ' . $value['middle_name'] . ' ' . $value['last_name'] }}</td>
-                                @if (isset($data['batch_id']) && !empty($data['batchs']))
-                                    <td>{{ $value['batch_title'] }}</td>
-                                @endif
-                                @for ($i = 1; $i <= $data['to_date']; $i++)
-                                    <td>
-                                        @if (isset($data['attendance_data'][$value['id']][$i]))
-                                            {{ $data['attendance_data'][$value['id']][$i] }}
-                                            @php
-                                                if ($data['attendance_data'][$value['id']][$i] == 'A') {
-                                                    $totalA++;
-                                                } else {
-                                                    $totalP++;
-                                                }
-
-                                                $totalWorkingDays++;
-                                            @endphp
-                                        @else
-                                            @if (in_array($i, $data['sundays']))
-                                                S
-                                            @elseif(in_array($i, $data['holidays']))
-                                                H
-                                            @elseif(in_array($i, $data['events']))
-                                                -
-                                            @else
-                                                -
-                                                @php
-                                                    $totalWorkingDays++;
-                                                @endphp
-                                            @endif
-                                        @endif
-                                    </td>
-                                @endfor
-                                <td>{{ $totalWorkingDays }}</td>
-                                <td>{{ $totalP }}</td>
-                                <td>{{ $totalA }}</td>
-                            </tr>
-                        @endforeach
+                                <td>{!! $code == 'A' ? '<b>A</b>' : $code !!}</td>
+                            @endforeach
+                            <td>{{ $total }}</td>
+                            <td>{{ $present }}</td>
+                            <td>{{ $absent }}</td>
+                        </tr>
+                    @endforeach
                     </tbody>
                 </table>
+                <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                        <div style="text-align: left; width: 33%;">
+                            <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                Sign of Class Coordinator
+                            </div>
+                        </div>
+                        <div style="text-align: center; width: 33%;">
+                            <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                Sign of HOD.
+                            </div>
+                        </div>
+                        <div style="text-align: right; width: 33%;">
+                            <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                Sign of Principal
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     @endif
@@ -229,40 +163,59 @@
         });
 
         var table = $('#example').DataTable({
-            select: true,
-            lengthMenu: [
-                [100, 500, 1000, -1],
-                ['100', '500', '1000', 'Show All']
-            ],
-            dom: 'Bfrtip',
-            buttons: [{
-                    extend: 'pdfHtml5',
-                    title: 'Monthwise Attendance Report',
-                    orientation: 'landscape',
-                    pageSize: 'Legal',
-                    exportOptions: {
-                        columns: ':visible'
-                    },
-                },
-                {
-                    extend: 'csv',
-                    text: ' CSV',
-                    title: 'Monthwise Attendance Report'
-                },
-                {
-                    extend: 'excel',
-                    text: ' EXCEL',
-                    title: 'Monthwise Attendance Report'
-                },
-                {
-                    extend: 'print',
-                    text: ' PRINT',
-                    title: 'Monthwise Attendance Report',
-                    customize: function(win) {
-                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
-                    }
-                },
-                'pageLength'
+            //select: false,          
+            paging: false,          // Enable pagination
+            //pageLength: 500,        // Rows per page
+            //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+            ordering: true,        // Enable sorting
+            searching: true,       // Enable search box
+            info: true,            // Show "Showing 1 to n of n entries"
+            //autoWidth: false,
+            dom: 'Bfrtip', 
+            buttons: [ 
+                { extend: 'csv', text: ' CSV', title: 'Subjectwise Detailed Semester Report' }, 
+                { extend: 'print', text: ' PRINT', title: 'Subjectwise Detailed Semester Report',customize: function (win) {
+                    $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
+                    $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
+                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
+                            
+                    // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const year = now.getFullYear();
+                    let hours = now.getHours();
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                    // Add signature section to print view
+                    $(win.document.body).append(`
+                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div style="text-align: left; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Coordinator
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of HOD.
+                                    </div>
+                                </div>
+                                <div style="text-align: right; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Principal
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            <div style="text-align: left; margin-top: 20px;">
+                                Printed on: ${formattedDateTime}
+                            </div>
+                        </div>
+                    `);
+                        }},
             ],
         });
         var g = document.getElementById("grade");
@@ -273,21 +226,6 @@
 
         var d = document.getElementById("division");
         var division = d.options[d.selectedIndex].text;
-        $('#example thead #heads').clone(true).appendTo('#example thead');
-        $('#example thead #heads:eq(1) th').each(function(i) {
-            var title = $(this).text();
-            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
-
-            $('input', this).on('keyup change', function() {
-                if (table.column(i).search() !== this.value) {
-                    table
-                        .column(i)
-                        .search(this.value)
-                        .draw();
-                }
-            });
-
-        });
 
         $('#grade').attr('required', true);
         $('#standard').attr('required', true);
@@ -357,10 +295,10 @@
                         if (batch_select_container.length === 0) {
                             batch_select_container = $(
                                 '<div class="col-md-3 form-group" id="batch_div"></div>');
-                            $('#std_div').before(batch_select_container);
+                            $('#lecture_type').after(batch_select_container);
 
                             var batch_select_label = $(
-                                '<label for="batch_sel">Select Batch</label>');
+                                '<label for="batch_sel">Batch</label>');
                             batch_select = $(
                                 '<select id="batch_sel" class="form-control" name="batch_sel"></select>'
                                 );
