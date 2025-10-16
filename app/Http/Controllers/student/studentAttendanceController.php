@@ -443,117 +443,189 @@ class studentAttendanceController extends Controller
     public function showMonthwiseStudentAttendance(Request $request)
     {
         $type = $request->input('type');
-        $month = $request->input('month');
         $grade_id = $request->input("grade");
         $standard_id = $request->input("standard");
         $division_id = $request->input("division");
-        $selected_year = $request->input("year");
         $syear = $request->session()->get('syear');
         $term_id = $request->session()->get('term_id');
         $sub_institute_id = $request->session()->get('sub_institute_id');
-        $batch="";
+        $subject = $request->input('subject');
+        $batch = $request->input('batch_sel');
+        $lecture_type = $request->input('lecture_type');
+        /*$batch="";
         if($request->has('batch_sel')){
             $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'standard_id'=>$standard_id,'division_id'=>$division_id])->get()->toArray();
             $res['batch_id'] = $request->batch_sel;    
             $res['batchs']=$batchs;    
             
             $batch=$request->batch_sel;
+        }*/
+
+        // Optional subject student list
+        $optSubject = '';
+        if (!empty($subject)) {
+            $optSubjectData = DB::table('student_optional_subject')
+                ->select(DB::raw('GROUP_CONCAT(DISTINCT student_id) as student_id'))
+                ->where('subject_id', $subject)
+                ->where('sub_institute_id', $sub_institute_id)
+                //->where('batch_id', $batch)
+                ->first();
+
+            if ($optSubjectData && $optSubjectData->student_id) {
+                $optSubject = $optSubjectData->student_id;
+            }
         }
+
+        // Get semester/term start-end dates from standard table
+        $sem = DB::table('standard')
+            ->where('id', $standard_id)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->select('sem_start_date', 'sem_end_date')
+            ->first();
+
+        if (!$sem) {
+            return back()->with('error', 'Semester not found.');
+        }
+
+        $semStartDate = $sem->sem_start_date;
+        $semEndDate = $sem->sem_end_date;
+        
+        // Build attendance query
+        $attendanceQuery = DB::table('attendance_student as ap')
+            ->join('tblstudent as s', 's.id', '=', 'ap.student_id')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.student_id', '=', 's.id')
+                    ->on('se.syear', '=', 'ap.syear')
+                    ->on('se.standard_id', '=', 'ap.standard_id')
+                    ->on('se.section_id', '=', 'ap.section_id')
+                    ->whereNull('se.end_date');
+            })
+            ->join('standard as st', function ($join) {
+                $join->on('st.id', '=', 'ap.standard_id')
+                     ->on('ap.term_id', '=', 'st.marking_period_id');
+            })
+            ->where('ap.syear', $syear)
+            ->where('ap.sub_institute_id', $sub_institute_id)
+            ->whereBetween('ap.attendance_date', [$semStartDate, $semEndDate])
+            ->where('ap.standard_id', $standard_id)
+            ->where('ap.section_id', $division_id)
+            ->where('ap.subject_id', $subject)
+            ->where('ap.attendance_for', $lecture_type)
+            ->where('ap.term_id', $term_id);
+        
+            // Batch / optional subject conditions
+        if ($optSubject) {
+            if ($batch) {
+                $attendanceQuery->join('student_optional_subject as sos', function ($join) use ($subject, $batch) {
+                    $join->on('sos.student_id', '=', 's.id')
+                        ->where('sos.subject_id', '=', $subject)
+                        ->where('sos.syear', '=', $syear)
+                        ->where('sos.sub_institute_id', $sub_institute_id);
+                        //->where('sos.batch_id', '=', $batch);
+                });
+            } else {
+                $attendanceQuery->whereIn('s.id', explode(',', $optSubject));
+            }
+        } else {
+            if ($batch) {
+                $attendanceQuery->where('se.batch_id', $batch);
+            }
+        }
+
+        $attendanceData = $attendanceQuery
+            ->select(
+                'ap.student_id',
+                'ap.attendance_date',
+                'ap.period_id',
+                'ap.subject_id',
+                'ap.attendance_code',
+                'ap.attendance_for',
+                DB::raw("
+                    CASE 
+                        WHEN ap.attendance_for IN ('Lab', 'Tutorial') 
+                        THEN CONCAT(ap.subject_id, ap.attendance_date, ap.attendance_type, IFNULL(ap.lecture_no, 0))
+                        ELSE CONCAT(ap.subject_id, ap.period_id, ap.attendance_date, ap.attendance_type, IFNULL(ap.lecture_no, 0))
+                    END AS unique_key
+                ")
+            )
+            ->orderBy('ap.attendance_date')
+            ->orderBy('s.enrollment_no')
+            ->get();
 
         // get student list 
-        $student_data = SearchStudent($grade_id, $standard_id, $division_id,"","", "","","", "", "","",$batch);
+        //$student_data = SearchStudent($grade_id, $standard_id, $division_id,"","", "","","", "", "","",$batch);
 
-        $from_date = $selected_year . "-" . $month . "-01";
-        $to_date = date('Y-m-t', strtotime($selected_year . "-" . $month));
+        // Student list
+        $studentQuery = DB::table('tblstudent as s')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('s.id', '=', 'se.student_id')
+                    ->whereNull('se.end_date');
+            })
+            ->join('standard as st', function ($join) {
+                $join->on('st.id', '=', 'se.standard_id');
+            })
+            ->join('division as d', function ($join) {
+                $join->on('d.id', '=', 'se.section_id');
+            })
+            ->where('se.syear', $syear)
+            ->where('se.sub_institute_id', $sub_institute_id)
+            ->where('st.marking_period_id', $term_id)
+            ->where('se.standard_id', $standard_id)
+            ->where('se.section_id', $division_id);
 
-        $sundays = getCountDays($from_date, $to_date);
+        if ($optSubject) {
+            if ($batch) {
+                $studentQuery->join('student_optional_subject as sos', function ($join) use ($subject, $batch) {
+                    $join->on('sos.student_id', '=', 's.id')
+                        ->where('sos.subject_id', '=', $subject)
+                        ->where('sos.syear', $syear)
+                        ->where('sos.sub_institute_id', $sub_institute_id);
+                        //->where('sos.batch_id', '=', $batch);
+                });
+            } else {
+                $studentQuery->whereIn('s.id', explode(',', $optSubject));
+            }
+        } else {
+            if ($batch) {
+                $studentQuery->where('s.batch', $batch);
+            }
+        }
 
-        $whereAtt['ast.syear'] = $syear;
-        $whereAtt['ast.sub_institute_id'] = $sub_institute_id;
-       
-        $holidays = DB::table("calendar_events")
-            ->selectRaw("DATE_FORMAT(school_date,'%d') AS DATE")
-            ->where('event_type', '=', 'holiday')
-            ->whereRaw("month(school_date) = " . $month)
-            ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
-            ->pluck('DATE')
-            ->toArray();
-            
-        $events = DB::table("calendar_events")
-            ->selectRaw("DATE_FORMAT(school_date,'%d') AS DATE, event_type")
-            ->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear])
-            ->where('event_type', '=', 'event')
-            ->whereRaw("month(school_date) = " . $month)
+        $students = $studentQuery
+            ->select(
+                'se.student_id',
+                's.enrollment_no',
+                DB::raw("CONCAT_WS(' ', s.last_name, s.first_name, CONCAT(SUBSTRING(s.middle_name,1,1), '.')) as student_name"),
+                'st.name as standard',
+                'd.name as division',
+                'st.marking_period_id as term_id',
+            )
+            ->orderBy('s.enrollment_no')
             ->get();
-        
-        $eventsArray = [];
-        foreach ($events as $event) {
-            $eventsArray[] = $event->DATE; // Add event date to the array without event type
-        }
-        
-        /* echo("<pre>");
-        print_r($holidays);
-        print_r($eventsArray);
-        die; */
 
-        // $whereAtt['term_id'] = $term_id;
-        if(isset($standard_id)){
-            $whereAtt['ast.standard_id'] = $standard_id;
-        }
-        if(isset($division_id)){
-            $whereAtt['ast.section_id'] = $division_id;    
-        }
-        // DB::enableQueryLog();
-        $attendanceData = DB::table("attendance_student as ast")
-        ->join('timetable as tt', function ($join) use($sub_institute_id,$syear){
-            $join->on('ast.timetable_id', '=', 'tt.id')->where(['tt.sub_institute_id'=>$sub_institute_id,'tt.syear'=>$syear]);
-        })
-            ->where($whereAtt)
-            ->whereBetween("ast.attendance_date", [$from_date, $to_date])
-            ->when($request->has('batch_sel') && $request->batch_sel!='',function($query) use($request){
-                $query->where('tt.batch_id',$request->batch_sel);
-            })
-            ->when($request->has('subject') && $request->subject!='',function($query) use($request){
-                $query->whereIn('tt.subject_id',explode('|||',$request->subject));
+        // Prepare attendance matrix
+        $studentArr = [];
+        $dateArr = [];
 
-            })
-            ->get()
-            ->toArray();
-        // dd(DB::getQueryLog($attendanceData));
-        if (count($attendanceData) == 0) {
-            $res['status_code'] = 0;
-            $res['message'] = "No attendance taken in this month";
-            return is_mobile($type, "monthwise_student_attendance_report", $res);
+        foreach ($attendanceData as $row) {
+            $studentArr[$row->student_id]['student_id'] = $row->student_id;
+            $studentArr[$row->student_id][$row->unique_key] = $row->attendance_code;
+            $dateArr[$row->unique_key] = $row->attendance_date;
         }
 
-        $finalAttendanceArray = array();
-        foreach ($attendanceData as $key => $value) {
-            $finalAttendanceArray[$value->student_id][(int)date('d', strtotime($value->attendance_date))] = $value->attendance_code;
-        }
-
-        foreach ($sundays['S'] as $key => $value) {
-            $sundays[$key] = (int)date('d', strtotime($value));
-        }
-
-        unset($sundays['S']);
-        // echo "<pre>";print_r($student_data);exit;
+        //echo "<pre>";print_r($students);exit;
         $res['status_code'] = 1;
         $res['message'] = "Success";
-        $res['month'] = $month;
-        $res['year'] = $selected_year;
         $res['grade_id'] = $grade_id;
         $res['standard_id'] = $standard_id;
         $res['division_id'] = $division_id;
-        $res['student_data'] = $student_data;
-        $res['attendance_data'] = $finalAttendanceArray;
-        $res['sundays'] = $sundays;
-        $res['holidays'] = $holidays;
-        $res['events'] = $eventsArray;
-        $res['to_date'] = date('d', strtotime($to_date));
+        $res['student_data'] = $students;
+        $res['studentArr'] = $studentArr;
+        $res['dateArr'] = $dateArr;
         $res['types'] = ["Lecture", "Lab", "Tutorial"];
-        $res['lecture_type'] = $request->lecture_type;
-        $res['subject'] = $request->subject;
-        $res['batch'] = $request->batch_sel;
+        $res['lecture_type'] = $lecture_type;
+        $res['subject'] = $subject;
+        $res['batch'] = $batch;
 
         return is_mobile($type, "student/monthwise_attendance_report", $res, "view");
     }
