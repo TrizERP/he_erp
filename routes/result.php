@@ -49,6 +49,7 @@ use App\Http\Controllers\Import\ExcelDownloadController;
 use App\Http\Controllers\result\new_result\templateController;
 use App\Http\Controllers\result\new_result\studentResultController;
 use App\Http\Controllers\result\approve_mobile_result\approve_mobile_result_controller;
+use App\Http\Controllers\result\SubjectWiseGradeMaster\SubjectWiseGradeController;
 
 Route::group(['prefix' => 'result', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('exam_type_master', ExamTypeMasterController::class);
@@ -59,6 +60,8 @@ Route::group(['prefix' => 'result', 'middleware' => ['session', 'menu', 'logRout
     Route::resource('std_grd_maping', std_grd_maping_controller::class);
     Route::resource('result_master', result_master_controller::class);
     Route::resource('exam_creation', exam_creation_controller::class);
+    Route::resource('subject_wise_grade_master', SubjectWiseGradeController::class);
+
     Route::resource('result_remark_master', result_remark_master_controller::class);
     Route::resource('result_book_master', result_book_master_controller::class);
     Route::resource('co_scholastic_master', co_scholastic_master_controller::class);
