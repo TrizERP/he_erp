@@ -8,38 +8,6 @@
     tfoot {
      display: table-header-group;
     }
-    .signature-section {
-        margin-top: 50px;
-        padding: 20px 0;
-        width: 100%;
-    }
-    .signature-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        width: 100%;
-    }
-    .signature-left {
-        text-align: left;
-        width: 48%;
-    }
-    .signature-right {
-        text-align: right;
-        width: 48%;
-    }
-    .signature-line {
-        border-top: 1px solid #000;
-        padding-top: 5px;
-        display: inline-block;
-    }
-    .signature-left .signature-line {
-        text-align: left;
-        margin-left: 0;
-    }
-    .signature-right .signature-line {
-        text-align: right;
-        margin-right: 0;
-    }
 </style>
 @include('includes.header')
 @include('includes.sideNavigation')
@@ -186,16 +154,31 @@
                         </table>
 
                         <!-- Signature Section -->
-                        <div class="signature-section">
-                            <div class="signature-container">
-                                <div class="signature-left">
-                                    <div class="signature-line">
-                                        Signature of Internal Examiner
+                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div style="text-align: left; width: 20%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Class Coordinator
                                     </div>
                                 </div>
-                                <div class="signature-right">
-                                    <div class="signature-line">
-                                        Signature of External Examiner/HOD
+                                <div style="text-align: center; width: 20%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of HOD.
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 20%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Exam Coordinator
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 20%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of GTU Coordinator
+                                    </div>
+                                </div>
+                                <div style="text-align: right; width: 20%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Principal
                                     </div>
                                 </div>
                             </div>
@@ -270,7 +253,7 @@
             /*{ extend: 'excel', text: ' EXCEL', title: 'Mid-Sem Exam Report' }, */
             { extend: 'print', text: ' PRINT', title: 'Mid-Sem Exam Report',customize: function (win) {
                 $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
-                $(win.document.body).find('th, td').css('text-align', 'center').css('vertical-align', 'middle');
+                $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
                 $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
                         
                 // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
@@ -285,16 +268,31 @@
                 const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
                 // Add signature section to print view
                 $(win.document.body).append(`
-                    <div style="margin-top: 80px; padding: 20px 0; width: 100%;">
+                    <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                            <div style="text-align: left; width: 48%;">
+                            <div style="text-align: left; width: 20%;">
                                 <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                    Signature of Internal Examiner
+                                    Sign of Class Coordinator
                                 </div>
                             </div>
-                            <div style="text-align: right; width: 48%;">
+                            <div style="text-align: center; width: 20%;">
                                 <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                    Signature of External Examiner/HOD
+                                    Sign of HOD.
+                                </div>
+                            </div>
+                            <div style="text-align: center; width: 20%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Exam Coordinator
+                                </div>
+                            </div>
+                            <div style="text-align: center; width: 20%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of GTU Coordinator
+                                </div>
+                            </div>
+                            <div style="text-align: right; width: 20%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Principal
                                 </div>
                             </div>
                         </div>
