@@ -250,12 +250,7 @@
     }
 </script>
 
-<script>
-    /* function stripHtmlTags(html) {
-        var tmp = document.createElement("div");
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || "";
-    } */
+@include('includes.footerJs')
 
     $(document).ready(function() {
         var table = $('#example').DataTable({
