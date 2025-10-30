@@ -23,18 +23,11 @@
             $academicYears = session()->get('academicYears');
             $syear = session()->get('syear');
 
-            // Fallback if session value not set
-            if(empty($syear)) {
-                if(isset($academicYears) && count($academicYears) > 0) {
-                    $syear = $academicYears[0]['year'] ?? date('Y');
-                } else {
-                    $syear = date('Y');
-                }
-            }
 
             $nextYear = $syear + 1;
         @endphp
 
+        
         <div class="card shadow-sm p-4">
             @if ($sessionData = Session::get('data'))
                 <div class="alert alert-{{ $sessionData['status_code'] == 1 ? 'success' : 'danger' }} alert-block">
@@ -48,7 +41,7 @@
                 <div class="row">
                     {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
 
-                   
+          
 
                     <!-- From Date -->
                     <div class="col-md-6 form-group mb-3">

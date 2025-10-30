@@ -87,12 +87,24 @@
                 {{-- School header/address --}}
                 @php
                     echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
+
+                     $getInstitutes = session()->get('getInstitutes');
+                     $academicYears = session()->get('academicYears');
+                     $syear = session()->get('syear');
+
+
+            $nextYear = $syear + 1;
+
                 @endphp
 
-                {{-- Academic Year Label (before report title) --}}
-                <div style="text-align:center; font-size:15px; margin-top:10px; margin-bottom:10px; font-family:inherit; color:black;">
-                    <strong>Academic Year: {{ date('Y') }} - {{ date('Y') + 1 }}</strong>
-                </div>
+                {{-- ✅ Academic Year Label (same font as address) --}}
+           
+                <center>
+                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                        Academic Year :{{ $syear }} - {{ $nextYear }}
+                    </span>
+                </center>
+               
 
                 {{-- Report Title --}}
                 <h1 style="text-align:center; font-size:20px; margin-top:5px; font-family:inherit; color:black;">

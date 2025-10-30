@@ -178,11 +178,13 @@
                     $nextYear = $syear + 1;
                 @endphp
 
-                @if (!empty($syear))
-                    <div class="text-center mt-2 mb-3">
-                        <h5><strong>Academic Year: {{ $syear }} - {{ $nextYear }}</strong></h5>
-                    </div>
-                @endif
+                {{-- ✅ Academic Year Label (same font as address) --}}
+           
+                <center>
+                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                        Academic Year : {{ $nextYear }}
+                    </span>
+                </center>
                 <table id="example" class="table table-striped">
                     <thead>
                         <tr>

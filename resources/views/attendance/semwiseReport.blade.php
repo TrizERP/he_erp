@@ -110,11 +110,15 @@
 
                     {{-- ✅ Academic Year Label Added Here --}}
                     @php
-                        $current_year = date('Y');
-                        $next_year = $current_year + 1;
+                         $getInstitutes = session()->get('getInstitutes');
+                         $academicYears = session()->get('academicYears');
+                         $syear = session()->get('syear');
+
+
+                            $nextYear = $syear + 1;
                     @endphp
                     <h4 style="text-align: center; font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif; margin-top: 8px;">
-                        Academic Year: {{ $current_year }} - {{ $next_year }}
+                        Academic Year: {{ $syear }} - {{ $nextYear }}
                     </h4>
 
                     {{-- ✅ Report Title Below Academic Year --}}

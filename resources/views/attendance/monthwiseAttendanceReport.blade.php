@@ -22,6 +22,9 @@
 
             $getInstitutes = session()->get('getInstitutes');
             $academicYears = session()->get('academicYears');
+            $syear = session()->get('syear');
+            $nextYear = $syear + 1;
+
             $month_name = [
                 1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',
                 7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'
@@ -42,17 +45,17 @@
                     {{ App\Helpers\SearchChain('3','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
 
                     <div class="col-md-3 form-group">
-                        <label for="">Type</label>
+                        <label>Type</label>
                         <select name="lecture_type" id="lecture_type" class="form-control" required>
                             <option value="">Select Type</option>
                             @foreach ($data['types'] as $value)
-                                <option value="{{ $value }}" @selected(isset($data['lecture_type']) && $data['lecture_type']==$value)>{{ $value }}</option>
+                                <option value="{{ $value }}" @selected(isset($data['lecture_type']) && $data['lecture_type'] == $value)>{{ $value }}</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="col-md-3 form-group">
-                        <label for="">Subject</label>
+                        <label>Subject</label>
                         <select name="subject" id="subject" class="form-control" required>
                             <option value="">Select Subject</option>
                         </select>
@@ -70,12 +73,12 @@
                     @endif
 
                     <div class="col-md-3 form-group">
-                        <label for="">From</label>
+                        <label>From</label>
                         <input type="text" class="form-control mydatepicker" name="from_month" autocomplete="off" value="{{ $from_date }}">
                     </div>
 
                     <div class="col-md-3 form-group">
-                        <label for="">To</label>
+                        <label>To</label>
                         <input type="text" class="form-control mydatepicker" name="to_month" autocomplete="off" value="{{ $to_date }}">
                     </div>
 
@@ -90,24 +93,14 @@
         @if (isset($data['student_data']))
             @php
                 echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
-
-                $academicYear = session()->get('academicYears');
-                $currentAcademicYear = '';
-                if (!empty($academicYear)) {
-                    $currentYear = is_array($academicYear) && isset($academicYear['year']) ? $academicYear['year'] : date('Y');
-                    $nextYear = $currentYear + 1;
-                    $currentAcademicYear = $currentYear . ' - ' . $nextYear;
-                }
             @endphp
 
-            {{-- ✅ Academic Year Label (same font as address) --}}
-            @if(!empty($currentAcademicYear))
-                <center>
-                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
-                        Academic Year : {{ $currentAcademicYear }}
-                    </span>
-                </center>
-            @endif
+            {{-- ✅ Academic Year Label --}}
+            <center>
+                <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                    Academic Year : {{ $syear }} - {{ $nextYear }}
+                </span>
+            </center>
 
             {{-- ✅ Report Title --}}
             <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
@@ -137,7 +130,10 @@
                                     <td>{{ $student['enrollment_no'] }}</td>
                                     <td>{{ $student['student_name'] }}</td>
                                     @foreach ($data['month_totals'] as $monthId => $total)
-                                        @php $month_value = $student[$monthId] ?? 0; $student_total += $month_value; @endphp
+                                        @php 
+                                            $month_value = $student[$monthId] ?? 0; 
+                                            $student_total += $month_value; 
+                                        @endphp
                                         <td class="text-center">{{ $month_value }}</td>
                                     @endforeach
                                     <td class="text-center fw-bold">{{ $student_total }}</td>
@@ -187,6 +183,7 @@ $(document).ready(function() {
         }
     });
 
+    // ✅ DataTable Setup
     var table = $('#example').DataTable({
         paging: false,
         ordering: false,
@@ -202,16 +199,17 @@ $(document).ready(function() {
                 customize: function (win) {
                     $(win.document.body).find('th, td').css({'color':'black','text-align':'center'});
                     $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
-                    $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $currentAcademicYear }}</span></center>`);
+                    $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $syear }} - {{ $nextYear }}</span></center>`);
                     $(win.document.body).prepend("<h1 style='text-align:center;font-size:20px;font-weight:700;text-transform:uppercase;margin-top:5px;margin-bottom:15px;font-family:Arial,Helvetica,sans-serif !important;'>Subject Month to Month Report</h1>");
                 }
             }
         ]
     });
 
+    // ✅ Load subjects dynamically
     function loadSubjects(selectedStandard, selectedDivision, callback) {
         var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
-        $('#subject').html('<option value="">Select Subject</option>');
+        $('#subject').html('<option value=\"\">Select Subject</option>');
         $.ajax({
             url: path,
             data: { std_id: selectedStandard },

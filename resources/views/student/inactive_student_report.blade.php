@@ -97,27 +97,27 @@
                {{-- School Details --}}
                
 {{-- School Details --}}
-<div style="text-align: center; font-family: Arial, Helvetica, sans-serif; font-weight: 700;">
-    <div style="font-size: 18px;">
-        Shree Swami Atmanand Saraswati Institute of Technology
-    </div>
-    <div style="font-size: 14px;">
-        Managed by Shree Tapi Brahmcharyashram Sabha
-    </div>
-    <div style="font-size: 14px;">
-        Shree Swami Atmanand Saraswati Vidya Sankul
-    </div>
-    <div style="font-size: 14px;">
-        Kapodra, Varachha Road, Surat-395006.  
-                                    </br> Academic Year : {{ isset($data['academic_year']) ? $data['academic_year'] : (date('Y') . '-' . (date('Y') + 1)) }}
-    </div>
-    <div style="font-size: 14px; margin-top: 5px;">
-        Academic Section : {{ $data['section'] ?? 'FY-BBA' }} | 
-        Semester : {{ $data['semester'] ?? 'BBA SEM - 1' }} | 
-        Division : {{ $data['division_label'] ?? 'A' }}
-    </div>
-</div>
+ 
+            @php
+                    echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
 
+                    $getInstitutes = session()->get('getInstitutes');
+                    $academicYears = session()->get('academicYears');
+                    $syear = session()->get('syear');
+
+
+            $nextYear = $syear + 1;
+
+                @endphp
+
+                {{-- ✅ Academic Year Label (same font as address) --}}
+           
+                <center>
+                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                        Academic Year : {{ $syear }} - {{ $nextYear }}
+                    </span>
+                </center>
+               
 
                <table id="example" class="table table-striped">
                   <thead>
