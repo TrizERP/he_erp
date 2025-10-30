@@ -21,7 +21,23 @@
             @csrf
                 <div class="row">                    
                     {{ App\Helpers\SearchChain('4','single','grade,std') }}
-                                                 
+                    {{--  Admission Year Dropdown --}}
+                    <div class="col-md-4 form-group">
+                        <label>Admission Year</label>
+                        <select name="admission_year" id="admission_year" class="form-control" required>
+                            <option value="">--Select--</option>
+                            @php
+                                $syear = session('syear', date('Y'));
+                                $years = [];
+                                for ($i = $syear - 2; $i <= $syear ; $i++) {
+                                    $years[] = $i;
+                                }
+                            @endphp
+                            @foreach($years as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>                               
                     <div class="col-md-4 form-group">
                         <label>Month</label>
     					{{-- <div class="custom-select"> --}}
