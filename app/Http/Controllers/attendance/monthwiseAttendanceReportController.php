@@ -150,6 +150,9 @@ class monthwiseAttendanceReportController extends Controller
         $res['division_id'] = $request->division;
         $res['subject'] = $request->subject;
         $res['lecture_type'] = $request->lecture_type;
+        //echo "<pre>";
+        //print_r($res);
+        //die();
 
         return is_mobile($type, 'attendance/monthwiseAttendanceReport', $res, 'view');
     }

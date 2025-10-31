@@ -11,11 +11,16 @@
         </div>
 
         @php
-            $grade_id = $standard_id = $division_id = '';
+
+            $grade_id = $standard_id = $division_id = $subject = '';
+
             if (isset($data['grade_id'])) {
                 $grade_id = $data['grade_id'];
                 $standard_id = $data['standard_id'];
                 $division_id = $data['division_id'];
+            }
+            if (isset($data['subject'])) {
+                $subject = $data['subject'];
             }
             $getInstitutes = session()->get('getInstitutes');
         @endphp
@@ -77,10 +82,7 @@
 
         @if (isset($data['student_data']))
             @php
-                $j = 1;
-                if (isset($data['student_data'])) {
-                    $student_data = $data['student_data'];
-                }
+                echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id,$subject);
             @endphp
 
             <div class="card">
@@ -177,4 +179,200 @@
 </div>
 
 @include('includes.footerJs')
+<script>
+    $(document).ready(function() {
+        // Initially hide batch_div
+        $('#batch_div').hide();
+
+        // Toggle batch_div visibility on lecture_type change
+        $('#lecture_type').on('change', function() {
+            var selectedLectureType = $(this).val();
+            if (selectedLectureType !== 'Lecture') {
+                $('#batch_div').show();
+            } else {
+                $('#batch_div').hide();
+            }
+        });
+
+        var table = $('#example').DataTable({
+            //select: false,          
+            paging: false,          // Enable pagination
+            //pageLength: 500,        // Rows per page
+            //lengthMenu: [5, 10, 25, 50, 100], // Page size options
+            ordering: true,        // Enable sorting
+            searching: true,       // Enable search box
+            info: true,            // Show "Showing 1 to n of n entries"
+            //autoWidth: false,
+            dom: 'Bfrtip', 
+            buttons: [ 
+                { extend: 'csv', text: ' CSV', title: 'Subjectwise Detailed Semester Report' }, 
+                { extend: 'print', text: ' PRINT', title: 'Subjectwise Detailed Semester Report',customize: function (win) {
+                    $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
+                    $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
+                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '', $subject ?? '') !!}`);
+                            
+                    // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const year = now.getFullYear();
+                    let hours = now.getHours();
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                    // Add signature section to print view
+                    $(win.document.body).append(`
+                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div style="text-align: left; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Coordinator
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of HOD.
+                                    </div>
+                                </div>
+                                <div style="text-align: right; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Principal
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            <div style="text-align: left; margin-top: 20px;">
+                                Printed on: ${formattedDateTime}
+                            </div>
+                        </div>
+                    `);
+                        }},
+            ],
+        });
+        var g = document.getElementById("grade");
+        var grade = g.options[g.selectedIndex].text;
+
+        var s = document.getElementById("standard");
+        var standard = s.options[s.selectedIndex].text;
+
+        var d = document.getElementById("division");
+        var division = d.options[d.selectedIndex].text;
+
+        $('#grade').attr('required', true);
+        $('#standard').attr('required', true);
+        $('#division').attr('required', true);
+
+        // get subject lists 
+        function loadSubjects(selectedStandard, selectedDivision, callback) {
+                var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
+                $('#subject').find('option').remove().end().append('<option value="">Select Subject</option>').val('');
+
+                $.ajax({
+                    url: path,
+                    data: { std_id: selectedStandard },
+                    success: function(result) {
+                        console.log(result);
+                        for (var i = 0; i < result.length; i++) {
+                            $("#subject").append(
+                                $("<option></option>")
+                                    .val(result[i]['subject_id'])
+                                    .html(result[i]['display_name'])
+                            );
+                        }
+
+                        // ✅ Call the callback after subjects are loaded
+                        if (typeof callback === "function") {
+                            callback();
+                        }
+                    }
+                });
+
+        }
+
+        // On load, if subject is set, trigger division change and select subject
+        @if(isset($data['subject']))
+            loadSubjects('{{ $standard_id }}', '{{ $division_id }}', function() {
+                $("#subject").val('{{ $data['subject'] }}');
+            });
+        @endif
+
+        $('#division').on('change', function() {
+            var selectedStandard = $('#standard').val();
+            var selectedDivision = $(this).val();
+            loadSubjects(selectedStandard, selectedDivision);
+        });
+
+    });
+</script>
+
+<script>
+    $(document).on('change', '#lecture_type', function() {
+        var standard_id = $('#standard').val();
+        var division_id = $('#division').val();
+        var path = "{{ route('get_batch') }}";
+
+        $.ajax({
+            url: path,
+            data: 'standard_id=' + standard_id + '&division_id=' + division_id,
+            success: function(data) {
+                let selectedLectureType = $('#lecture_type').val();
+                if (selectedLectureType !== 'Lecture') {
+                    $('#batch_div').show();
+
+                    var batch_select_container = $('#batch_div');
+                    var batch_select = $('#batch_sel');
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        if (batch_select_container.length === 0) {
+                            batch_select_container = $(
+                                '<div class="col-md-3 form-group" id="batch_div"></div>');
+                            $('#lecture_type').after(batch_select_container);
+
+                            var batch_select_label = $(
+                                '<label for="batch_sel">Batch</label>');
+                            batch_select = $(
+                                '<select id="batch_sel" class="form-control" name="batch_sel"></select>'
+                                );
+                            var defaultOption = '<option value="">--Select--</option>';
+                            batch_select.append(defaultOption);
+
+                            batch_select_container.append(batch_select_label);
+                            batch_select_container.append(batch_select);
+                        }
+
+                        // Populate the batch options
+                        data.forEach(function(value) {
+                            var option = '<option value="' + value.id + '">' + value.title +
+                                '</option>';
+                            batch_select.append(option);
+                        });
+
+                        // Show batch_div only if lecture_type is not 'Lecture'
+                        var lectureType = $('#lecture_type').val();
+                        if (lectureType !== 'Lecture') {
+                            $('#batch_div').show();
+                        } else {
+                            $('#batch_div').hide();
+                        }
+
+                        // On load, if batch is set, trigger lecture_type change and select batch
+                        @if(isset($data['batch_id']))
+                            $('#batch_sel').val('{{ $data['batch_id'] }}');
+                        @endif
+                    } else {
+                        $('#batch_div').hide();
+                    }
+                } else {
+                    $('#batch_div').hide();
+                }
+            }
+        });
+    });
+
+    // On load, if batch is set, trigger lecture_type change to show batch div and select batch
+    @if(isset($data['batch_id']))
+        $('#lecture_type').trigger('change');
+    @endif
+</script>
 @include('includes.footer')
