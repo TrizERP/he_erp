@@ -291,6 +291,29 @@ $(document).ready(function() {
                         </div>
                     `);
 
+                    //start PAGE 1 of 2
+			        var css = `@page {
+			            @bottom-right {
+			              content: "Page " counter(page) " of " counter(pages);
+			            }
+			           }
+			            body {counter-reset: page;
+			            }
+			        `;
+			        var head = win.document.head || win.document.getElementsByTagName('head')[0];
+			        var style = win.document.createElement('style');
+			        style.type = 'text/css';
+			        style.media = 'print';
+			        if (style.styleSheet){
+			            style.styleSheet.cssText = css;
+			        } else {
+			            style.appendChild(win.document.createTextNode(css));
+			        }
+			        head.appendChild(style);
+
+			        // Add page number footer element
+			        $(win.document.body).append('<div class="page-number"></div>');
+			        //end PAGE 1 of 2
               }}
         ]
     });
