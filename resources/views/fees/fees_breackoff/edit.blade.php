@@ -21,6 +21,7 @@
                             <tr>
                                 <th>Grade</th>
                                 <th>{{ App\Helpers\get_string('standard','request')}}</th>
+                                <th>Admission Year</th>
                                 <th>Month</th>
                             </tr>
                         </thead>
@@ -45,6 +46,11 @@
                                     <!-- </ul> -->
                                 </td>
                                 <td>
+                                    <span class="badge badge-warning mb-1">
+                                        {{ $data['selected_admission_year'] }}
+                                    </span>
+                                </td>
+                                <td>
                                     <!-- <ul class="list-icons"> -->
                                         <?php foreach ($data['data']['month_arr'] as $id => $val) { ?>
                                             <span class="badge badge-dark mb-1">
@@ -63,6 +69,10 @@
             <form action="{{ route('fees_breackoff.store') }}" enctype="multipart/form-data" method="post">
             @csrf
                 <input type="hidden" value="insert" name="action">
+                    <input type="hidden" name="admission_year" value="{{ $data['selected_admission_year'] }}">
+                    @error('admission_year')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
                     <div class="row">
                         <div class="col-lg-12 col-sm-12 col-xs-12">
                             <div class="table-responsive">
@@ -75,7 +85,7 @@
                                         </td>
                                     </tr>
                                 </table> -->
-                                <div class="h4">New Student</div>
+                                
                                 <table id="example" class="table table-bordered mb-4">
                                     <tr>
                                         <th>
@@ -119,7 +129,7 @@
                                         </td>
                                     </tr>
                                 </table> -->
-                                <div class="h4">Old Student</div>
+                                <!-- <div class="h4">Old Student</div>
                                 <table id="example" class="table table-bordered mb-4">
                                     <tr>
                                         <th>
@@ -149,7 +159,7 @@
                                             </td>
                                         <?php } ?>
                                     </tr>
-                                </table>
+                                </table> -->
                             </div>
                         </div>
                     </div>

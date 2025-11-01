@@ -17,6 +17,7 @@
                             <tr>
                                 <th>Grade</th>
                                 <th>{{ App\Helpers\get_string('standard','request')}}</th>
+                                <th>Admission Year</th>
                                 <th class="text-left">Month</th>
                             </tr>
                         </thead>
@@ -29,6 +30,11 @@
                                 <td>
                                 <span class="badge badge-info mb-1">
                                     {{$data['standard']}}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-warning mb-1">
+                                        {{ $data['selected_admission_year'] }}
+                                    </span>
                                 </td>
                                 <td> <span class="badge badge-dark mb-1">
                                     {{$data['month']}} </span>
@@ -43,9 +49,10 @@
             <form action="{{ route('update_fees_breackoff.store') }}" enctype="multipart/form-data" method="post">
                 @csrf
                 <input type="hidden" value="insert" name="action">
+                <input type="hidden" name="admission_year" value="{{ $data['selected_admission_year'] }}">
                 <div class="row">
                     <div class="col-md-12 form-group">
-                        <div class="h4 mt-2 text-primary font-weight-bold">New Student</div>
+                        
                         <div class="table-responsive">
                             <table id="example" class="table table-striped">
                                 <thead>
@@ -100,67 +107,6 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-12 form-group">
-                        <div class="h4 mt-2 text-primary font-weight-bold">Old Student</div>
-                        <div class="table-responsive">
-                            <table id="example" class="table table-striped" style="margin-top:10px; ">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                        {{ App\Helpers\get_string('studentquota','request')}}
-                                        </th>
-                                        <?php foreach ($data['data']['title_arr'] as $id => $val) { ?>
-                                            <th>
-                                                <?php echo $val; ?>
-                                            </th>
-                                        <?php } ?>
-                                        <th>
-                                            Total
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <?php
-                                foreach ($data['data']['quota_arr'] as $quota_id => $quota_val) {
-                                    $total = 0;
-//                                                    $amount_val = 0;
-                                    //START If fees collected breakoff cant be edited
-                                    if(isset($data['data']['paid_arr']['old'][$quota_id]))
-                                    {
-                                        $disable_old_edit = "disabled";
-                                        $disable_old_tr = "background-color : #f09898 !important;";
-                                    }
-                                    else
-                                    {
-                                        $disable_old_edit = "";  
-                                        $disable_old_tr = "";  
-                                    }
-                                    //END If fees collected breakoff cant be edited
-                                    ?>
-                                    <tr style="{{$disable_old_tr}}">
-                                        <td>
-                                            <?php echo $quota_val; ?>
-                                        </td>
-                                        <?php
-                                        foreach ($data['data']['title_arr'] as $id => $val) {
-                                            $amount_val = 0;
-                                            if (isset($data['data']['bk_arr']['old'][$quota_id][$id])) {
-                                                $amount_val = $data['data']['bk_arr']['old'][$quota_id][$id];
-                                                $total += $amount_val;
-                                            }
-                                            ?>
-                                            <td>
-                                                <input {{$disable_old_edit}} type="text" class="form-control" value="<?php echo $amount_val; ?>" name="<?php echo 'OldValues[' . $quota_id . '][' . $id . ']'; ?>">
-                                            </td>
-                                        <?php } ?>
-                                        <td class="total">
-                                            <input {{$disable_old_edit}} type="text" class="form-control w-auto" name="total" value="<?php echo $total; ?>">
-                                        </td>
-                                    <?php } ?>
-                                </tr>
-                                       
-                            </table>
-                        </div>
-                    </div>
                     <div class="col-md-12 form-group">                        
                         <center>
                             <button type="submit" class="btn btn-info">Submit</button>
