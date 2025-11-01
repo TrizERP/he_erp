@@ -182,7 +182,7 @@
            
                 <center>
                     <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
-                        Academic Year : {{ $nextYear }}
+                        Academic Year : {{ $syear }} - {{ $nextYear }}
                     </span>
                 </center>
                 <table id="example" class="table table-striped">
@@ -248,9 +248,6 @@
             document.getElementsByName('dynamicFields[]')[i].checked = checked;
         }
     }
-</script>
-
-@include('includes.footerJs')
 
     $(document).ready(function() {
         var table = $('#example').DataTable({

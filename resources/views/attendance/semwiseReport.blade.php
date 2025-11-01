@@ -13,6 +13,8 @@
 
     @php
         $grade_id = $standard_id = $division_id = $from_date = $to_date = '';
+        $syear = session()->get('syear');
+        $nextYear = $syear + 1;
         $batch = [];
         if (isset($data['from_date'])) {
             $from_date = $data['from_date'];
@@ -112,10 +114,6 @@
                     @php
                          $getInstitutes = session()->get('getInstitutes');
                          $academicYears = session()->get('academicYears');
-                         $syear = session()->get('syear');
-
-
-                            $nextYear = $syear + 1;
                     @endphp
                     <h4 style="text-align: center; font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif; margin-top: 8px;">
                         Academic Year: {{ $syear }} - {{ $nextYear }}
@@ -163,7 +161,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                             <div style="text-align: left; width: 33%;">
                                 <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                    Sign of Class Coordinator
+                                    Sign of Coordinator
                                 </div>
                             </div>
                             <div style="text-align: center; width: 33%;">
@@ -252,9 +250,47 @@ $(document).ready(function() {
                 $(win.document.body)
                     .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
                         <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
-                            Academic Year: {{ date('Y') }} - {{ date('Y') + 1 }}
+                            Academic Year: {{ $syear }} - {{ $nextYear }}
                         </h4>
                         <h1 style="text-align:center; font-size:20px; margin-top:5px;">All Subject Semesterwise Report</h1>`);
+
+                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const year = now.getFullYear();
+                    let hours = now.getHours();
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
+                    // Add signature section to print view
+                    $(win.document.body).append(`
+                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div style="text-align: left; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Coordinator
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of HOD.
+                                    </div>
+                                </div>
+                                <div style="text-align: right; width: 33%;">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                        Sign of Principal
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            <div style="text-align: left; margin-top: 20px;">
+                                Printed on: ${formattedDateTime}
+                            </div>
+                        </div>
+                    `);
+
               }}
         ]
     });
