@@ -74,6 +74,16 @@
 
             <div class="card mt-4 shadow-sm">
                 <div class="table-responsive p-4" id="printPage">
+                      <style>
+    /* Bold border only in the report table */
+    #printPage table, 
+    #printPage th, 
+    #printPage td {
+        border: 2px solid #000 !important;
+        border-collapse: collapse;
+    }
+                 </style>
+
                     @php
                         echo App\Helpers\get_school_details($grade_id,$standard_id,$division_id);
                         echo '<div style="margin-top:10px; text-align:center;">
