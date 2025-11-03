@@ -258,9 +258,36 @@
                { extend: 'print', text: ' PRINT', title: 'Student Certificate Report', customize: function(win) {
                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
                    $(win.document.body).append(`<div style="text-align: right;margin-top:20px">Printed on: {{date('d-m-Y H:i:s')}}</div>`);
-               }},
-               'pageLength'
-           ],
+                    // Add CSS for page numbering in print mode
+        var css = `
+            @page {
+                
+                @bottom-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                }
+            }
+            body {
+                counter-reset: page;
+            }
+        `;
+        var head = win.document.head || win.document.getElementsByTagName('head')[0];
+        var style = win.document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        if (style.styleSheet){
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(win.document.createTextNode(css));
+        }
+        head.appendChild(style);
+
+        // Add page number footer element
+        $(win.document.body).append('<div class="page-number"></div>');
+    }
+               
+           },
+           'pageLength'
+       ],
        });
 
        $('#example thead tr').clone(true).appendTo('#example thead');

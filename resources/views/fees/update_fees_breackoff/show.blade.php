@@ -1,7 +1,9 @@
 @include('includes.headcss')
 @include('includes.header')
 @include('includes.sideNavigation')
-
+    @php
+        $academicYears = session('academicYears', []);
+    @endphp
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row">            
@@ -26,16 +28,9 @@
                         <label>Admission Year</label>
                         <select name="admission_year" id="admission_year" class="form-control" required>
                             <option value="">--Select--</option>
-                            @php
-                                $syear = session('syear', date('Y'));
-                                $years = [];
-                                for ($i = $syear - 2; $i <= $syear ; $i++) {
-                                    $years[] = $i;
-                                }
-                            @endphp
-                            @foreach($years as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
-                            @endforeach
+                                                @foreach ($academicYears as $year)
+                                                    <option value="{{ $year->syear }}">{{ $year->syear }}</option>
+                                                @endforeach
                         </select>
                     </div>                               
                     <div class="col-md-4 form-group">

@@ -5,12 +5,8 @@
 @extends('layout')
 @section('container')
     @php
-    $syear = (int) session('syear', date('Y'));
-    $years = [];
-    for ($i = $syear - 2; $i <= $syear; $i++) {
-        $years[] = $i;
-    }
-@endphp
+        $academicYears = session('academicYears', []);
+    @endphp
     <div id="page-wrapper">
         <div class="container-fluid">
             <div class="row">
@@ -27,16 +23,24 @@
                             <div class="row">
                                 <div class="col-md-12 form-group">
                                     <div class="row">
-                                        {{ App\Helpers\SearchChain('4', 'multiple', 'grade,std,div') }}
-                                        <div class="col-md-4 form-group">
+                                        {{ App\Helpers\SearchChain('4', 'multiple', 'grade,std') }}
+                                            <!-- <div class="col-md-4 form-group" hidden>
+                                            <div id="admission_year" name="admission_year" class="form-control" style="width:100%" hidden>
+                                            </div>
+                                            </div> -->
+                                            <div class="col-md-4 form-group">
                                             <label>Admission Year</label>
-                                            <select id='admission_year' name="admission_year" class="form-control" required>
+                                            <select id='admission_year' name="admission_year" class="form-control" style="width:100%" required>
                                                 <option value="">--Select--</option>
-                                                 @foreach($years as $year)
-        <option value="{{ $year }}">{{ $year }}</option>
-    @endforeach
+                                                @foreach ($academicYears as $year)
+                                                    <option value="{{ $year->syear }}">{{ $year->syear }}</option>
+                                                @endforeach
                                             </select>
+                                            @error('admission_year')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
                                         </div>
+                                        
                                     </div>
                                 </div>
                                 @foreach ($data['data']['ddMonth'] as $id => $val)
@@ -66,17 +70,17 @@
         <!-- <script src="../../../tooltip/bower_components/todomvc-common/base.js"></script> -->
         <!-- <script src="../../../tooltip/bower_components/jquery/jquery.js"></script> -->
         <!-- <script src="../../../tooltip/bower_components/underscore/underscore.js"></script>
-            <script src="../../../tooltip/bower_components/backbone/backbone.js"></script>
-            <script src="../../../tooltip/bower_components/backbone.localStorage/backbone.localStorage.js"></script>
-            <script src="../../../tooltip/js/models/todo.js"></script>
-            <script src="../../../tooltip/js/collections/todos.js"></script>
-            <script src="../../../tooltip/js/views/todo-view.js"></script>
-            <script src="../../../tooltip/js/views/app-view.js"></script>
-            <script src="../../../tooltip/js/routers/router.js"></script>
-            <script src="../../../tooltip/js/app.js"></script>
-            <script src="../../../tooltip/enjoyhint/enjoyhint.js"></script>
-            <script src="../../../tooltip/enjoyhint/jquery.enjoyhint.js"></script>
-            <script src="../../../tooltip/enjoyhint/kinetic.min.js"></script> -->
+                <script src="../../../tooltip/bower_components/backbone/backbone.js"></script>
+                <script src="../../../tooltip/bower_components/backbone.localStorage/backbone.localStorage.js"></script>
+                <script src="../../../tooltip/js/models/todo.js"></script>
+                <script src="../../../tooltip/js/collections/todos.js"></script>
+                <script src="../../../tooltip/js/views/todo-view.js"></script>
+                <script src="../../../tooltip/js/views/app-view.js"></script>
+                <script src="../../../tooltip/js/routers/router.js"></script>
+                <script src="../../../tooltip/js/app.js"></script>
+                <script src="../../../tooltip/enjoyhint/enjoyhint.js"></script>
+                <script src="../../../tooltip/enjoyhint/jquery.enjoyhint.js"></script>
+                <script src="../../../tooltip/enjoyhint/kinetic.min.js"></script> -->
 
         <!--  <script>
             localStorage.clear();
@@ -141,10 +145,27 @@
     @endif
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $("#admission_year").val("{{ session()->get('syear') }}");
-        $("#division").parent('.form-group').hide();
-        $("#grade").attr('required', true);
-        $("#standard").attr('required', true);
+    $(document).ready(function() {
+    const sessionYear = "{{ session()->get('syear') }}";
+    
+    // Admission year select karo
+    $('#admission_year option').each(function() {
+        if ($(this).text().trim() === sessionYear) {
+            $(this).prop('selected', true);
+            return false; // Loop break karo
+        }
+    });
+    
+    // Form submit thatu pehla verify karo
+    $('form').on('submit', function(e) {
+        var admissionYear = $('#admission_year').val();
+        if (!admissionYear) {
+            e.preventDefault();
+            alert('Please select admission year');
+            return false;
+        }
+    });
+        });
     </script>
     @if (app('request')->input('implementation') == 1)
         <script type="text/javascript">
@@ -152,7 +173,17 @@
             document.getElementById('main-header').style.display = 'none';
         </script>
     @endif
-
+        
+    <script>
+$(document).ready(function() {
+    const sessionYear = "{{ session()->get('syear') }}";
+    $('#admission_year option').each(function() {
+        if ($(this).text().trim() === sessionYear) {
+            $(this).prop('selected', true);
+        }
+    });
+});
+</script>
     <script type="text/javascript">
         // function check_validation()
         // {
