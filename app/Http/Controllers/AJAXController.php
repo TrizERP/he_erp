@@ -2383,8 +2383,13 @@ private function groupConsecutivePeriods($periods)
         $employees = DB::table('tbluser')->join('tbluserprofilemaster as upm', 'upm.id', '=', 'tbluser.user_profile_id')
             ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.last_name, "-"),COALESCE(tbluser.first_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
             ->where('tbluser.sub_institute_id', $sub_institute_id)
-            ->whereRaw('tbluser.department_id in (' . implode(',', $department_id) . ') ')
             ->where('tbluser.status', 1)
+            // Exclude employees who have existing proxy assignments to prevent conflicts
+            ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id) {
+                $subquery->select('proxy_teacher_id')
+                    ->from('proxy_master')
+                    ->where('sub_institute_id', '=', $sub_institute_id);
+            })
             ->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
                 $q->whereIn('tbluser.id', $SubCordinates);
             })

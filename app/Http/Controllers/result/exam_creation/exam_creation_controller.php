@@ -71,7 +71,8 @@ class exam_creation_controller extends Controller
             ->join('subject', 'sub_std_map.subject_id', '=', 'subject.id')
             ->join('academic_section', 'academic_section.id', '=', 'standard.grade_id')
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
-            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
+            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.cutoff',
+)
             ->select(
                 'result_create_exam.id',
                 'academic_year.title as term_name',
@@ -86,6 +87,7 @@ class exam_creation_controller extends Controller
                 'result_create_exam.report_card_status',
                 'result_create_exam.sort_order',
                 DB::raw('DATE_FORMAT(result_create_exam.exam_date,"%d-%m-%Y") as exam_date'),
+                'result_create_exam.cutoff',
                 'lo_category.id as co_id',
                 'lo_category.title as co_name',
                 'lo_category.sort_order as co_order',
@@ -273,6 +275,7 @@ class exam_creation_controller extends Controller
                     'exam_date'          => !empty($examDates[$key])
                         ? date("Y-m-d", strtotime($examDates[$key]))
                         : null,
+                    'cutoff' => $request->get('cutoff')[$key] ?? null,
                     'created_by'         => session()->get('user_id'),
                     'created_at'         => now(),
                 ]);
@@ -329,7 +332,8 @@ class exam_creation_controller extends Controller
             'result_create_exam.sort_order',
             'result_create_exam.exam_date',
             'result_create_exam.con_point',
-            'result_create_exam.co_id'
+             'result_create_exam.cutoff'
+
         )
             ->join('standard', 'standard.id', '=', 'result_create_exam.standard_id')
             ->where([
@@ -420,6 +424,7 @@ class exam_creation_controller extends Controller
                 'report_card_status' => $request->get('report_card_status'),
                 'sort_order'         => $request->get('sort_order'),
                 'exam_date'          => date("Y-m-d", strtotime($request->get('exam_date'))),
+                'cutoff'             => $request->get('cutoff'),
                 'updated_by'         => session()->get('user_id'),
                 'updated_at'         => now()
             ];
