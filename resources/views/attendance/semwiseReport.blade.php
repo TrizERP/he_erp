@@ -246,77 +246,100 @@ $(document).ready(function() {
         buttons: [
             { extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report' },
             { extend: 'print', text: ' PRINT', title: '',
-              customize: function (win) {
-                $(win.document.body)
-                    .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
-                        <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
-                            Academic Year: {{ $syear }} - {{ $nextYear }}
-                        </h4>
-                        <h1 style="text-align:center; font-size:20px; margin-top:5px;">All Subject Semesterwise Report</h1>`);
+customize: function (win) {
+    // Add school details and titles
+    $(win.document.body)
+        .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
+            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
+                Academic Year: {{ $syear }} - {{ $nextYear }}
+            </h4>
+            <h1 style="text-align:center; font-size:20px; margin-top:5px;">All Subject Semesterwise Report</h1>`);
 
-                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
-                    const now = new Date();
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const year = now.getFullYear();
-                    let hours = now.getHours();
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                    hours = hours % 12 || 12;
-                    const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
-                    // Add signature section to print view
-                    $(win.document.body).append(`
-                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                                <div style="text-align: left; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of Coordinator
-                                    </div>
-                                </div>
-                                <div style="text-align: center; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of HOD.
-                                    </div>
-                                </div>
-                                <div style="text-align: right; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of Principal
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-                            <div style="text-align: left; margin-top: 20px;">
-                                Printed on: ${formattedDateTime}
-                            </div>
-                        </div>
-                    `);
+    // Add styles for borders on print
+    const style = `
+        <style>
+            /* Regular table style for screen */
+            #example {
+                width: 100%;
+                border-collapse: collapse;
+                border: 1px solid #333;
+            }
 
-                    //start PAGE 1 of 2
-			        var css = `@page {
-			            @bottom-right {
-			              content: "Page " counter(page) " of " counter(pages);
-			            }
-			           }
-			            body {counter-reset: page;
-			            }
-			        `;
-			        var head = win.document.head || win.document.getElementsByTagName('head')[0];
-			        var style = win.document.createElement('style');
-			        style.type = 'text/css';
-			        style.media = 'print';
-			        if (style.styleSheet){
-			            style.styleSheet.cssText = css;
-			        } else {
-			            style.appendChild(win.document.createTextNode(css));
-			        }
-			        head.appendChild(style);
+            #example th, #example td {
+                border: 1px solid #333;
+                padding: 6px;
+                text-align: center;
+                font-size: 12px;
+                font-family: Arial, Helvetica, sans-serif;
+            }
 
-			        // Add page number footer element
-			        $(win.document.body).append('<div class="page-number"></div>');
-			        //end PAGE 1 of 2
-              }}
+            #example thead th {
+                background-color: #f5f5f5;
+                font-weight: bold;
+            }
+
+            /* ✅ On Print: Bold black borders */
+            @media print {
+                #example {
+                    border: 2px solid black !important;
+                    border-collapse: collapse !important;
+                }
+
+                #example th, #example td {
+                    border: 2px solid black !important;
+                    padding: 6px !important;
+                    text-align: center !important;
+                    font-size: 12px !important;
+                    font-family: Arial, Helvetica, sans-serif !important;
+                }
+
+                #example thead th {
+                    background-color: #f0f0f0 !important;
+                    font-weight: bold !important;
+                    -webkit-print-color-adjust: exact;
+                }
+
+                /* Remove borders from other tables (like school info) */
+                body table:not(#example),
+                body table:not(#example) th,
+                body table:not(#example) td {
+                    border: none !important;
+                }
+
+                /* Ensure layout stays A4-sized */
+                @page {
+                    size: A4 portrait;
+                    margin: 15mm;
+                }
+            }
+        </style>
+    `;
+    $(win.document.head).append(style);
+
+    // Add footer signature section
+    const now = new Date();
+    const formatted = now.toLocaleString('en-IN', { hour12: true });
+
+    $(win.document.body).append(`
+        <div style="margin-top:60px; padding:20px 0; width:100%; color:black">
+            <div style="display:flex; justify-content:space-between;">
+                <div style="text-align:left; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of Coordinator</div>
+                <div style="text-align:center; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of HOD</div>
+                <div style="text-align:right; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of Principal</div>
+            </div>
+        </div>
+        <div style="text-align:left; margin-top:20px;">Printed on: ${formatted}</div>
+    `);
+}
+
+
+}
         ]
     });
 });
+
 </script>
+
+
+
 @endsection

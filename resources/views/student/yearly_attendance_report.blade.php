@@ -74,15 +74,7 @@
 
             <div class="card mt-4 shadow-sm">
                 <div class="table-responsive p-4" id="printPage">
-                      <style>
-    /* Bold border only in the report table */
-    #printPage table, 
-    #printPage th, 
-    #printPage td {
-        border: 2px solid #000 !important;
-        border-collapse: collapse;
-    }
-                 </style>
+                      
 
                     @php
                         echo App\Helpers\get_school_details($grade_id,$standard_id,$division_id);
@@ -98,6 +90,7 @@
                     @endphp
 
                     <table class="table table-bordered table-striped table-hover" border="1">
+                        
                         @php 
                             $month_name = [1 => "Jan", 2 => "Feb", 3 => "Mar", 4 => "Apr", 5 => "May", 6 => "June", 7 => "July", 8 => "Aug", 9 => "Sept", 10 => "Oct", 11 => "Nov", 12 => "Dec"]; 
                         @endphp
@@ -179,5 +172,27 @@
         popupWin.document.close();
     }
 </script>
+
+<style>
+    /* Remove borders around institute header section */
+    #printPage table[style*="width:100%"],
+    #printPage table[style*="border"],
+    #printPage table[border="1"]:not(.table) {
+        border: none !important;
+    }
+
+    /* Apply bold borders only to the main report table */
+    #printPage .table,
+    #printPage .table th,
+    #printPage .table td {
+        border: 2px solid #000 !important;
+        border-collapse: collapse !important;
+    }
+
+    #printPage .table th {
+        font-weight: bold;
+        text-align: center;
+    }
+</style>
 
 @include('includes.footer')

@@ -2,6 +2,56 @@
 @include('../includes.header')
 @include('../includes.sideNavigation')
 
+<style>
+/* ===== FONT SIZE INCREASE (VISIBLE ON SCREEN + PRINT) ===== */
+body, #page-wrapper, .container-fluid, .card, form, label, select, input, h4, .page-title {
+    font-size: 18px !important;
+    line-height: 1.6 !important;
+}
+
+/* Make headings slightly larger */
+h1, h2, h3, h4, h5, h6, .page-title {
+    font-weight: bold !important;
+    font-size: 20px !important;
+}
+
+/* Table styling (applied when report is printed) */
+@media print {
+    * {
+        font-size: 18px !important;
+        line-height: 1.6 !important;
+        color: #000 !important;
+    }
+
+    table, th, td {
+        border: 2px solid #000 !important;
+        border-collapse: collapse !important;
+        padding: 8px !important;
+        font-size: 18px !important;
+    }
+
+    th {
+        font-weight: bold !important;
+        background: #f8f8f8 !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    /* Hide non-print elements */
+    form, .btn, .alert, .navbar, .sidebar, .header, .no-print {
+        display: none !important;
+    }
+
+    #page-wrapper, .container-fluid, .card {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+</style>
+
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row">
@@ -108,6 +158,7 @@
 </div>
 
 @include('includes.footerJs')
+
 <script type="text/javascript">
     $('#grade').prop('required', true);
     $('#standard').prop('required', true);
@@ -228,7 +279,6 @@
             $('#subject').prop('required', false);
         }
     }
-
-  
 </script>
+
 @include('includes.footer')
