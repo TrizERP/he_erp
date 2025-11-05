@@ -20,6 +20,7 @@
                                 <th>Date</th>
                                 <th>Enrollment No</th>
                                 <th>Name</th>
+                                <th>Sem/Div</th> 
                                 <th>Mobile</th>
                                 <th>Text</th>
                                 <th>Module</th>
@@ -34,7 +35,8 @@
                             <tr>    
                                 <td>{{$arr['sent_date']}}</td>
                                 <td>{{$arr['enrollment_no']}}</td>
-                                <td>{{$arr['name']}}</td>
+                                <td>{{$arr['name']}}</td>   
+                                <td>{{$arr['sem_div']}}</td>
                                 <td>{{$arr['sms_no']}}</td>
                                 <td>{{$arr['sms_text']}}</td>                 
                                 <td>{{$arr['module_name']}}</td>                                                  
