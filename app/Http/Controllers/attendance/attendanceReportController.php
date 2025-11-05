@@ -64,12 +64,13 @@ class attendanceReportController extends Controller
 
         // get students
         // db::enableQueryLog();
+        //ats.timetable_id, ELSE CONCAT
         $get_students = DB::table('tblstudent as s')
         ->selectRaw("s.id as student_id,s.enrollment_no,s.mobile,CONCAT_WS(' ',s.last_name,s.first_name,CONCAT(SUBSTRING(s.middle_name,1,1),'.')) as student_name,ats.attendance_date,ats.subject_id,ats.attendance_code,ats.attendance_for,if(ats.attendance_code='P',1,0) as present,
          CASE
             WHEN ats.attendance_for = 'Lab' THEN CONCAT(ats.subject_id, ats.attendance_date, ats.attendance_type, IFNULL(ats.id, 0))
             WHEN ats.attendance_for = 'Tutorial' THEN CONCAT(ats.subject_id, ats.attendance_date, ats.attendance_type, IFNULL(ats.id, 0))
-            ELSE CONCAT(ats.subject_id, ats.period_id, ats.attendance_date, ats.attendance_type,ats.timetable_id,ats.student_id, IFNULL(ats.id, 0))
+            ELSE CONCAT(ats.subject_id, ats.period_id, ats.attendance_date, ats.attendance_type,ats.student_id, IFNULL(ats.id, 0))
         END as group_column,
         group_concat(ats.id) as att_id")
         ->join('tblstudent_enrollment as se','se.student_id','=','s.id')

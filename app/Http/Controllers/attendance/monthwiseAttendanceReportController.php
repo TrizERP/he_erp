@@ -18,6 +18,7 @@ class monthwiseAttendanceReportController extends Controller
         $att_type = $request->get('lecture_type');
         $standard = $request->get('standard');
         $division = $request->get('division');
+        $subject = $request->get('subject');
         $batch = $request->get('batch');
         $from_date = $request->get('from_month');
         $to_date = $request->get('to_month');
@@ -67,23 +68,34 @@ class monthwiseAttendanceReportController extends Controller
                 ->whereNull('se.end_date')
                 ->where('se.standard_id',$standard)
                 ->where('se.section_id',$division)
+                ->where('ats.subject_id',$subject)
                 ->get()
                 ->groupBy(['student_id','month_num']);
 
             // Build month-wise summary per student
+            //echo $to_date;
             $students_details = [];
             $start = new \DateTime($from_date);
             $end   = new \DateTime($to_date);
+//echo $end;
+//echo "<pre>";
+//print_r($end);
+//die();
             $monthPeriod = new \DatePeriod(
                 $start,
                 new \DateInterval('P1M'),
-                $end->modify('+1 month')
+                $end->modify('+0 month')
             );
+            //echo "<pre>";
+            //print_r($monthPeriod);
+            //die();
             $monthsRange = [];
             foreach ($monthPeriod as $m) {
                 $monthsRange[$m->format('m')] = $m->format('F Y');
             }
-
+            //echo "<pre>";
+            //print_r($monthsRange);
+            //die();
             foreach($rawRows as $student_id => $months){
                 $first = $months->flatten()->first();
                 $base = [
@@ -100,7 +112,9 @@ class monthwiseAttendanceReportController extends Controller
                 }
                 $students_details[] = $base;
             }
-
+            //echo "<pre>";
+            //print_r($monthsRange);
+            //die();
             // Month-wise total working days
             foreach($monthsRange as $monthNum => $monthName){
                 $monthStart = new \DateTime($from_date);
@@ -108,12 +122,15 @@ class monthwiseAttendanceReportController extends Controller
                 $monthTotals[$monthNum] = DB::table('attendance_student')
                     ->where('attendance_for',$att_type)
                     ->whereRaw("MONTH(attendance_date) = ?",[$monthNum])
+                    ->where('standard_id',$standard)
+                    ->where('section_id',$division)
+                    ->where('subject_id',$subject)
                     ->whereBetween('attendance_date',[
                         date('Y-m-d',strtotime($from_date)),
                         date('Y-m-d',strtotime($to_date))
                     ])
-                    ->distinct('attendance_date')
-                    ->count('attendance_date');
+                    ->selectRaw('COUNT(DISTINCT CONCAT(attendance_date, "-", period_id)) as aggregate')
+                    ->value('aggregate');
             }
             $students_data = $students_details;
             // return [
@@ -121,6 +138,9 @@ class monthwiseAttendanceReportController extends Controller
             //     'month_totals' => $monthTotals
             // ];
         }
+        //echo "<pre>";
+        //print_r($monthTotals);
+        //die();
         $res['types'] = ["Lecture","Lab","Tutorial"];
         $res['reportType'] = ["Percentage wise","Number of Lecture wise"];
         $res['month_totals'] = $monthTotals;

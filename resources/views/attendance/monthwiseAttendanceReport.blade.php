@@ -122,31 +122,48 @@
                 }
             @endphp
             <div class="table-responsive">
-                <table id="example" class="table display" style="border:none !important">
-                    <thead>
-                        <tr>
-                            <th>Sr</th>
-                            <th>Enrollment No</th>
-                            <th>Student Name</th>
-                            @foreach ($data['month_totals'] as $monthId => $total)
-                                <th>{{ $month_name[(int)$monthId] ?? '' }} ({{ $total }})</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($data['student_data'] as $key => $student)
-                            <tr>
-                                <td>{{ $key + 1 }}</td>
-                                <td>{{ $student['enrollment_no'] }}</td>
-                                <td>{{ $student['student_name'] }}</td>
-                                @foreach ($data['month_totals'] as $monthId => $total)
-                                    <td>{{ $student[$monthId] ?? 0 }}</td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    <table id="example" class="table display" style="border:none !important">
+        <thead>
+            <tr>
+                <th>Sr</th>
+                <th>Enrollment No</th>
+                <th>Student Name</th>
+                @foreach ($data['month_totals'] as $monthId => $total)
+                    <th class="text-center">{{ $month_name[(int)$monthId] ?? '' }} ({{ $total }})</th>
+                @endforeach
+
+                @php
+                    // Calculate grand total of all months
+                    $grand_total = array_sum($data['month_totals']);
+                @endphp
+
+                <th class="text-center">Total ({{ $grand_total }})</th> <!-- 👈 Added total month header -->
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach ($data['student_data'] as $key => $student)
+                @php
+                    $student_total = 0;
+                @endphp
+                <tr>
+                    <td>{{ $key + 1 }}</td>
+                    <td>{{ $student['enrollment_no'] }}</td>
+                    <td>{{ $student['student_name'] }}</td>
+                    @foreach ($data['month_totals'] as $monthId => $total)
+                        @php
+                            $month_value = $student[$monthId] ?? 0;
+                            $student_total += $month_value;
+                        @endphp
+                        <td class="text-center">{{ $month_value }}</td>
+                    @endforeach
+                    <td class="text-center fw-bold">{{ $student_total }}</td> <!-- 👈 Student-wise total -->
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
         </div>
     @endif
 </div>
