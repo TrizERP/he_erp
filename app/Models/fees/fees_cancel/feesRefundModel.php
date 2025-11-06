@@ -11,9 +11,10 @@ class feesRefundModel extends Model
 
     protected $fillable = [
         'id',
-        'student_id',
-        'syear',
         'sub_institute_id',
+        'syear',
+        'student_id',
+        'standard_id',
         'receipt_no',
         'fees_html',
         'created_by',

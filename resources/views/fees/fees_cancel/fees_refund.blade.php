@@ -16,7 +16,7 @@
     <div class="container-fluid">
     <div class="row bg-title">
                 <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                    <h4 class="page-title">Fees Refund Report</h4> </div>
+                    <h4 class="page-title">Fees Refund</h4> </div>
             </div>
         <div class="row bg-title">
             <div class="col-md-3 d-flex">
