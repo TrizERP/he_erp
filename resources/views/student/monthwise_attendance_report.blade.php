@@ -246,6 +246,8 @@
     });
 </script>
 
+
+
 <script>
     $(document).on('change', '#lecture_type', function() {
         var standard_id = $('#standard').val();
@@ -306,5 +308,19 @@
         $('#lecture_type').trigger('change');
     @endif
 </script>
+
+<style>
+@media print {
+    @page {
+        @bottom-right {
+            content: "Page " counter(page) " / " counter(pages);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: black;
+        }
+    }
+}
+</style>
+
 
 @include('includes.footer')

@@ -244,99 +244,121 @@ $(document).ready(function() {
         info: false,
         dom: 'Bfrtip',
         buttons: [
-            { extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report' },
-            { extend: 'print', text: ' PRINT', title: '',
-customize: function (win) {
-    // Add school details and titles
-    $(win.document.body)
-        .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
-            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
-                Academic Year: {{ $syear }} - {{ $nextYear }}
-            </h4>
-            <h1 style="text-align:center; font-size:20px; margin-top:5px;">All Subject Semesterwise Report</h1>`);
+            { 
+                extend: 'csv', 
+                text: 'CSV', 
+                title: 'All Subject Semesterwise Report' 
+            },
+            { 
+                extend: 'print',
+                text: 'PRINT',
+                title: '',
+                customize: function (win) {
+                    // Add school details and report title
+                    $(win.document.body)
+                        .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
+                            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
+                                Academic Year: {{ $syear }} - {{ $nextYear }}
+                            </h4>
+                            <h1 style="text-align:center; font-size:20px; margin-top:5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;">
+                                All Subject Semesterwise Report
+                            </h1>`);
 
-    // Add styles for borders on print
-    const style = `
-        <style>
-            /* Regular table style for screen */
-            #example {
-                width: 100%;
-                border-collapse: collapse;
-                border: 1px solid #333;
+                    // Add print styles for bold borders and formatting
+                    const style = `
+                        <style>
+                            @media print {
+                                body {
+                                    font-family: Arial, Helvetica, sans-serif !important;
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                }
+
+                                /* Table outer border */
+                                table#example {
+                                    width: 100% !important;
+                                    border-collapse: collapse !important;
+                                    border: 3px solid black !important; /* Bold outer border */
+                                    margin-top: 10px !important;
+                                }
+
+                                /* Header and cell borders */
+                                table#example th,
+                                table#example td {
+                                    border: 2px solid black!important; /* Bold inner borders */
+                                    padding: 6px 8px !important;
+                                    text-align: center !important;
+                                    font-size: 12px !important;
+                                }
+
+                                /* Table header background */
+                                table#example thead th {
+                                    background-color: #f2f2f2 !important;
+                                    font-weight: bold !important;
+                                    border-bottom: 3px solid black!important;
+                                }
+
+                                /* Zebra stripes for rows */
+                                table#example tbody tr:nth-child(odd) {
+                                    background-color: #f9f9f9 !important;
+                                }
+
+                                table#example tbody tr:nth-child(even) {
+                                    background-color: #ffffff !important;
+                                }
+
+                                /* Signature section */
+                                .signature-block {
+                                    margin-top: 60px;
+                                    display: flex;
+                                    justify-content: space-between;
+                                    width: 100%;
+                                }
+
+                                .signature {
+                                    border-top: 3px solid #000;
+                                    padding-top: 5px;
+                                    width: 30%;
+                                    text-align: center;
+                                }
+
+                                .print-footer {
+                                    margin-top: 20px;
+                                    font-size: 12px;
+                                    text-align: left;
+                                }
+
+                                @page {
+                                    size: A4 landscape;
+                                    margin: 15mm 10mm 20mm 10mm;
+                                    @bottom-right {
+                                        content: "Page " counter(page) " / " counter(pages);
+                                        font-size: 12px;
+                                        font-family: Arial, Helvetica, sans-serif;
+                                    }
+                                }
+                            }
+                        </style>
+                    `;
+                    $(win.document.head).append(style);
+
+                    // Append signatures and print date
+                    const now = new Date();
+                    const formatted = now.toLocaleString('en-IN', { hour12: true });
+                    $(win.document.body).append(`
+                        <div class="signature-block">
+                            <div class="signature">Sign of Coordinator</div>
+                            <div class="signature">Sign of HOD</div>
+                            <div class="signature">Sign of Principal</div>
+                        </div>
+                        <div class="print-footer">Printed on: ${formatted}</div>
+                    `);
+                }
             }
-
-            #example th, #example td {
-                border: 1px solid #333;
-                padding: 6px;
-                text-align: center;
-                font-size: 12px;
-                font-family: Arial, Helvetica, sans-serif;
-            }
-
-            #example thead th {
-                background-color: #f5f5f5;
-                font-weight: bold;
-            }
-
-            /* ✅ On Print: Bold black borders */
-            @media print {
-                #example {
-                    border: 2px solid black !important;
-                    border-collapse: collapse !important;
-                }
-
-                #example th, #example td {
-                    border: 2px solid black !important;
-                    padding: 6px !important;
-                    text-align: center !important;
-                    font-size: 12px !important;
-                    font-family: Arial, Helvetica, sans-serif !important;
-                }
-
-                #example thead th {
-                    background-color: #f0f0f0 !important;
-                    font-weight: bold !important;
-                    -webkit-print-color-adjust: exact;
-                }
-
-                /* Remove borders from other tables (like school info) */
-                body table:not(#example),
-                body table:not(#example) th,
-                body table:not(#example) td {
-                    border: none !important;
-                }
-
-                /* Ensure layout stays A4-sized */
-                @page {
-                    size: A4 portrait;
-                    margin: 15mm;
-                }
-            }
-        </style>
-    `;
-    $(win.document.head).append(style);
-
-    // Add footer signature section
-    const now = new Date();
-    const formatted = now.toLocaleString('en-IN', { hour12: true });
-
-    $(win.document.body).append(`
-        <div style="margin-top:60px; padding:20px 0; width:100%; color:black">
-            <div style="display:flex; justify-content:space-between;">
-                <div style="text-align:left; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of Coordinator</div>
-                <div style="text-align:center; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of HOD</div>
-                <div style="text-align:right; border-top:2px solid #000; padding-top:5px; width:30%;">Sign of Principal</div>
-            </div>
-        </div>
-        <div style="text-align:left; margin-top:20px;">Printed on: ${formatted}</div>
-    `);
-}
-
-
-}
         ]
     });
 });
+
 
 </script>
 

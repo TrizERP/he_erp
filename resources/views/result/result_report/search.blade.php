@@ -3,40 +3,29 @@
 @include('../includes.sideNavigation')
 
 <style>
-/* ===== FONT SIZE INCREASE (VISIBLE ON SCREEN + PRINT) ===== */
-body, #page-wrapper, .container-fluid, .card, form, label, select, input, h4, .page-title {
-    font-size: 18px !important;
+/* ===== FONT SIZE AND BORDERS FOR ALL TABLES ===== */
+
+/* On screen (visible on page) */
+table, th, td {
+    font-size: 26px !important;
     line-height: 1.6 !important;
+    padding: 10px !important;
 }
 
-/* Make headings slightly larger */
-h1, h2, h3, h4, h5, h6, .page-title {
-    font-weight: bold !important;
-    font-size: 20px !important;
-}
-
-/* Table styling (applied when report is printed) */
+/* On print */
 @media print {
-    * {
-        font-size: 18px !important;
-        line-height: 1.6 !important;
-        color: #000 !important;
-    }
-
     table, th, td {
+        font-size: 28px !important;
+        line-height: 1.8 !important;
+        padding: 10px !important;
         border: 2px solid #000 !important;
         border-collapse: collapse !important;
-        padding: 8px !important;
-        font-size: 18px !important;
+        color: #000 !important;
     }
 
     th {
         font-weight: bold !important;
-        background: #f8f8f8 !important;
-    }
-
-    body {
-        background: #fff !important;
+        background-color: #f8f8f8 !important;
     }
 
     /* Hide non-print elements */
@@ -44,13 +33,16 @@ h1, h2, h3, h4, h5, h6, .page-title {
         display: none !important;
     }
 
-    #page-wrapper, .container-fluid, .card {
+    /* Full width for printing */
+    body, #page-wrapper, .container-fluid, .card {
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        background: #fff !important;
     }
 }
 </style>
+
 
 <div id="page-wrapper">
     <div class="container-fluid">

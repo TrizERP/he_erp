@@ -196,13 +196,13 @@ $(document).ready(function() {
                     $(win.document.body).find('th, td').css({
                         'color':'black',
                         'text-align':'center',
-                        'border':'2px solid black',
+                        
                         'padding':'6px'
                     });
                     $(win.document.body).find('table').css({
                         'border-collapse':'collapse',
                         'width':'100%',
-                        'border':'3px solid black'
+                        
                     });
                     $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
                     $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $syear }} - {{ $nextYear }}</span></center>`);
@@ -297,5 +297,76 @@ $(document).on('change', '#lecture_type', function() {
     $('#lecture_type').trigger('change');
 @endif
 </script>
+
+<style>
+@media print {
+
+    /* ===== REMOVE BORDER FROM SCHOOL + ACADEMIC SECTION ===== */
+    .school-header,
+    .report-title,
+    .academic-section,
+    .academic-year {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: black !important;
+        text-align: center !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+    .school-header {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        margin-bottom: 5px !important;
+    }
+
+    .academic-section,
+    .academic-year {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* ===== TABLE SECTION (BOLD BORDERS) ===== */
+    table {
+        width: 100%;
+        border-collapse: collapse !important;
+        border: 3px solid black !important;
+        margin-top: 10px !important;
+    }
+
+    table th,
+    table td {
+        border: 2px solid black !important;
+        color: black !important;
+        padding: 6px 8px !important;
+        text-align: center !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 13px !important;
+    }
+
+    table th {
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        background: #f9f9f9 !important;
+    }
+
+    /* ===== PAGE NUMBER (Bottom Right) ===== */
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+        @bottom-right {
+            content: "Page " counter(page) " / " counter(pages);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: black;
+        }
+    }
+}
+</style>
+
+
+
+
 
 @include('includes.footer')
