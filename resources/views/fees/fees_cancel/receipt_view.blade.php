@@ -20,11 +20,11 @@
     <div class="container-fluid">
         <div class="row bg-title">
             <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">Fees Refund Receipt</h4>
+                <h4 class="page-title">Fees Refund</h4>
             </div>
         </div>
         <div id="printPage" class="card">
-
+<!--
 
             @if(isset($data['str']))
                 @php
@@ -57,6 +57,12 @@
 
 
         @endif
+                -->
+        @if(isset($data['message']))
+            <div class="alert alert-success text-center mt-5">
+                <h4>{{ $data['message'] }}</h4>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -65,5 +71,10 @@
     window.onafterprint = function () {
         window.location.reload(true);
     }
+</script>
+<script>
+    setTimeout(() => {
+        window.location.href = "{{ url('fees/fees_refund') }}"; // change path as needed
+    }, 5000);
 </script>
 @include('includes.footer')

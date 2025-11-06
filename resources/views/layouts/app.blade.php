@@ -1,0 +1,9 @@
+@include('includes.headcss')
+@include('includes.header')
+@include('includes.sideNavigation')
+<head>
+    <title>@yield('title')</title>
+</head>
+<body>
+    @yield('content')
+</body>

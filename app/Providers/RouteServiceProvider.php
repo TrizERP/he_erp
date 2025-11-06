@@ -106,6 +106,8 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapSkillRoutes();
 
         $this->mapCustomModuleApiRoutes();
+
+        $this->mapInternshipApiRoutes();
     }
 
     /**
@@ -285,6 +287,13 @@ class RouteServiceProvider extends ServiceProvider
         Route::namespace($this->namespace)
             ->middleware('web')
             ->group(base_path('routes/skill.php'));
+    }
+
+    protected function mapInternshipApiRoutes()
+    {
+        Route::namespace($this->namespace)
+            ->middleware('web')
+            ->group(base_path('routes/internship.php'));
     }
     /**
      * Configure the rate limiters for the application.
