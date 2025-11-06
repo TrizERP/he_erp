@@ -29,6 +29,8 @@
                                 <th>CO</th>
                                 <th>Exam Name</th>
                                 <th>Points</th>
+                                <th>Cutoff</th>
+                                <th>Remedial</th>
                                 <th>Sort Order</th>
                                 <th>Exam Date</th>
                                 <th class="text-left">Action</th>
@@ -45,6 +47,14 @@
                                 <td>{{ isset($data->co_order) ? 'CO'.$data->co_order : '-'}}</td>
                                 <td>{{$data->exam_name}}</td>
                                 <td>{{$data->points}}</td>
+                                <td>{{ $data->cutoff ?? '-' }}</td>
+                                <td>
+                                    @if(isset($data->is_remedial) && $data->is_remedial == 1)
+                                        <span class="badge badge-success">Yes</span>
+                                    @else
+                                        <span class="badge badge-secondary">No</span>
+                                 @endif
+                                </td>
                                 <td>{{$data->sort_order}}</td>
                                 <td>{{$data->exam_date}}</td>
                                 <td>
@@ -56,9 +66,11 @@
                                     <form class="d-inline" action="{{ route('exam_creation.destroy', $data->id)}}" method="post">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="btn btn-info btn-outline-danger" onclick="return confirmDelete();" type="submit"><i class="ti-trash"></i></button>
+                                        <button class="btn btn-info btn-outline-danger" onclick="return confirmDelete();" type="submit">
+                                            <i class="ti-trash"></i>
+                                        </button>
                                     </form>
-                                </td> 
+                                </td>  
                             </tr>
                             @endforeach
 
