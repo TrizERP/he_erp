@@ -477,9 +477,10 @@ class studentAttendanceController extends Controller
         }
 
         // Get semester/term start-end dates from standard table
-        $sem = DB::table('standard')
-            ->where('id', $standard_id)
+        $sem = DB::table('division_capacity_master')
+            ->where('standard_id', $standard_id)
             ->where('sub_institute_id', $sub_institute_id)
+            ->where('division_id', $division_id)
             ->select('sem_start_date', 'sem_end_date')
             ->first();
 
@@ -528,7 +529,7 @@ class studentAttendanceController extends Controller
             }
         } else {
             if ($batch) {
-                $attendanceQuery->where('se.batch_id', $batch);
+                $attendanceQuery->where('s.studentbatch', $batch);
             }
         }
 
@@ -587,7 +588,7 @@ class studentAttendanceController extends Controller
             }
         } else {
             if ($batch) {
-                $studentQuery->where('s.batch', $batch);
+                $studentQuery->where('s.studentbatch', $batch);
             }
         }
 

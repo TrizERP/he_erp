@@ -61,8 +61,9 @@
 
                     @php
                         $readonly = '';
-                        if(session()->get('user_profile_name') != 'Admin'){
-                            $readonly = 'readonly=readonly';
+                        
+                        if (session()->get('user_profile_name') != 'Admin'){
+                            $readonly = 'readonly = readonly';
                         }
                         $departments = $data['departments'];
                         $new_emp_code = $data['new_emp_code'];
@@ -87,6 +88,10 @@
                         $bloodgroups = $data['bloodgroups'];
                         $maretial_status = $data['maretial_status'];
                         $data = $data['data'];
+                        $isAdmin = false;
+    if (Auth::check()) {
+        $isAdmin = Auth::user()->user_profile === 'admin';
+    }
                     @endphp
                     <div class="tab-content">
                         <div class="tab-pane p-3 active" id="section-linemove-1" role="tabpanel">
@@ -140,13 +145,14 @@
                                         <input type="text"
                                                value="@if(isset($data['user_name'])){{ $data['user_name'] }}@endif"
                                                id='user_name' required name="user_name" class="form-control" {{$readonly}}>
+                                               id='user_name' required name="user_name" class="form-control" {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Email</label>
                                         <!--<span><br><b>{{ $data['email'] }}</b></span>-->
                                         <input type="text" id='email'
                                                value="@if(isset($data['email'])){{ $data['email'] }}@endif" required
-                                               name="email" class="form-control" {{$readonly}}>
+                                               name="email" class="form-control"  {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Mobile</label>
@@ -310,11 +316,18 @@
                                                id='join_year' required name="join_year" class="form-control">
                                     </div>
                                     <div class="col-md-4 form-group">
-                                        <label>Password</label>
+                                    <label>Password</label>
+                                    <div class="input-group">
                                         <input type="password"
-                                               value="@if(isset($data['password'])){{ $data['password'] }}@endif"
-                                               id='password' required name="password" class="form-control" {{$readonly}}>
+                                            value="@if(isset($data['password'])){{ $data['password'] }}@endif"
+                                            id='password' required name="password" class="form-control" {{$readonly}}>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+                                                <i class="fa fa-eye" id="passwordIcon"></i>
+                                            </span>
+                                        </div>
                                     </div>
+                                </div>
                                     <div class="col-md-4 form-group">
                                         <label>Birthdate</label>
                                         <div class="input-daterange input-group" id="date-range">
@@ -2630,6 +2643,29 @@ htmlcontent += '</div></div>';
         })
     }
     // end on 07-05-2025 
+</script><script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            // Toggle the password field type
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle the eye icon
+            if (type === 'text') {
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        });
+    }
+});
 </script>
 
 @include('includes.footer')

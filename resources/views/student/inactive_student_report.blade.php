@@ -7,144 +7,168 @@
             <h4 class="page-title">Inactive Student Report</h4>
          </div>
       </div>
+
       <div class="card">
          @if ($sessionData = Session::get('data'))
-         @if($sessionData['status_code'] == 1)
-         <div class="alert alert-success alert-block">
+            @if($sessionData['status_code'] == 1)
+               <div class="alert alert-success alert-block">
             @else
-            <div class="alert alert-danger alert-block">
-               @endif
+               <div class="alert alert-danger alert-block">
+            @endif
                <button type="button" class="close" data-dismiss="alert">×</button>
                <strong>{{ $sessionData['message'] }}</strong>
             </div>
-            @endif
-            @php
+         @endif
+
+         @php
             $grade_id = $standard_id = $division_id = '';
             if(isset($data['grade_id'])){
-            $grade_id = $data['grade_id'];
-            $standard_id = $data['standard_id'];
-            $division_id = $data['division_id'];
+               $grade_id = $data['grade_id'];
+               $standard_id = $data['standard_id'];
+               $division_id = $data['division_id'];
             }
-            @endphp   
-            <form action="{{ route('inactive_student_report.create') }}" enctype="multipart/form-data">
-               @csrf  
-               <div class="row">
-                  {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
-                  <div class="col-md-4 form-group mt-3">
-                     <input type="submit" name="submit" value="Search" class="btn btn-success" >                     
-                     <button type="button" class="btn btn-info" data-toggle="modal"
-                        data-target="#exampleModal"><i class="mdi mdi-tune"></i></button>
-                  </div>
-               </div>
-               <!-- Modal -->
-               <div class="modal fade bd-example-modal-lg" id="exampleModal" tabindex="-1"
-                  role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                     <div class="modal-content">
-                        <div class="modal-header">
-                           <h5 class="modal-title" id="exampleModalLabel">Choose Field</h5>
-                           <button type="button" class="close" data-dismiss="modal"
-                              aria-label="Close">
-                           <span aria-hidden="true">x</span>
-                           </button>
-                        </div>
-                        <div class="modal-body">
-                           <div class="slimscrollright">
-                              <div class="rpanel-title"><span><i class="ti-close right-side-toggle"></i></span> </div>
-                              <div class="row">
-                                 @php 
-                                    $i=0;
-                                 @endphp
-                                    @foreach($data['data'] as $header => $headerValue)
+         @endphp
 
-                                    @if(isset($data['data'][$header]) && !empty($data['data'][$header]))
+         <form action="{{ route('inactive_student_report.create') }}" enctype="multipart/form-data">
+            @csrf  
+            <div class="row">
+               {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
+               <div class="col-md-4 form-group mt-3">
+                  <input type="submit" name="submit" value="Search" class="btn btn-success" >                     
+                  <button type="button" class="btn btn-info" data-toggle="modal"
+                     data-target="#exampleModal"><i class="mdi mdi-tune"></i></button>
+               </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade bd-example-modal-lg" id="exampleModal" tabindex="-1"
+               role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+               <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                     <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Choose Field</h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                           aria-label="Close">
+                        <span aria-hidden="true">x</span>
+                        </button>
+                     </div>
+                     <div class="modal-body">
+                        <div class="slimscrollright">
+                           <div class="rpanel-title"><span><i class="ti-close right-side-toggle"></i></span> </div>
+                           <div class="row">
+                              @php $i=0; @endphp
+                              @foreach($data['data'] as $header => $headerValue)
+                                 @if(isset($data['data'][$header]) && !empty($data['data'][$header]))
                                     @php 
-                                        $val = $headerValue->field_name.'/'.$headerValue->id;
-                                        $fieldVal = $headerValue->field_name;
-                                        $fieldLabel = str_replace('_',' ',$headerValue->field_label);
-                                        $label = ucfirst($fieldLabel);
-                                        if($fieldVal=="enrollment_no"){
-                                            $label = App\Helpers\get_string('grno');
-                                        }
+                                       $val = $headerValue->field_name.'/'.$headerValue->id;
+                                       $fieldVal = $headerValue->field_name;
+                                       $fieldLabel = str_replace('_',' ',$headerValue->field_label);
+                                       $label = ucfirst($fieldLabel);
+                                       if($fieldVal=="enrollment_no"){
+                                           $label = App\Helpers\get_string('grno');
+                                       }
                                     @endphp
-                                          <div class="col-md-4 form-group py-8">
-                                             <div class="pb-2"><input type="checkbox" name="dynamicFields[]" class="chkClass{{$i}}" value="{{$val}}" @if(isset($data['dynamicFields']) && in_array($val,$data['dynamicFields'])) checked @endif> {{$label}}</div>
-                                          </div>
-                                    @endif
-                                    @php 
-                                          $i++;
-                                    @endphp
-                                    @endforeach
-                              </div>
+                                    <div class="col-md-4 form-group py-8">
+                                       <div class="pb-2">
+                                          <input type="checkbox" name="dynamicFields[]" class="chkClass{{$i}}" value="{{$val}}" 
+                                             @if(isset($data['dynamicFields']) && in_array($val,$data['dynamicFields'])) checked @endif> {{$label}}
+                                       </div>
+                                    </div>
+                                 @endif
+                                 @php $i++; @endphp
+                              @endforeach
                            </div>
                         </div>
                      </div>
                   </div>
                </div>
-         </div>
+            </div>
          </form>
       </div>
-      @if(isset($data['student_data']))
-      @php
-      if(isset($data['student_data'])){
-      $student_data = $data['student_data'];
-      }
-      $j =1;
-      @endphp
-      <div class="card">
-         <div class="table-responsive mt-20 tz-report-table">
-            {!! App\Helpers\get_school_details("$grade_id","$standard_id","$division_id") !!}
-            <table id="example" class="table table-striped">
-               <thead>
-                  <tr>
-                     @foreach($data['headers'] as $hkey => $header)
-                     @php 
-                        $joinVal = str_replace(' ','',$header);
-                        $lowerCase = strtolower($joinVal);
-                        // norm clature
-                        $checkNorm = DB::table('app_language')->where('sub_institute_id',session()->get('sub_institute_id'))->where('string',$joinVal)->first(); 
 
-                           if(!empty($checkNorm)){
-                              $header = $checkNorm->value;
-                           }
-                     @endphp
-                     <th class="text-left"> {{$header}} </th>
+      @if(isset($data['student_data']))
+         @php
+            $student_data = $data['student_data'];
+            $j = 1;
+         @endphp
+         <div class="card">
+            <div class="table-responsive mt-20 tz-report-table">
+
+               {{-- School Details --}}
+               
+{{-- School Details --}}
+ 
+            @php
+                    echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
+
+                    $getInstitutes = session()->get('getInstitutes');
+                    $academicYears = session()->get('academicYears');
+                    $syear = session()->get('syear');
+
+
+            $nextYear = $syear + 1;
+
+                @endphp
+
+                {{-- ✅ Academic Year Label (same font as address) --}}
+           
+                <center>
+                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                        Academic Year : {{ $syear }} - {{ $nextYear }}
+                    </span>
+                </center>
+               
+
+               <table id="example" class="table table-striped">
+                  <thead>
+                     <tr>
+                        @foreach($data['headers'] as $hkey => $header)
+                           @php 
+                              $joinVal = str_replace(' ','',$header);
+                              $lowerCase = strtolower($joinVal);
+                              $checkNorm = DB::table('app_language')
+                                 ->where('sub_institute_id', session()->get('sub_institute_id'))
+                                 ->where('string', $joinVal)
+                                 ->first(); 
+                              if(!empty($checkNorm)){
+                                 $header = $checkNorm->value;
+                              }
+                           @endphp
+                           <th class="text-left"> {{$header}} </th>
+                        @endforeach
+                     </tr>
+                  </thead>
+                  <tbody>
+                     @foreach($student_data as $key => $value)
+                        <tr>
+                           @foreach($data['headers'] as $hkey => $header)
+                              @if($hkey == 'image')
+                                 <td><img height="60" width="60" src="../storage/student/{{$value->$hkey}}"/></td>
+                              @elseif(in_array($hkey, ['admission_date','dob','date','birthdate','created_on','birthday','created_at']))
+                                 <td> {{ (isset($value->$hkey)) ? date('d-m-Y', strtotime($value->$hkey)) : '-'}} </td>
+                              @else
+                                 <td> {{$value->$hkey ?? '-'}} </td>
+                              @endif
+                           @endforeach
+                        </tr>
                      @endforeach
-                  </tr>
-               </thead>
-               <tbody>
-                  @foreach($student_data as $key => $value)
-                  <tr>
-                     @foreach($data['headers'] as $hkey => $header)
-                     @if($hkey == 'image')
-                     <td><img height="60" width="60" src="../storage/student/{{$value->$hkey}}"/>
-                     </td>
-                     @elseif($hkey == 'admission_date' || $hkey == 'dob' || $hkey == 'date' || $hkey == 'birthdate' || $hkey == 'created_on' || $hkey == 'birthday' || $hkey == 'created_at')
-                     <td> {{ (isset($value->$hkey)) ? date('d-m-Y', strtotime($value->$hkey)) : '-'}} </td>
-                     @elseif($hkey == 'dise_uid')
-                     <td>{{$value->$hkey}}</td>
-                     @else
-                     <td> {{$value->$hkey ?? '-'}} </td>
-                     @endif
-                     @endforeach
-                  </tr>
-                  @endforeach
-               </tbody>
-            </table>
+                  </tbody>
+               </table>
+            </div>
          </div>
-      </div>
-   </div>
-   @endif
+      @endif
    </div>
 </div>
+
 @include('includes.footerJs')
 <script>
  function checkAll(chkName){
     $('.'+chkName).each(function() {
             $(this).prop('checked', !$(this).prop('checked'));
         });
-   }
+ }
 </script>
+
 <script>
    $(document).ready(function () {
        var table = $('#example').DataTable({
@@ -160,7 +184,6 @@
                    extend: 'pdfHtml5',
                    title: 'Student Report',
                    orientation: 'landscape',
-                   pageSize: 'LEGAL',
                    pageSize: 'A0',
                    exportOptions: {
                        columns: ':visible'
@@ -180,23 +203,20 @@
                'pageLength'
            ],
        });
-       //table.buttons().container().appendTo('#example_wrapper .col-md-6:eq(0)');
-   
+
        $('#example thead tr').clone(true).appendTo('#example thead');
        $('#example thead tr:eq(1) th').each(function (i) {
            var title = $(this).text();
            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
-   
+
            $('input', this).on('keyup change', function () {
                if (table.column(i).search() !== this.value) {
-                   table
-                   .column(i)
-                   .search( this.value )
-                   .draw();
-           }
-       } );
-   } );
-   } );
+                   table.column(i).search(this.value).draw();
+               }
+           });
+       });
+   });
 </script>
+
 @include('includes.footer')
 @endsection

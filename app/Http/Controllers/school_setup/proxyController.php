@@ -137,6 +137,12 @@ class proxyController extends Controller
         )
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2, 'tbluser.status' => 1])
+            // Exclude employees who already have proxy assignments
+            ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id) {
+                $subquery->select('proxy_teacher_id')
+                    ->from('proxy_master')
+                    ->where('sub_institute_id', '=', $sub_institute_id);
+            })
             ->orderBy('tbluser.last_name')
             ->get();
         $data['teacher_data'] = $user_data;
@@ -214,7 +220,7 @@ class proxyController extends Controller
                 'S' => 'Saturday',
             );
             foreach ($dates as $key => $val) {
-                //Get free teacher according to period and day
+                //Get free teacher according to period and day, excluding those with existing proxy assignments
 
                 $teacher_data = DB::table('tbluser as t')
                     ->select(DB::raw("CONCAT_WS(' ', t.last_name,t.first_name) as teacher_name, t.id"))
@@ -222,15 +228,20 @@ class proxyController extends Controller
                         $join->on('u.id', '=', 't.user_profile_id');
                     })
                     ->leftJoin('timetable as ti', 't.id', '=', 'ti.teacher_id')
-                    // ->where('ti.period_id', '<>', $tval["period_id"])
-                    // ->where('u.parent_id', '=', '2')
                     ->where(['u.parent_id' => 2])
                     ->where('u.sub_institute_id', '=', $sub_institute_id)
-                    ->where('t.department_id', '=', $department_id)
                     ->where('ti.teacher_id', '<>', $proxy_teacher_id)
                     ->where('ti.syear', '<=', $syear)
                     ->where('ti.sub_institute_id', '=', $sub_institute_id)
                     ->where('t.status', '=', 1)
+                    // Exclude employees who already have proxy assignments in the selected date range
+                    ->whereNotIn('t.id', function ($subquery) use ($sub_institute_id, $syear, $from_date, $to_date) {
+                        $subquery->select('proxy_teacher_id')
+                            ->from('proxy_master')
+                            ->where('sub_institute_id', '=', $sub_institute_id)
+                            ->where('syear', '=', $syear)
+                            ->whereBetween('proxy_date', [$from_date, $to_date]);
+                    })
                     ->where(function ($q) use ($tval, $syear, $sub_institute_id) {
                         $q->whereNotIn('ti.teacher_id', function ($sub) use ($tval, $syear, $sub_institute_id) {
                             $sub->select('tt.teacher_id')
@@ -242,7 +253,7 @@ class proxyController extends Controller
                         })
                         ->orWhereNull('ti.week_day');
                     })
-                    ->groupBy('ti.teacher_id')
+                    ->groupBy('t.id')
                     ->orderBy('t.last_name')
                     ->get();
 
@@ -270,6 +281,14 @@ class proxyController extends Controller
         )
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2])
+            // Exclude employees who already have proxy assignments in the selected date range
+            ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id, $syear, $from_date, $to_date) {
+                $subquery->select('proxy_teacher_id')
+                    ->from('proxy_master')
+                    ->where('sub_institute_id', '=', $sub_institute_id)
+                    ->where('syear', '=', $syear)
+                    ->whereBetween('proxy_date', [$from_date, $to_date]);
+            })
             ->orderBy('tbluser.last_name')
             ->get();
 

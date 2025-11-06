@@ -24,6 +24,9 @@
             if (isset($data['to_date'])) {
                 $to_date = $data['to_date'];
             }
+            if (isset($data['subject'])) {
+                $subject = $data['subject'];
+            }
             $getInstitutes = session()->get('getInstitutes');
             $academicYears = session()->get('academicYears');
             $month_name = [
@@ -109,7 +112,7 @@
         @endphp
         <div class="card">
             @php
-                echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
+                echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id,$subject);
                 // Safely output month and year if they exist
                 $displayMonth = isset($data['month']) ? ($month_name[$data['month']] ?? '') : '';
                 $displayYear  = isset($data['year']) ? $data['year'] : '';
@@ -199,7 +202,7 @@
                     text: ' PRINT',
                     title: 'Monthwise Attendance Report',
                     customize: function(win) {
-                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
+                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id","$subject") !!}`);
                     }
                 },
                 'pageLength'

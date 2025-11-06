@@ -105,6 +105,9 @@ class studentReportController extends Controller
         $tblcustom_fields['optional_subjects'] = 'Optional Subjects';        
         $tblcustom_fields['nationality'] = get_string('nationality','request');
         $tblcustom_fields['place_of_birth'] = get_string('birthplace','request');
+        $tblcustom_fields['total_working_days'] = 'Total Working Days';
+        $tblcustom_fields['present_working_days'] = 'Present Working Days';
+        $tblcustom_fields['student_percentage'] = 'Student Percentage';
 
         $tblcustoms = DB::table("tblcustom_fields")
             ->where(["status" => "1", "table_name" => "tblstudent"])
@@ -189,6 +192,13 @@ class studentReportController extends Controller
                 if ($value != "bloodgroup" && $value != "van" && $value != "optional_subjects") {
                     $array[] = $value;
                 }
+                
+                // Add attendance-related calculations
+                if ($value == "total_working_days" || $value == "present_working_days" || $value == "student_percentage") {
+                    // These will be calculated using subqueries
+                    continue;
+                }
+                
                 $value1 = str_replace($searchArr1, $replaceArr1, $value);
                 $value2 = str_replace($searchArr, $replaceArr, $value1);
 
@@ -207,6 +217,56 @@ class studentReportController extends Controller
             $array[] = 'batch.title as studentbatch';
         }
         $array[] = 'concat_ws(" ",tblstudent.first_name,tblstudent.middle_name,tblstudent.last_name) AS student_name';
+
+        // Add attendance-related calculations if requested
+        $dynamicFields = $request->input('dynamicFields') ?? [];
+        if (in_array('total_working_days', $dynamicFields) || in_array('present_working_days', $dynamicFields) || in_array('student_percentage', $dynamicFields)) {
+            $array[] = '(
+                SELECT COUNT(DISTINCT attendance_date)
+                FROM student_attendance
+                WHERE student_id = tblstudent.id
+                AND sub_institute_id = '.$sub_institute_id.'
+                AND syear = '.$syear.'
+            ) as total_working_days';
+            
+            $array[] = '(
+                SELECT COUNT(DISTINCT attendance_date)
+                FROM student_attendance
+                WHERE student_id = tblstudent.id
+                AND sub_institute_id = '.$sub_institute_id.'
+                AND syear = '.$syear.'
+                AND attendance_status = "Present"
+            ) as present_working_days';
+            
+            $array[] = '(
+                CASE
+                    WHEN (
+                        SELECT COUNT(DISTINCT attendance_date)
+                        FROM student_attendance
+                        WHERE student_id = tblstudent.id
+                        AND sub_institute_id = '.$sub_institute_id.'
+                        AND syear = '.$syear.'
+                    ) > 0
+                    THEN ROUND(
+                        (
+                            SELECT COUNT(DISTINCT attendance_date)
+                            FROM student_attendance
+                            WHERE student_id = tblstudent.id
+                            AND sub_institute_id = '.$sub_institute_id.'
+                            AND syear = '.$syear.'
+                            AND attendance_status = "Present"
+                        ) * 100.0 / (
+                            SELECT COUNT(DISTINCT attendance_date)
+                            FROM student_attendance
+                            WHERE student_id = tblstudent.id
+                            AND sub_institute_id = '.$sub_institute_id.'
+                            AND syear = '.$syear.'
+                        ), 2
+                    )
+                    ELSE 0
+                END
+            ) as student_percentage';
+        }
 
         $student_data = DB::table('tblstudent')
             ->select(DB::raw(implode(',', $array)))
