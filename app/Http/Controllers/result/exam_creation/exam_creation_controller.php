@@ -71,8 +71,8 @@ class exam_creation_controller extends Controller
             ->join('subject', 'sub_std_map.subject_id', '=', 'subject.id')
             ->join('academic_section', 'academic_section.id', '=', 'standard.grade_id')
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
-            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.cutoff',
-)
+            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
+            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.cutoff')
             ->select(
                 'result_create_exam.id',
                 'academic_year.title as term_name',
@@ -335,6 +335,7 @@ class exam_creation_controller extends Controller
             'result_create_exam.sort_order',
             'result_create_exam.exam_date',
             'result_create_exam.con_point',
+            'result_create_exam.co_id',
             'result_create_exam.is_remedial',
              'result_create_exam.cutoff'
 

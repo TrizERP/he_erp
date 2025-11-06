@@ -203,7 +203,8 @@ $('#subject').on('change',function(){
     var grade = $("#grade").val();
     var standard = $("#standard").val();
     var subject = $(this).val();
-    var co_id = "{{ $data['cutoff'] }}";
+    var co_id = "{{ $data['co_id'] }}";
+    var cutoff = "{{ $data['cutoff'] }}";
 
     getCO(grade,standard,subject,co_id);
 })
@@ -222,7 +223,8 @@ $(document).ready(function () {
     @endif
 
     var subject ="{{ $data['subject_id'] }}";
-    var co_id = "{{ $data['cutoff'] }}";
+    var co_id = "{{ $data['co_id'] }}";
+    var cutoff = "{{ $data['cutoff'] }}";
     // console.log('grade='+grade+',standard='+standard+',subject='+subject+',co_id='+co_id);
     // console.log(grade +'-'+ standard +'-'+ subject +'-'+ co_id);
     if (grade && standard && subject && co_id) {
