@@ -41,6 +41,12 @@
                                 <option value="">Select</option>
                             </select>
                         </div>
+                        
+                        <div class="form-check col-md-4" style="margin-top: 32px;">
+                            <input type="hidden" name="is_remedial" value="0"> <!-- ensures unchecked sends 0 -->
+                            <input type="checkbox" name="is_remedial" id="is_remedial" value="1" class="form-check-input">
+                            <label for="is_remedial" class="form-check-label">Remedial</label>
+                        </div>
 
                         <div class="col-md-12 form-group">
                             <div class="table-responsive">
@@ -52,6 +58,7 @@
                                             <th>Marks</th>
                                             <th>Sort Order</th>
                                             <th class="text-left">Exam Date</th>
+                                            <th>Cutoff</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -74,6 +81,9 @@
                                             <td>
                                                 <input type="text" name="exam_date[]" class="form-control mydatepicker" autocomplete="off" />
                                             </td>
+                                            <td>
+                                                <input type="text" name="cutoff[]" class="form-control" placeholder="Enter cutoff marks" />
+                                            </td>
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-success btn-sm addRow">+</button>
                                             </td>
@@ -82,6 +92,7 @@
                                 </table>
                             </div>
                         </div>
+                    
 
                         <input type="hidden" name="con_point" value="0">
                         <input type="hidden" name="app_disp_status" value="Y">

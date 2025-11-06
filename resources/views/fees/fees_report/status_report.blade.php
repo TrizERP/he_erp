@@ -60,7 +60,7 @@
                             
                             {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
 
-                            @if(isset($data['months']))
+                            @if(isset($data['months'])) 
                                 <div class="col-md-3 form-group">
                                     <label>Months:</label>
                                     <select name="month[]" class="form-control" required="required" multiple="multiple">
@@ -146,6 +146,7 @@
                                             @foreach($data['fees_head'] as $dk => $dv)
                                                 <th>{{$data['fees_heads'][$dv]}}</th>
                                             @endforeach
+                                            <th>Previous Due</th>
                                             <th>Amount</th>
 		                                </tr>
 		                            </thead>
@@ -195,16 +196,20 @@
                                                     <td>00</td>
                                                 @endif
                                             @endforeach
-
-                                            <td>{{$amount}}</td>
+                                            <td>{{ number_format(($data['previous_dues'][$value['id']] ?? 0), 2) }}</td>
+                                            <td>{{ number_format(($amount + ($data['previous_dues'][$value['id']] ?? 0)), 2) }}</td>
 		                                </tr>
+                                        
                                         @endif
+                                        
 		                            @php
 		                            $j++;
 		                            @endphp
 		                                @endforeach
 		                            @endif
+                                    
 		                            </tbody>
+                                    
 		                        </table>
 		                    </div>
                             <div class="col-md-12 form-group">
@@ -221,128 +226,128 @@
 
 @include('includes.footerJs')
 <script>
-	function checkAll(ele) {
-	     var checkboxes = document.getElementsByTagName('input');
-	     if (ele.checked) {
-	         for (var i = 0; i < checkboxes.length; i++) {
-	             if (checkboxes[i].type == 'checkbox') {
-	                 checkboxes[i].checked = true;
-	             }
-	         }
-	     } else {
-	         for (var i = 0; i < checkboxes.length; i++) {
-	             console.log(i)
-	             if (checkboxes[i].type == 'checkbox') {
-	                 checkboxes[i].checked = false;
-	             }
-	         }
-	     }
-	}
-</script>
-<script>
-    $(document).ready(function() {
-    // Setup - add a text input to each footer cell    
+(function () {
+  if (window.__feesDTInit) return;
+  window.__feesDTInit = true;
 
-     var table = $('#example').DataTable( {
-         select: true,          
-         lengthMenu: [ 
-                        [100, 500, 1000, -1], 
-                        ['100', '500', '1000', 'Show All'] 
-        ],
-        dom: 'Bfrtip', 
-        buttons: [ 
-            { 
-                extend: 'pdfHtml5',
-                title: 'Fees Status Report',
-                orientation: 'landscape',
-                pageSize: 'LEGAL',                
-                pageSize: 'A0',
-                exportOptions: {                   
-                     columns: ':visible'                             
-                },
-            }, 
-            { extend: 'csv', text: ' CSV', title: 'Fees Status Report' }, 
-            { extend: 'excel', text: ' EXCEL',title: 'Fees Status Report' }, 
-            {
-                extend: 'print',
-                text: ' PRINT',
-                title: 'Fees Status Report',
-                customize: function (win) {
-                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
-                }
-            },
-            'pageLength' 
-        ], 
-        order: [[1, "asc"]],
-        }); 
-        //table.buttons().container().appendTo('#example_wrapper .col-md-6:eq(0)');
+  $(function () {
+    var $tbl = $('#example');
 
+    // Destroy previous DT + cleanup
+    if ($.fn.DataTable.isDataTable($tbl)) {
+      $tbl.DataTable().destroy(true);
+    }
+    $tbl.find('thead tr').slice(1).remove();
+    $tbl.find('tfoot').remove();
 
-        $('#example thead tr').clone(true).appendTo( '#example thead' );
-        $('#example thead tr:eq(1) th').each( function (i) {
-            var title = $(this).text();
-            $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
-
-            $( 'input', this ).on( 'keyup change', function () {
-                if ( table.column(i).search() !== this.value ) {
-                    table
-                        .column(i)
-                        .search( this.value )
-                        .draw();
-                }
-            } );
-        } );
-
-} );
-</script>
-<script>
-    // SEND SMS
-    $(document).ready(function(){
-        $('#remain_fees_sms').on('click', function(){
-            confirm('Are you sure to send SMS?');
-            // get checked sudend ids
-            var studentsData = [];
-            $('.remain_fees:checked').each(function() {
-                var student_id = $(this).data('id');
-                var student_name = $(this).data('name');
-                var student_mobile = $(this).data('mobile');
-                var student_remain_fees = $(this).data('remain_fees');
-                var studentinfo = {
-                    student_id: student_id,
-                    student_mobile: student_mobile,
-                    student_remain_fees: student_remain_fees,
-                    student_name: student_name
-                };
-                studentsData.push(studentinfo);
-            });
-
-            // send sms using ajax
-            var path = "{{ route('remainFeesNotification') }}";
-            //console.warn('ajax path', path);
-            $.ajax({
-                url: path,
-                type: 'POST',
-                data: { studentsData: studentsData},
-                dataType: 'json',
-                success: function ( response ) {
-                    // if ( response.status == 200 ) {
-                        alert('SMS Sent Successfully');
-                        window.location.href="{{ route('fees_status_report.index') }}";
-                    // }
-                }
-            });
-        });
-
-        // check all 
-        $('#fees_check_all').on('click', function(){
-            var isChecked = $(this).is(':checked');
-            if ( isChecked ) {
-                $('.remain_fees').prop('checked', true);
-            }else {
-                $('.remain_fees').prop('checked', false);
-            }
-        });
+    // Build single filter row
+    var $filter = $('<tr class="filters"></tr>');
+    $tbl.find('thead tr:first th').each(function () {
+      var title = $(this).text();
+      $filter.append('<th><input type="text" placeholder="Search ' + title + '"/></th>');
     });
+    $tbl.find('thead').append($filter);
+
+    // Init DataTable
+    var table = $tbl.DataTable({
+      orderCellsTop: true,
+      select: true,
+      lengthMenu: [[100, 500, 1000, -1], ['100', '500', '1000', 'Show All']],
+      dom: 'Bfrtip',
+      buttons: [
+        { extend: 'pdfHtml5', title: 'Fees Status Report', orientation: 'landscape', pageSize: 'A0', exportOptions: { columns: ':visible', footer: true } },
+        { extend: 'csv', text: ' CSV', title: 'Fees Status Report', exportOptions: { columns: ':visible', footer: true } },
+        { extend: 'excel', text: ' EXCEL', title: 'Fees Status Report', exportOptions: { columns: ':visible', footer: true } },
+        { extend: 'print', text: ' PRINT', title: 'Fees Status Report', exportOptions: { columns: ':visible', footer: true },
+          customize: function (win) {
+            $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
+          }
+        },
+        'pageLength'
+      ],
+      order: [[1, 'asc']],
+
+      // === FOOTER TOTAL LOGIC ===
+      footerCallback: function () {
+  var api = this.api();
+  var $tbl = $('#example');
+
+  // 1) Headers in lowercase
+  var headers = [];
+  $tbl.find('thead tr:first th').each(function () {
+    headers.push($(this).text().trim().toLowerCase());
+  });
+
+  // 2) Fees head names from PHP (exact labels printed in the header)
+  //    This uses the same array you rendered in Blade.
+  const feeHeadNames = {!! json_encode(array_values(
+      array_intersect_key($data['fees_heads'], array_flip($data['fees_head'] ?? []))
+  )) !!}.map(s => (s || '').toString().trim().toLowerCase());
+
+  // 3) Indexes we care about
+  const prevIdx = headers.indexOf('previous due');
+  const amtIdx  = headers.indexOf('amount');
+
+  // 4) Helper to parse numbers like "16,000.00"
+  const parseNum = v => {
+    if (typeof v === 'string') v = v.replace(/,/g, '').trim();
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  };
+
+  // 5) Make sure there is a tfoot with same number of cells
+  if (!$tbl.find('tfoot').length) {
+    let cells = '';
+    for (let i = 0; i < headers.length; i++) cells += '<th></th>';
+    $tbl.append('<tfoot><tr>' + cells + '</tr></tfoot>');
+  }
+  const $f = $tbl.find('tfoot tr th');
+
+  // 6) Clear old totals
+  $f.html('');
+
+  // 7) Fees Head: sum EACH selected fee head column and write under its column
+  let firstFeeIdx = null;
+  feeHeadNames.forEach(name => {
+    const idx = headers.indexOf(name);
+    if (idx > -1) {
+      if (firstFeeIdx === null) firstFeeIdx = idx;
+      const total = api.column(idx, { search: 'applied', page: 'all' }).data()
+        .reduce((a, b) => parseNum(a) + parseNum(b), 0);
+      $f.eq(idx).html('<strong>' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>');
+    }
+  });
+  if (firstFeeIdx !== null && firstFeeIdx - 1 >= 0) {
+    $f.eq(firstFeeIdx - 1).html('<strong>Total:</strong>');
+  }
+
+  // 8) Previous Due total
+  if (prevIdx > -1) {
+    const prevTotal = api.column(prevIdx, { search: 'applied', page: 'all' }).data()
+      .reduce((a, b) => parseNum(a) + parseNum(b), 0);
+    $f.eq(prevIdx).html('<strong>' + prevTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>');
+  }
+
+  // 9) Amount total
+  if (amtIdx > -1) {
+    const amountTotal = api.column(amtIdx, { search: 'applied', page: 'all' }).data()
+      .reduce((a, b) => parseNum(a) + parseNum(b), 0);
+    $f.eq(amtIdx).html('<strong>' + amountTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>');
+  }
+}
+
+    });
+
+    // Filter inputs
+    $tbl.find('thead tr.filters th input').each(function (i) {
+      $(this).on('keyup change', function () {
+        if (table.column(i).search() !== this.value) {
+          table.column(i).search(this.value).draw();
+        }
+      });
+    });
+  });
+})();
 </script>
 
 @include('includes.footer')
