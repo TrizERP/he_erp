@@ -14,6 +14,7 @@ class exam_creation extends Model {
         'term_id',
         'medium',
         'exam_id',
+        'is_remedial',
         'standard_id',
         'app_disp_status',
         'subject_id',
