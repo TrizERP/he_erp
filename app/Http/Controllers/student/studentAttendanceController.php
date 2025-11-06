@@ -529,7 +529,7 @@ class studentAttendanceController extends Controller
             }
         } else {
             if ($batch) {
-                $attendanceQuery->where('se.batch_id', $batch);
+                $attendanceQuery->where('s.studentbatch', $batch);
             }
         }
 
@@ -588,7 +588,7 @@ class studentAttendanceController extends Controller
             }
         } else {
             if ($batch) {
-                $studentQuery->where('s.batch', $batch);
+                $studentQuery->where('s.studentbatch', $batch);
             }
         }
 

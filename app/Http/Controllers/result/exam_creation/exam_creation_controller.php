@@ -73,6 +73,7 @@ class exam_creation_controller extends Controller
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
             ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
             ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.cutoff')
+
             ->select(
                 'result_create_exam.id',
                 'academic_year.title as term_name',
@@ -337,7 +338,8 @@ class exam_creation_controller extends Controller
             'result_create_exam.con_point',
             'result_create_exam.co_id',
             'result_create_exam.is_remedial',
-             'result_create_exam.cutoff'
+            'result_create_exam.cutoff'
+
 
         )
             ->join('standard', 'standard.id', '=', 'result_create_exam.standard_id')
@@ -433,6 +435,7 @@ class exam_creation_controller extends Controller
                 'is_remedial'        => $request->get('is_remedial', 0),
                 'updated_by'         => session()->get('user_id'),
                 'updated_at'         => now()
+
             ];
 
 

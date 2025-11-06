@@ -11,23 +11,15 @@
         </div>
 
         @php
-            $grade_id = $standard_id = $division_id = $from_date = $to_date = $subject = '';
-
+            $grade_id = $standard_id = $division_id = $from_date = $to_date = '';
             if (isset($data['grade_id'])) {
                 $grade_id = $data['grade_id'];
                 $standard_id = $data['standard_id'];
                 $division_id = $data['division_id'];
             }
+            if (isset($data['from_date'])) $from_date = $data['from_date'];
+            if (isset($data['to_date'])) $to_date = $data['to_date'];
 
-            if (isset($data['from_date'])) {
-                $from_date = $data['from_date'];
-            }
-            if (isset($data['to_date'])) {
-                $to_date = $data['to_date'];
-            }
-            if (isset($data['subject'])) {
-                $subject = $data['subject'];
-            }
             $getInstitutes = session()->get('getInstitutes');
             $academicYears = session()->get('academicYears');
             $syear = session()->get('syear');
@@ -62,55 +54,12 @@
                         </select>
                     </div>
 
-                <div class="col-md-3 form-group">
-                    <label for="">From</label>
-                    <input type="text" class="form-control mydatepicker" name="from_month" autocomplete="off" value="{{$from_date}}">
-                </div>
-                <div class="col-md-3 form-group">
-                    <label for="">To</label>
-                    <input type="text" class="form-control mydatepicker" name="to_month" autocomplete="off" value="{{$to_date}}">
-                </div>
-                <div class="col-md-12 form-group">
-                    <center>
-                        <input type="submit" name="submit" value="Search" class="btn btn-success">
-                    </center>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    @if (isset($data['student_data']))
-        @php
-            $j = 1;
-            if (isset($data['student_data'])) {
-                $student_data = $data['student_data'];
-            }
-        @endphp
-        <div class="card">
-            @php
-                echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id,$subject);
-                // Safely output month and year if they exist
-                $displayMonth = isset($data['month']) ? ($month_name[$data['month']] ?? '') : '';
-                $displayYear  = isset($data['year']) ? $data['year'] : '';
-                if ($displayMonth || $displayYear) {
-                    echo '<br><center><span style="font-size:14px;font-weight:600;font-family:Arial,Helvetica,sans-serif!important">Month : ' .
-                         e($displayMonth) .
-                         ' / </span><span style="font-size:14px;font-weight:600;font-family:Arial,Helvetica,sans-serif!important">Year : ' .
-                         e($displayYear) .
-                         '</span></center><br>';
-                }
-            @endphp
-            <h1 style="text-align: center; font-size: 20px; margin-top: 5px;">Subject Month to Month Report</h1>
-            <div class="table-responsive">
-    <table id="example" class="table display" style="border:none !important">
-        <thead>
-            <tr>
-                <th>Sr</th>
-                <th>Enrollment No</th>
-                <th>Student Name</th>
-                @foreach ($data['month_totals'] as $monthId => $total)
-                    <th class="text-center">{{ $month_name[(int)$monthId] ?? '' }} ({{ $total }})</th>
-                @endforeach
+                    <div class="col-md-3 form-group">
+                        <label>Subject</label>
+                        <select name="subject" id="subject" class="form-control" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
 
                     @if (isset($data['batch_id']) && !empty($data['batchs']))
                         <div class="col-md-3 form-group" id="batch_div">
@@ -140,25 +89,23 @@
             </form>
         </div>
 
-        {{-- ===================== REPORT SECTION ===================== --}}
-        @if (isset($data['student_data']))
-            @php
-                echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
-            @endphp
-
-            {{-- ✅ Academic Year Label --}}
-            <center>
-                <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
-                    Academic Year : {{ $syear }} - {{ $nextYear }}
-                </span>
-            </center>
-
-            {{-- ✅ Report Title --}}
-            <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
-                Subject Month to Month Report
-            </h1>
-
+        @if (!empty($data['student_data']))
             <div class="card">
+                @php
+                    echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
+                @endphp
+
+                {{-- ✅ Academic Year Label --}}
+                <div style="text-align:center">
+                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
+                        Academic Year : {{ $syear }} - {{ $nextYear }}
+                    </span>
+                </div>
+
+                {{-- ✅ Report Title --}}
+                <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
+                    Subject Month to Month Report
+                </h1>
                 <div class="table-responsive">
                     <table id="example" class="table display" style="border:none !important">
                         <thead>
@@ -198,7 +145,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
                             <div style="text-align:left; width:33%;">
                                 <div style="border-top:1px solid #000; padding-top:5px; display:inline-block;">
-                                    Sign of Class Coordinator
+                                    Sign of Coordinator
                                 </div>
                             </div>
                             <div style="text-align:center; width:33%;">
@@ -284,5 +231,73 @@ $(document).ready(function() {
     });
 });
 </script>
+<script>
+    $(document).on('change', '#lecture_type', function() {
+        var standard_id = $('#standard').val();
+        var division_id = $('#division').val();
+        var path = "{{ route('get_batch') }}";
 
+        $.ajax({
+            url: path,
+            data: 'standard_id=' + standard_id + '&division_id=' + division_id,
+            success: function(data) {
+                let selectedLectureType = $('#lecture_type').val();
+                if (selectedLectureType !== 'Lecture') {
+                    $('#batch_div').show();
+
+                    var batch_select_container = $('#batch_div');
+                    var batch_select = $('#batch_sel');
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        if (batch_select_container.length === 0) {
+                            batch_select_container = $(
+                                '<div class="col-md-2 form-group" id="batch_div"></div>');
+                            $('#lecture_type').after(batch_select_container);
+
+                            var batch_select_label = $(
+                                '<label for="batch_sel">Batch</label>');
+                            batch_select = $(
+                                '<select id="batch_sel" class="form-control" name="batch_sel"></select>'
+                                );
+                            var defaultOption = '<option value="">--Select--</option>';
+                            batch_select.append(defaultOption);
+
+                            batch_select_container.append(batch_select_label);
+                            batch_select_container.append(batch_select);
+                        }
+
+                        // Populate the batch options
+                        data.forEach(function(value) {
+                            var option = '<option value="' + value.id + '">' + value.title +
+                                '</option>';
+                            batch_select.append(option);
+                        });
+
+                        // Show batch_div only if lecture_type is not 'Lecture'
+                        var lectureType = $('#lecture_type').val();
+                        if (lectureType !== 'Lecture') {
+                            $('#batch_div').show();
+                        } else {
+                            $('#batch_div').hide();
+                        }
+
+                        // On load, if batch is set, trigger lecture_type change and select batch
+                        @if(isset($data['batch_id']))
+                            $('#batch_sel').val('{{ $data['batch_id'] }}');
+                        @endif
+                    } else {
+                        $('#batch_div').hide();
+                    }
+                } else {
+                    $('#batch_div').hide();
+                }
+            }
+        });
+    });
+
+    // On load, if batch is set, trigger lecture_type change to show batch div and select batch
+    @if(isset($data['batch_id']))
+        $('#lecture_type').trigger('change');
+    @endif
+</script>
 @include('includes.footer')

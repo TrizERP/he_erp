@@ -33,6 +33,8 @@
                                 <th>Remedial</th>
                                 <th>Sort Order</th>
                                 <th>Exam Date</th>
+                                <th>Cutoff</th>
+
                                 <th class="text-left">Action</th>
                             </tr>
                         </thead>
@@ -57,6 +59,7 @@
                                 </td>
                                 <td>{{$data->sort_order}}</td>
                                 <td>{{$data->exam_date}}</td>
+                                <td>{{$data->cutoff ?? '-' }}</td>
                                 <td>
                                     <div class="d-inline">
                                         <a href="{{ route('exam_creation.edit',$data->id)}}" class="btn btn-info btn-outline">

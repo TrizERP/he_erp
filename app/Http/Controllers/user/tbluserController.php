@@ -300,6 +300,7 @@ class tbluserController extends Controller
         $res['user_profiles'] = $data;
         $res['new_emp_code'] = $new_emp_code;
         $res['data'] = $editData;
+        
 
         return is_mobile($type, "user/edit_user", $res, "view");
     }
