@@ -72,7 +72,6 @@ class exam_creation_controller extends Controller
             ->join('academic_section', 'academic_section.id', '=', 'standard.grade_id')
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
             ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
-
             ->select(
                 'result_create_exam.id',
                 'academic_year.title as term_name',

@@ -38,7 +38,18 @@
 
                                 </select>
                             </div>
-
+                           <div style="margin-left:15px; margin-top:25px;">
+                                <input 
+                                    type="checkbox" 
+                                    id="is_remedial" 
+                                    name="is_remedial" 
+                                    value="1"
+                                    style="transform: scale(1.2); margin-right:5px;"
+                                    onchange="this.form.submit();"
+                                    {{ request('is_remedial') == 1 ? 'checked' : '' }}
+                                >  
+                                <label for="is_remedial" style="font-weight:500;"> Remedial </label>
+                            </div>
 
                             <div class="col-md-4 form-group">
                                 <label for="title">Select Exam:</label>
@@ -305,6 +316,7 @@
                     term_id: $("#term").val(),
                     exam_id: {{ $data['exam_master'] }},
                     'searchType': 'co',
+                    'show_failed': $("#is_remedial").is(':checked') ? 1 : 0
                 }, '#exam', "{{ $data['exam'] }}");
             @endif
         }
@@ -318,15 +330,31 @@
         });
 
         // Fetch exams based on exam master
-        $('#exam_master').on('change', function() {
-            fetchDropdownData('/api/get-exam-list', {
+        $('#exam_master').on('change', function () {
+            loadExamList();
+        });
+
+        // When Remedial checkbox changes, reload exams automatically
+        $('#is_remedial').on('change', function () {
+            loadExamList();
+        });
+
+        function loadExamList() {
+            const params = {
                 standard_id: $("#standard").val(),
                 subject_id: $("#subject").val(),
                 term_id: $("#term").val(),
                 exam_id: $("#exam_master").val(),
-                'searchType': 'co',
-            }, '#exam');
-        });
+                searchType: 'co',
+            };
+
+            // ✅ Send is_remedial only when checkbox is checked
+            if ($('#is_remedial').is(':checked')) {
+                params.is_remedial = 1;
+            }
+
+            fetchDropdownData('/api/get-exam-list', params, '#exam');
+        }
 
         // Helper function to reset dropdowns
         function resetDropdowns(selectors) {

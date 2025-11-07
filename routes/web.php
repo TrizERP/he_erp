@@ -505,6 +505,7 @@ Route::get('api/get-batch-list-timetable', [AJAXController::class, 'getBatchTime
 /** get exam list */
 Route::get('api/get-exam-name-list', [AJAXController::class, 'getExamsList']);
 Route::get('api/get-exam-master-list', [AJAXController::class, 'getExamsMasterList']);
+Route::get('api/get-failed-students', [AJAXController::class, 'getFailedStudents']);
 
 /** get subjec by create exam list */
 Route::get('api/get-subject-by-create-exam', [AJAXController::class, 'getSubjectByCreateExam']);
