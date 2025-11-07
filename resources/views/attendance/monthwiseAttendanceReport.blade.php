@@ -90,23 +90,23 @@
         </div>
 
         @if (!empty($data['student_data']))
-            <div class="card">
-                @php
-                    echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
-                @endphp
-
-                <div style="text-align:center">
-                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
-                        Academic Year : {{ $syear }} - {{ $nextYear }}
-                    </span>
+            <div class="card" id="printableArea">
+                
+                {{-- ✅ SHOW SCHOOL DETAILS SAME AS PRINT --}}
+                <div class="school-detail">
+                     {!! App\Helpers\get_school_details($grade_id, $standard_id, $division_id) !!}
                 </div>
 
-                <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
+                <div class="academic-year" style="text-align:center; font-size:15px; font-weight:600; margin-top:15px; font-family:Arial, Helvetica, sans-serif;">
+                    Academic Year : {{ $syear }} - {{ $nextYear }}
+                </div>
+
+                <h1 class="report-title" style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family:Arial, Helvetica, sans-serif;">
                     Subject Month to Month Report
                 </h1>
 
                 <div class="table-responsive">
-                    <table id="example" class="table display" style="border:none !important">
+                    <table id="example" class="table display report-table">
                         <thead>
                             <tr>
                                 <th>Sr</th>
@@ -179,8 +179,8 @@ $(document).ready(function() {
         }
     });
 
-    // ✅ DataTable Setup with Bold Border on Print
-    var table = $('#example').DataTable({
+    // ✅ DataTable Print Setup (Bold Borders + Page Number)
+    $('#example').DataTable({
         paging: false,
         ordering: false,
         searching: false,
@@ -193,179 +193,104 @@ $(document).ready(function() {
                 text: ' PRINT',
                 title: '',
                 customize: function (win) {
-                    $(win.document.body).find('th, td').css({
-                        'color':'black',
-                        'text-align':'center',
-                        
-                        'padding':'6px'
-                    });
-                    $(win.document.body).find('table').css({
-                        'border-collapse':'collapse',
-                        'width':'100%',
-                        
-                    });
-                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
-                    $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $syear }} - {{ $nextYear }}</span></center>`);
-                    $(win.document.body).prepend("<h1 style='text-align:center;font-size:20px;font-weight:700;text-transform:uppercase;margin-top:5px;margin-bottom:15px;font-family:Arial,Helvetica,sans-serif !important;'>Subject Month to Month Report</h1>");
+                    $(win.document.body).html($('#printableArea').html());
+
+                    const style = `
+                        <style>
+                            @media print {
+                                body {
+                                    font-family: Arial, Helvetica, sans-serif;
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                }
+
+                                table {
+                                    width: 100% !important;
+                                    border-collapse: collapse !important;
+                                    border: 3px solid #000 !important;
+                                    margin-top: 10px !important;
+                                }
+
+                                table th,
+                                table td {
+                                    border: 2px solid #000 !important;
+                                    padding: 6px 8px !important;
+                                    text-align: center !important;
+                                    font-size: 13px !important;
+                                }
+
+                                table th {
+                                    background: #f9f9f9 !important;
+                                    font-weight: bold !important;
+                                }
+
+                                @page {
+                                    size: A4 portrait;
+                                    margin: 1.5cm;
+                                    @bottom-right {
+                                        content: "Page " counter(page) " / " counter(pages);
+                                        font-family: Arial, Helvetica, sans-serif;
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+                        </style>
+                    `;
+                    $(win.document.head).append(style);
                 }
             }
         ]
     });
-
-    // ✅ Load subjects dynamically
-    function loadSubjects(selectedStandard, selectedDivision, callback) {
-        var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
-        $('#subject').html('<option value=\"\">Select Subject</option>');
-        $.ajax({
-            url: path,
-            data: { std_id: selectedStandard },
-            success: function(result) {
-                result.forEach(function(r) {
-                    $("#subject").append($("<option></option>").val(r['subject_id']).html(r['display_name']));
-                });
-                if (callback) callback();
-            }
-        });
-    }
-
-    @if(isset($data['subject']))
-        loadSubjects('{{ $standard_id }}', '{{ $division_id }}', function() {
-            $("#subject").val('{{ $data['subject'] }}');
-        });
-    @endif
-
-    $('#division').on('change', function() {
-        loadSubjects($('#standard').val(), $(this).val());
-    });
 });
-</script>
-
-<script>
-$(document).on('change', '#lecture_type', function() {
-    var standard_id = $('#standard').val();
-    var division_id = $('#division').val();
-    var path = "{{ route('get_batch') }}";
-
-    $.ajax({
-        url: path,
-        data: 'standard_id=' + standard_id + '&division_id=' + division_id,
-        success: function(data) {
-            let selectedLectureType = $('#lecture_type').val();
-            if (selectedLectureType !== 'Lecture') {
-                $('#batch_div').show();
-                var batch_select_container = $('#batch_div');
-                var batch_select = $('#batch_sel');
-
-                if (Array.isArray(data) && data.length > 0) {
-                    if (batch_select_container.length === 0) {
-                        batch_select_container = $('<div class="col-md-2 form-group" id="batch_div"></div>');
-                        $('#lecture_type').after(batch_select_container);
-                        var batch_select_label = $('<label for="batch_sel">Batch</label>');
-                        batch_select = $('<select id="batch_sel" class="form-control" name="batch_sel"></select>');
-                        var defaultOption = '<option value="">--Select--</option>';
-                        batch_select.append(defaultOption);
-                        batch_select_container.append(batch_select_label);
-                        batch_select_container.append(batch_select);
-                    }
-
-                    data.forEach(function(value) {
-                        var option = '<option value="' + value.id + '">' + value.title + '</option>';
-                        batch_select.append(option);
-                    });
-
-                    var lectureType = $('#lecture_type').val();
-                    if (lectureType !== 'Lecture') {
-                        $('#batch_div').show();
-                    } else {
-                        $('#batch_div').hide();
-                    }
-
-                    @if(isset($data['batch_id']))
-                        $('#batch_sel').val('{{ $data['batch_id'] }}');
-                    @endif
-                } else {
-                    $('#batch_div').hide();
-                }
-            } else {
-                $('#batch_div').hide();
-            }
-        }
-    });
-});
-
-@if(isset($data['batch_id']))
-    $('#lecture_type').trigger('change');
-@endif
 </script>
 
 <style>
+/* ======== ON SCREEN ======== */
+.school-header,
+.school-details,
+.academic-section,
+.academic-year {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* ======== PRINT STYLING ======== */
 @media print {
 
-    /* ===== REMOVE BORDER FROM SCHOOL + ACADEMIC SECTION ===== */
-    .school-header,
-    .report-title,
-    .academic-section,
-    .academic-year {
+    /* ✅ Hide CSV/PRINT buttons during print */
+    .dt-buttons,
+    .btn {
+        display: none !important;
+    }
+
+    /* ✅ Remove borders from school details */
+    .school-detail {
         border: none !important;
-        background: transparent !important;
         box-shadow: none !important;
-        color: black !important;
-        text-align: center !important;
-        font-family: Arial, Helvetica, sans-serif !important;
+        background: transparent !important;
     }
 
-    .school-header {
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        margin-bottom: 5px !important;
-    }
-
-    .academic-section,
-    .academic-year {
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        margin-bottom: 5px !important;
-    }
-
-    /* ===== TABLE SECTION (BOLD BORDERS) ===== */
-    table {
-        width: 100%;
-        border-collapse: collapse !important;
-        border: 3px solid black !important;
-        margin-top: 10px !important;
-    }
-
-    table th,
-    table td {
+    /* Keep bold border only for report table */
+    table.report-table,
+    table.report-table th,
+    table.report-table td {
         border: 2px solid black !important;
-        color: black !important;
-        padding: 6px 8px !important;
-        text-align: center !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-        font-size: 13px !important;
+        border-collapse: collapse !important;
     }
-
-    table th {
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        background: #f9f9f9 !important;
-    }
-
-    /* ===== PAGE NUMBER (Bottom Right) ===== */
+     
+    .school-detail table,
+    .school-detail th,
+    .school-detail td {
+        border: none !important;
+        
+    /* Page margin and layout */
     @page {
         size: A4 portrait;
         margin: 1.5cm;
-        @bottom-right {
-            content: "Page " counter(page) " / " counter(pages);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
-            color: black;
-        }
     }
 }
 </style>
-
-
 
 
 

@@ -64,18 +64,15 @@
                     </select>
                 </div>
 
-               <div class="form-group col-md-2">
-    <label>Report Type</label>
-    <select class="form-control" name="report_type" required>
-        <option value="">Select</option>
-        @foreach ($report_type as $key => $value)
-            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $key) selected @endif>
-                {{ $value }}
-            </option>
-        @endforeach
-    </select>
-</div>
-
+                <div class="form-group col-md-2">
+                    <label>Report Type</label>
+                    <select class="form-control" name="report_type">
+                        @foreach ($report_type as $key => $value)
+                            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $value) selected @endif>
+                                {{ $value }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <div class="form-group col-md-2">
                     <label>Below Percent(%)</label>
@@ -127,6 +124,32 @@
                         All Subject Semesterwise Report
                     </h1>
 
+               <style>
+/* =============================
+   PRINT-ONLY BOLD TABLE BORDER
+============================= */
+@media print {
+    #example {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        border: 2px solid black !important;
+    }
+
+    #example th,
+    #example td {
+        border: 2px solid black !important;
+        padding: 6px !important;
+        text-align: center !important;
+    }
+
+    /* Optional: make font more readable in print */
+    #example th {
+        font-weight: bold !important;
+        background-color: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact; /* Keep background in print */
+    }
+}
+</style>
                     <table id="example" class="table table-striped">
                         <thead>
                             <tr>
@@ -237,7 +260,6 @@ $(document).ready(function() {
 </script>
 
 @include('includes.footer')
-
 <script>
 $(document).ready(function() {
     var table = $('#example').DataTable({
@@ -257,7 +279,7 @@ $(document).ready(function() {
                 text: 'PRINT',
                 title: '',
                 customize: function (win) {
-                    // Add school details and report title
+                    // ✅ Add school details and titles at the top
                     $(win.document.body)
                         .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
                             <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
@@ -267,121 +289,108 @@ $(document).ready(function() {
                                 All Subject Semesterwise Report
                             </h1>`);
 
-                    // ✅ Hide % column in print if Percentage wise is selected
-                    var reportType = $('select[name="report_type"]').val();
-                    if (reportType === 'pw') {
-                        $(win.document.body).find('table#example th:last-child, table#example td:last-child').remove();
-                    }
-
-                    // Add print styles for bold borders and formatting
+                    // ✅ Add strong bold border + page number + signatures
                     const style = `
                         <style>
-                            @media print {
-                                body {
-                                    font-family: Arial, Helvetica, sans-serif !important;
-                                    -webkit-print-color-adjust: exact !important;
-                                    print-color-adjust: exact !important;
-                                }
+                        @media print {
 
-                                table#example {
-                                    width: 100% !important;
-                                    border-collapse: collapse !important;
-                                    border: 3px solid black !important;
-                                    margin-top: 10px !important;
-                                }
+                            /* ====== PAGE SETTINGS ====== */
+                            @page {
+                                size: A4 portrait;
+                                margin: 1.2cm 1.5cm 2cm 1.5cm;
+                            }
 
-                                table#example th,
-                                table#example td {
-                                    border: 2px solid black !important;
-                                    padding: 6px 8px !important;
-                                    text-align: center !important;
-                                    font-size: 12px !important;
-                                }
+                            body {
+                                font-family: Arial, Helvetica, sans-serif !important;
+                                font-size: 12px !important;
+                                color: black !important;
+                            }
 
-                                table#example thead th {
-                                    background-color: #f2f2f2 !important;
-                                    font-weight: bold !important;
-                                    border-bottom: 3px solid black !important;
-                                }
+                            /* ====== BOLD TABLE BORDER ====== */
+                            #example {
+                                border-collapse: collapse !important;
+                                width: 100% !important;
+                                border: 2px solid black !important;
+                            }
 
-                                table#example tbody tr:nth-child(odd) {
-                                    background-color: #f9f9f9 !important;
-                                }
+                            #example th,
+                            #example td {
+                                border: 2px solid black !important;
+                                padding: 6px !important;
+                                text-align: center !important;
+                                vertical-align: middle !important;
+                            }
 
-                                table#example tbody tr:nth-child(even) {
-                                    background-color: #ffffff !important;
-                                }
+                            #example th {
+                                font-weight: bold !important;
+                                background-color: #f5f5f5 !important;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
 
-                                .signature-block {
-                                    margin-top: 60px;
-                                    display: flex;
-                                    justify-content: space-between;
-                                    width: 100%;
-                                }
+                            /* ====== SIGNATURE BLOCK ====== */
+                            .signature-block {
+                                width: 100%;
+                                margin-top: 60px;
+                                padding-top: 20px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                            }
 
-                                .signature {
-                                    border-top: 3px solid #000;
-                                    padding-top: 5px;
-                                    width: 30%;
-                                    text-align: center;
-                                }
+                            .signature-block div {
+                                width: 33%;
+                                text-align: center;
+                                font-size: 13px;
+                                color: black;
+                            }
 
-                                .print-footer {
-                                    margin-top: 20px;
-                                    font-size: 12px;
-                                    text-align: left;
-                                }
+                            .signature-line {
+                                display: inline-block;
+                                border-top: 1px solid black;
+                                padding-top: 5px;
+                                margin-top: 50px;
+                            }
 
-                                @page {
-                                    size: A4 landscape;
-                                    margin: 15mm 10mm 20mm 10mm;
-                                    @bottom-right {
-                                        content: "Page " counter(page) " / " counter(pages);
-                                        font-size: 12px;
-                                        font-family: Arial, Helvetica, sans-serif;
-                                    }
+                            /* ====== PRINT FOOTER ====== */
+                            .print-footer {
+                                margin-top: 15px;
+                                text-align: right;
+                                font-size: 11px;
+                                color: black;
+                                font-family: Arial, Helvetica, sans-serif;
+                            }
+
+                            /* PAGE NUMBER (bottom-right corner) */
+                            @page {
+                                @bottom-right {
+                                    content: "Page " counter(page) " / " counter(pages);
+                                    font-size: 11px;
+                                    font-family: Arial, Helvetica, sans-serif;
                                 }
                             }
+                        }
                         </style>
                     `;
                     $(win.document.head).append(style);
 
-                    // Append signatures and print date
-                    const now = new Date();
-                    const formatted = now.toLocaleString('en-IN', { hour12: true });
+                    // ✅ Keep signature block aligned exactly like non-print version
                     $(win.document.body).append(`
                         <div class="signature-block">
-                            <div class="signature">Sign of Faculty</div>
-                            <div class="signature">Sign of HOD</div>
-                            <div class="signature">Sign of Principal</div>
+                            <div><div class="signature-line">Sign of Faculty</div></div>
+                            <div><div class="signature-line">Sign of HOD</div></div>
+                            <div><div class="signature-line">Sign of Principal</div></div>
                         </div>
-                        <div class="print-footer">Printed on: ${formatted}</div>
+                        <div class="print-footer">
+                            Printed on: ${new Date().toLocaleString('en-IN', { hour12: true })}
+                        </div>
                     `);
                 }
             }
         ]
     });
-
-    // ✅ Hide/show % column on screen dynamically based on report type
-    function togglePercentageColumn() {
-        var reportType = $('select[name="report_type"]').val();
-        var lastColumnIndex = table.columns().count() - 1; // index of last column
-
-        if (reportType === 'pw') {
-            table.column(lastColumnIndex).visible(false); // hide %
-        } else {
-            table.column(lastColumnIndex).visible(true); // show %
-        }
-    }
-
-    togglePercentageColumn(); // initial check on load
-
-    $('select[name="report_type"]').on('change', function() {
-        togglePercentageColumn();
-    });
 });
 </script>
-
 
 
 @endsection
