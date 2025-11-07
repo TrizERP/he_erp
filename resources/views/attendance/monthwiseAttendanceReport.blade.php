@@ -95,17 +95,16 @@
                     echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
                 @endphp
 
-                {{-- ✅ Academic Year Label --}}
                 <div style="text-align:center">
                     <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
                         Academic Year : {{ $syear }} - {{ $nextYear }}
                     </span>
                 </div>
 
-                {{-- ✅ Report Title --}}
                 <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
                     Subject Month to Month Report
                 </h1>
+
                 <div class="table-responsive">
                     <table id="example" class="table display" style="border:none !important">
                         <thead>
@@ -140,7 +139,6 @@
                         </tbody>
                     </table>
 
-                    {{-- ✅ Signature Section --}}
                     <div style="margin-top:60px; padding:20px 0; width:100%; color:black">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
                             <div style="text-align:left; width:33%;">
@@ -181,7 +179,7 @@ $(document).ready(function() {
         }
     });
 
-    // ✅ DataTable Setup
+    // ✅ DataTable Setup with Bold Border on Print
     var table = $('#example').DataTable({
         paging: false,
         ordering: false,
@@ -195,7 +193,17 @@ $(document).ready(function() {
                 text: ' PRINT',
                 title: '',
                 customize: function (win) {
-                    $(win.document.body).find('th, td').css({'color':'black','text-align':'center'});
+                    $(win.document.body).find('th, td').css({
+                        'color':'black',
+                        'text-align':'center',
+                        
+                        'padding':'6px'
+                    });
+                    $(win.document.body).find('table').css({
+                        'border-collapse':'collapse',
+                        'width':'100%',
+                        
+                    });
                     $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
                     $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $syear }} - {{ $nextYear }}</span></center>`);
                     $(win.document.body).prepend("<h1 style='text-align:center;font-size:20px;font-weight:700;text-transform:uppercase;margin-top:5px;margin-bottom:15px;font-family:Arial,Helvetica,sans-serif !important;'>Subject Month to Month Report</h1>");
@@ -231,73 +239,134 @@ $(document).ready(function() {
     });
 });
 </script>
+
 <script>
-    $(document).on('change', '#lecture_type', function() {
-        var standard_id = $('#standard').val();
-        var division_id = $('#division').val();
-        var path = "{{ route('get_batch') }}";
+$(document).on('change', '#lecture_type', function() {
+    var standard_id = $('#standard').val();
+    var division_id = $('#division').val();
+    var path = "{{ route('get_batch') }}";
 
-        $.ajax({
-            url: path,
-            data: 'standard_id=' + standard_id + '&division_id=' + division_id,
-            success: function(data) {
-                let selectedLectureType = $('#lecture_type').val();
-                if (selectedLectureType !== 'Lecture') {
-                    $('#batch_div').show();
+    $.ajax({
+        url: path,
+        data: 'standard_id=' + standard_id + '&division_id=' + division_id,
+        success: function(data) {
+            let selectedLectureType = $('#lecture_type').val();
+            if (selectedLectureType !== 'Lecture') {
+                $('#batch_div').show();
+                var batch_select_container = $('#batch_div');
+                var batch_select = $('#batch_sel');
 
-                    var batch_select_container = $('#batch_div');
-                    var batch_select = $('#batch_sel');
+                if (Array.isArray(data) && data.length > 0) {
+                    if (batch_select_container.length === 0) {
+                        batch_select_container = $('<div class="col-md-2 form-group" id="batch_div"></div>');
+                        $('#lecture_type').after(batch_select_container);
+                        var batch_select_label = $('<label for="batch_sel">Batch</label>');
+                        batch_select = $('<select id="batch_sel" class="form-control" name="batch_sel"></select>');
+                        var defaultOption = '<option value="">--Select--</option>';
+                        batch_select.append(defaultOption);
+                        batch_select_container.append(batch_select_label);
+                        batch_select_container.append(batch_select);
+                    }
 
-                    if (Array.isArray(data) && data.length > 0) {
-                        if (batch_select_container.length === 0) {
-                            batch_select_container = $(
-                                '<div class="col-md-2 form-group" id="batch_div"></div>');
-                            $('#lecture_type').after(batch_select_container);
+                    data.forEach(function(value) {
+                        var option = '<option value="' + value.id + '">' + value.title + '</option>';
+                        batch_select.append(option);
+                    });
 
-                            var batch_select_label = $(
-                                '<label for="batch_sel">Batch</label>');
-                            batch_select = $(
-                                '<select id="batch_sel" class="form-control" name="batch_sel"></select>'
-                                );
-                            var defaultOption = '<option value="">--Select--</option>';
-                            batch_select.append(defaultOption);
-
-                            batch_select_container.append(batch_select_label);
-                            batch_select_container.append(batch_select);
-                        }
-
-                        // Populate the batch options
-                        data.forEach(function(value) {
-                            var option = '<option value="' + value.id + '">' + value.title +
-                                '</option>';
-                            batch_select.append(option);
-                        });
-
-                        // Show batch_div only if lecture_type is not 'Lecture'
-                        var lectureType = $('#lecture_type').val();
-                        if (lectureType !== 'Lecture') {
-                            $('#batch_div').show();
-                        } else {
-                            $('#batch_div').hide();
-                        }
-
-                        // On load, if batch is set, trigger lecture_type change and select batch
-                        @if(isset($data['batch_id']))
-                            $('#batch_sel').val('{{ $data['batch_id'] }}');
-                        @endif
+                    var lectureType = $('#lecture_type').val();
+                    if (lectureType !== 'Lecture') {
+                        $('#batch_div').show();
                     } else {
                         $('#batch_div').hide();
                     }
+
+                    @if(isset($data['batch_id']))
+                        $('#batch_sel').val('{{ $data['batch_id'] }}');
+                    @endif
                 } else {
                     $('#batch_div').hide();
                 }
+            } else {
+                $('#batch_div').hide();
             }
-        });
+        }
     });
+});
 
-    // On load, if batch is set, trigger lecture_type change to show batch div and select batch
-    @if(isset($data['batch_id']))
-        $('#lecture_type').trigger('change');
-    @endif
+@if(isset($data['batch_id']))
+    $('#lecture_type').trigger('change');
+@endif
 </script>
+
+<style>
+@media print {
+
+    /* ===== REMOVE BORDER FROM SCHOOL + ACADEMIC SECTION ===== */
+    .school-header,
+    .report-title,
+    .academic-section,
+    .academic-year {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: black !important;
+        text-align: center !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+    .school-header {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        margin-bottom: 5px !important;
+    }
+
+    .academic-section,
+    .academic-year {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* ===== TABLE SECTION (BOLD BORDERS) ===== */
+    table {
+        width: 100%;
+        border-collapse: collapse !important;
+        border: 3px solid black !important;
+        margin-top: 10px !important;
+    }
+
+    table th,
+    table td {
+        border: 2px solid black !important;
+        color: black !important;
+        padding: 6px 8px !important;
+        text-align: center !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 13px !important;
+    }
+
+    table th {
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        background: #f9f9f9 !important;
+    }
+
+    /* ===== PAGE NUMBER (Bottom Right) ===== */
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+        @bottom-right {
+            content: "Page " counter(page) " / " counter(pages);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: black;
+        }
+    }
+}
+</style>
+
+
+
+
+
 @include('includes.footer')

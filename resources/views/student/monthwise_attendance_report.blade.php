@@ -11,7 +11,6 @@
         </div>
 
         @php
-
             $grade_id = $standard_id = $division_id = $subject = '';
             $syear = session()->get('syear');
             $nextYear = $syear + 1;
@@ -83,7 +82,6 @@
 
         @if (isset($data['student_data']))
             @php
-                
             @endphp
 
             <div class="card">
@@ -93,16 +91,12 @@
                      $academicYears = session()->get('academicYears');
                 @endphp
 
-                {{-- ✅ Academic Year Label (same font as address) --}}
-           
                 <div style="text-align:center">
                     <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
                         Academic Year :{{ $syear }} - {{ $nextYear }}
                     </span>
                 </div>
                
-
-                {{-- Report Title --}}
                 <h1 style="text-align:center; font-size:20px; margin-top:5px; font-family:inherit; color:black;">
                     Subjectwise Detailed Semester Report
                 </h1>
@@ -154,10 +148,8 @@
 @include('includes.footerJs')
 <script>
     $(document).ready(function() {
-        // Initially hide batch_div
         $('#batch_div').hide();
 
-        // Toggle batch_div visibility on lecture_type change
         $('#lecture_type').on('change', function() {
             var selectedLectureType = $(this).val();
             if (selectedLectureType !== 'Lecture') {
@@ -168,28 +160,45 @@
         });
 
         var table = $('#example').DataTable({
-            //select: false,          
-            paging: false,          // Enable pagination
-            //pageLength: 500,        // Rows per page
-            //lengthMenu: [5, 10, 25, 50, 100], // Page size options
-            ordering: true,        // Enable sorting
-            searching: true,       // Enable search box
-            info: true,            // Show "Showing 1 to n of n entries"
-            //autoWidth: false,
+            paging: false,
+            ordering: true,
+            searching: true,
+            info: true,
             dom: 'Bfrtip', 
             buttons: [ 
                 { extend: 'csv', text: ' CSV', title: 'Subjectwise Detailed Semester Report' }, 
-                { extend: 'print', text: ' PRINT', title: 'Subjectwise Detailed Semester Report',customize: function (win) {
-                    $(win.document.body).find('h1').css('text-align', 'center').css('font-size', '20px').css('margin-top', '5px');
-                    $(win.document.body).find('th, td').css('color', 'black').css('text-align', 'center').css('vertical-align', 'middle');
-                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '', $subject ?? '') !!}
-                        <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
-                            Academic Year: {{ $syear }} - {{ $nextYear }}
-                        </h4>
+                { 
+                    extend: 'print', 
+                    text: ' PRINT', 
+                    title: 'Subjectwise Detailed Semester Report',
+                    customize: function (win) {
+                        $(win.document.body)
+                            .find('h1')
+                            .css('text-align', 'center')
+                            .css('font-size', '20px')
+                            .css('margin-top', '5px');
+
+                        // ✅ Bold border styling for print
+                        $(win.document.body).find('table')
+                            .css('border-collapse', 'collapse')
+                            .css('width', '100%');
+                        $(win.document.body).find('th, td')
+                            .css('border', '2px solid black')
+                            .css('padding', '5px')
+                            .css('text-align', 'center')
+                            .css('vertical-align', 'middle')
+                            .css('color', 'black');
+
+                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '', $subject ?? '') !!}
+                            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
+                                Academic Year: {{ $syear }} - {{ $nextYear }}
+                            </h4>
                         `);
-                        }},
+                    }
+                },
             ],
         });
+
         var g = document.getElementById("grade");
         var grade = g.options[g.selectedIndex].text;
 
@@ -203,34 +212,26 @@
         $('#standard').attr('required', true);
         $('#division').attr('required', true);
 
-        // get subject lists 
         function loadSubjects(selectedStandard, selectedDivision, callback) {
-                var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
-                $('#subject').find('option').remove().end().append('<option value="">Select Subject</option>').val('');
+            var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
+            $('#subject').find('option').remove().end().append('<option value="">Select Subject</option>').val('');
 
-                $.ajax({
-                    url: path,
-                    data: { std_id: selectedStandard },
-                    success: function(result) {
-                        console.log(result);
-                        for (var i = 0; i < result.length; i++) {
-                            $("#subject").append(
-                                $("<option></option>")
-                                    .val(result[i]['subject_id'])
-                                    .html(result[i]['display_name'])
-                            );
-                        }
-
-                        // ✅ Call the callback after subjects are loaded
-                        if (typeof callback === "function") {
-                            callback();
-                        }
+            $.ajax({
+                url: path,
+                data: { std_id: selectedStandard },
+                success: function(result) {
+                    for (var i = 0; i < result.length; i++) {
+                        $("#subject").append(
+                            $("<option></option>")
+                                .val(result[i]['subject_id'])
+                                .html(result[i]['display_name'])
+                        );
                     }
-                });
-
+                    if (typeof callback === "function") callback();
+                }
+            });
         }
 
-        // On load, if subject is set, trigger division change and select subject
         @if(isset($data['subject']))
             loadSubjects('{{ $standard_id }}', '{{ $division_id }}', function() {
                 $("#subject").val('{{ $data['subject'] }}');
@@ -242,9 +243,10 @@
             var selectedDivision = $(this).val();
             loadSubjects(selectedStandard, selectedDivision);
         });
-
     });
 </script>
+
+
 
 <script>
     $(document).on('change', '#lecture_type', function() {
@@ -265,15 +267,11 @@
 
                     if (Array.isArray(data) && data.length > 0) {
                         if (batch_select_container.length === 0) {
-                            batch_select_container = $(
-                                '<div class="col-md-2 form-group" id="batch_div"></div>');
+                            batch_select_container = $('<div class="col-md-2 form-group" id="batch_div"></div>');
                             $('#lecture_type').after(batch_select_container);
 
-                            var batch_select_label = $(
-                                '<label for="batch_sel">Batch</label>');
-                            batch_select = $(
-                                '<select id="batch_sel" class="form-control" name="batch_sel"></select>'
-                                );
+                            var batch_select_label = $('<label for="batch_sel">Batch</label>');
+                            batch_select = $('<select id="batch_sel" class="form-control" name="batch_sel"></select>');
                             var defaultOption = '<option value="">--Select--</option>';
                             batch_select.append(defaultOption);
 
@@ -281,14 +279,11 @@
                             batch_select_container.append(batch_select);
                         }
 
-                        // Populate the batch options
                         data.forEach(function(value) {
-                            var option = '<option value="' + value.id + '">' + value.title +
-                                '</option>';
+                            var option = '<option value="' + value.id + '">' + value.title + '</option>';
                             batch_select.append(option);
                         });
 
-                        // Show batch_div only if lecture_type is not 'Lecture'
                         var lectureType = $('#lecture_type').val();
                         if (lectureType !== 'Lecture') {
                             $('#batch_div').show();
@@ -296,7 +291,6 @@
                             $('#batch_div').hide();
                         }
 
-                        // On load, if batch is set, trigger lecture_type change and select batch
                         @if(isset($data['batch_id']))
                             $('#batch_sel').val('{{ $data['batch_id'] }}');
                         @endif
@@ -310,9 +304,23 @@
         });
     });
 
-    // On load, if batch is set, trigger lecture_type change to show batch div and select batch
     @if(isset($data['batch_id']))
         $('#lecture_type').trigger('change');
     @endif
 </script>
+
+<style>
+@media print {
+    @page {
+        @bottom-right {
+            content: "Page " counter(page) " / " counter(pages);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: black;
+        }
+    }
+}
+</style>
+
+
 @include('includes.footer')
