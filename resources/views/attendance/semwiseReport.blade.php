@@ -264,6 +264,12 @@ $(document).ready(function() {
                                 All Subject Semesterwise Report
                             </h1>`);
 
+                    // ✅ Hide % column in print if Percentage wise is selected
+                    var reportType = $('select[name="report_type"]').val();
+                    if (reportType === 'pw') {
+                        $(win.document.body).find('table#example th:last-child, table#example td:last-child').remove();
+                    }
+
                     // Add print styles for bold borders and formatting
                     const style = `
                         <style>
@@ -274,31 +280,27 @@ $(document).ready(function() {
                                     print-color-adjust: exact !important;
                                 }
 
-                                /* Table outer border */
                                 table#example {
                                     width: 100% !important;
                                     border-collapse: collapse !important;
-                                    border: 3px solid black !important; /* Bold outer border */
+                                    border: 3px solid black !important;
                                     margin-top: 10px !important;
                                 }
 
-                                /* Header and cell borders */
                                 table#example th,
                                 table#example td {
-                                    border: 2px solid black!important; /* Bold inner borders */
+                                    border: 2px solid black !important;
                                     padding: 6px 8px !important;
                                     text-align: center !important;
                                     font-size: 12px !important;
                                 }
 
-                                /* Table header background */
                                 table#example thead th {
                                     background-color: #f2f2f2 !important;
                                     font-weight: bold !important;
-                                    border-bottom: 3px solid black!important;
+                                    border-bottom: 3px solid black !important;
                                 }
 
-                                /* Zebra stripes for rows */
                                 table#example tbody tr:nth-child(odd) {
                                     background-color: #f9f9f9 !important;
                                 }
@@ -307,7 +309,6 @@ $(document).ready(function() {
                                     background-color: #ffffff !important;
                                 }
 
-                                /* Signature section */
                                 .signature-block {
                                     margin-top: 60px;
                                     display: flex;
@@ -357,9 +358,25 @@ $(document).ready(function() {
             }
         ]
     });
+
+    // ✅ Hide/show % column on screen dynamically based on report type
+    function togglePercentageColumn() {
+        var reportType = $('select[name="report_type"]').val();
+        var lastColumnIndex = table.columns().count() - 1; // index of last column
+
+        if (reportType === 'pw') {
+            table.column(lastColumnIndex).visible(false); // hide %
+        } else {
+            table.column(lastColumnIndex).visible(true); // show %
+        }
+    }
+
+    togglePercentageColumn(); // initial check on load
+
+    $('select[name="report_type"]').on('change', function() {
+        togglePercentageColumn();
+    });
 });
-
-
 </script>
 
 
