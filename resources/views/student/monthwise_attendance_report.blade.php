@@ -113,12 +113,13 @@
                                 <th>Total</th>
                                 <th>Present</th>
                                 <th>Absent</th>
+                                <th>%</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($data['student_data'] as $stu)
                                 @php
-                                    $total = $present = $absent = 0;
+                                    $total = $present = $absent = $per = 0;
                                 @endphp
                                 <tr>
                                     <td>{{ $stu->enrollment_no }}</td>
@@ -135,6 +136,10 @@
                                     <td>{{ $total }}</td>
                                     <td>{{ $present }}</td>
                                     <td>{{ $absent }}</td>
+                                    @php
+                                    	$per = round(100 * $present / $total,2);
+                                	@endphp
+                                    <td>{{ $per }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

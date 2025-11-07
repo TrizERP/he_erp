@@ -143,7 +143,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
                             <div style="text-align:left; width:33%;">
                                 <div style="border-top:1px solid #000; padding-top:5px; display:inline-block;">
-                                    Sign of Coordinator
+                                    Sign of Faculty
                                 </div>
                             </div>
                             <div style="text-align:center; width:33%;">
