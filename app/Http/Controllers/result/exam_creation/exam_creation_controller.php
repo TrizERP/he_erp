@@ -72,7 +72,6 @@ class exam_creation_controller extends Controller
             ->join('academic_section', 'academic_section.id', '=', 'standard.grade_id')
             ->join('result_exam_master', 'result_exam_master.id', '=', 'result_create_exam.exam_id')
             ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.co_id')
-            ->leftJoin('lo_category', 'lo_category.id', '=', 'result_create_exam.cutoff')
 
             ->select(
                 'result_create_exam.id',
@@ -90,7 +89,6 @@ class exam_creation_controller extends Controller
                 'result_create_exam.report_card_status',
                 'result_create_exam.sort_order',
                 DB::raw('DATE_FORMAT(result_create_exam.exam_date,"%d-%m-%Y") as exam_date'),
-                'result_create_exam.cutoff',
                 'lo_category.id as co_id',
                 'lo_category.title as co_name',
                 'lo_category.sort_order as co_order',
