@@ -54,7 +54,7 @@
                                 }
                             @endphp
 
-                            {!! App\Helpers\HrmsDepartments('', '', $dep_id, '', $emp_id, '') !!}
+                            {!! App\Helpers\HrmsDepartments('', '', $dep_id, '', $emp_id, 'none') !!}
                             <div class="col-md-12 form-group">
                                 <center>
                                     <input type="submit" name="submit" value="Submit" class="btn btn-success"
@@ -143,7 +143,7 @@
                                                 @endphp
                                                  <td style="width:200px;">
                                                     <select name="table_branch1" class="form-control table_branch1" onchange="getEmployeeList(this)">
-                                                        <option value="">Select any One</option>
+                                                        <option value="">-Select any One</option>
                                                         @if(isset($data['departmentLists']))
                                                         @foreach ($data['departmentLists'] as $key=>$dept )
                                                         <option value="{{$dept->id}}" @if(isset($data['department_id']) && $data['department_id']==$dept->id) selected @endif>{{$dept->department}}</option>

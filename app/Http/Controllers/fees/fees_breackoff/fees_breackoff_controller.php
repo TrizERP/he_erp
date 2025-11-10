@@ -69,7 +69,15 @@ class fees_breackoff_controller extends Controller
             $month = (int) $y;
 
             $year = substr($arr->month_id, -4);
-            $result[$id]->month_id = $months[$month]."/".$year;
+            
+            // Convert to semester name
+            if ($month == 6) {
+                $result[$id]->month_id = "Semester 1";
+            } elseif ($month == 12) {
+                $result[$id]->month_id = "Semester 2";
+            } else {
+                $result[$id]->month_id = $months[$month]."/".$year;
+            }
         }
 
         return $result;
@@ -102,15 +110,27 @@ class fees_breackoff_controller extends Controller
         $months_arr = [];
         $syear = session()->get('syear');
 
+        // Helper function to convert month to semester name
+        $getSemesterName = function($month, $year) use ($months){
+            // June (6) = Semester 1, December (12) = Semester 2
+            if ($month == 6) {
+                return "Semester 1";
+            } elseif ($month == 12) {
+                return "Semester 2";
+            }
+            // For other months, return original format
+            return $months[$month] . '/' . $year;
+        };
+
         if($data[0]['type'] == "yearly_fees")
         {
-            $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+            $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
         }
         else if($data[0]['type'] == "half_year_fees")
         {
-            $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+            $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
             $sixmonths = ($start_month+6);
-            $months_arr[$sixmonths.$syear] = $months[$sixmonths].'/'.$syear;
+            $months_arr[$sixmonths.$syear] = $getSemesterName($sixmonths, $syear);
 
         }
         else if($data[0]['type'] == "quarterly_fees")
@@ -119,14 +139,14 @@ class fees_breackoff_controller extends Controller
             {
                 if ($start_month <= 12)
                 {
-                    $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                    $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                     $start_month = ($start_month+3);
                 }
                 else
                 {
                     $start_month = 1;
                     ++$syear;
-                    $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                    $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                     break;
                 }
             }
@@ -134,7 +154,7 @@ class fees_breackoff_controller extends Controller
         else
         {
             for ($i = 1; $i <= 12; $i++) {
-                $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                 if ($start_month == 12) {
                     $start_month = 0;
                     ++$syear;
@@ -323,7 +343,15 @@ class fees_breackoff_controller extends Controller
                 $y = $id / 10000;
                 $month = (int) $y;
                 $year = substr($id, -4);
-                $months_arr[] = $months[$month]."/".$year;
+                
+                // Convert to semester name
+                if ($month == 6) {
+                    $months_arr[] = "Semester 1";
+                } elseif ($month == 12) {
+                    $months_arr[] = "Semester 2";
+                } else {
+                    $months_arr[] = $months[$month]."/".$year;
+                }
             }
 
             $where_arr = [
@@ -448,7 +476,6 @@ class fees_breackoff_controller extends Controller
 
     public function getMonthName($month)
     {
-
         $months = [
             1  => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep',
             10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
@@ -459,7 +486,14 @@ class fees_breackoff_controller extends Controller
         $year = substr($month, -4);
         $month = (int) $y;
 
-        $month_name .= $months[$month]."/".$year.',';
+        // Convert to semester name
+        if ($month == 6) {
+            $month_name .= "Semester 1,";
+        } elseif ($month == 12) {
+            $month_name .= "Semester 2,";
+        } else {
+            $month_name .= $months[$month]."/".$year.',';
+        }
 
         return $month_name;
     }

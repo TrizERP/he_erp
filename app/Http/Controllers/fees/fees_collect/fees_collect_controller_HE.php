@@ -360,17 +360,6 @@ class fees_collect_controller extends Controller
         $_REQUEST['fees_data'] = $fees_data;
 
         $stu_arr = session()->get('stu_arr');
-
-
-
-
-
-
-
-
-
-
-
         // get all month name with month_id
         $month_arr = FeeMonthId();
         $currunt_month = date('m');
@@ -997,7 +986,7 @@ class fees_collect_controller extends Controller
         $month_name = [];
         
         foreach ($_REQUEST['months'] as $monthId) {
-            $month_header = DB::table('fees_month_header')
+            $month_header = DB::table('')
                 ->where('sub_institute_id', session()->get('sub_institute_id'))
                 ->where('month_id', $monthId)
                 ->first();
@@ -1458,7 +1447,7 @@ die;*/
             $html_content = str_replace(htmlspecialchars("<<standard_medium>>"),$standard_medium,$html_content);
             $html_content = str_replace(htmlspecialchars("<<fees_months_display>>"), $month_name, $html_content);
 
-            $html_content = str_replace(htmlspecialchars("<<fees_month_header>>"), $month_header_name, $html_content);
+            $html_content = str_replace(htmlspecialchars("<<>>"), $month_header_name, $html_content);
 
             $html_content = str_replace(htmlspecialchars("<<fees_head_content>>"), $fees_head_content, $html_content);
             $html_content = str_replace(htmlspecialchars("<<grand_total>>"), $recTotal, $html_content);

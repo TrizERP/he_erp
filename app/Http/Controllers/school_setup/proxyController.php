@@ -131,6 +131,10 @@ class proxyController extends Controller
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
+        // Get logged-in user's department and ID
+        $user_id = $request->session()->get('user_id');
+        $user_department = DB::table('tbluser')->where('id', $user_id)->value('department_id');
+
         $user_data = tbluserModel::select(
             'tbluser.*',
             DB::raw('concat(tbluser.last_name," ",tbluser.first_name) as teacher_name')
@@ -138,14 +142,14 @@ class proxyController extends Controller
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2, 'tbluser.status' => 1])
             // Exclude employees who already have proxy assignments
-            ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id) {
-                $subquery->select('proxy_teacher_id')
-                    ->from('proxy_master')
-                    ->where('sub_institute_id', '=', $sub_institute_id);
-            })
+
             ->orderBy('tbluser.last_name')
             ->get();
         $data['teacher_data'] = $user_data;
+
+        // Set logged-in user's department and ID for auto-population
+        $data['department_id'] = $user_department;
+        $data['selected_emp'] = $user_id;
 
         return is_mobile($type, 'school_setup/add_proxy', $data, "view");
     }
@@ -230,18 +234,13 @@ class proxyController extends Controller
                     ->leftJoin('timetable as ti', 't.id', '=', 'ti.teacher_id')
                     ->where(['u.parent_id' => 2])
                     ->where('u.sub_institute_id', '=', $sub_institute_id)
+                     ->where('t.department_id', '=', $department_id)
                     ->where('ti.teacher_id', '<>', $proxy_teacher_id)
                     ->where('ti.syear', '<=', $syear)
                     ->where('ti.sub_institute_id', '=', $sub_institute_id)
                     ->where('t.status', '=', 1)
                     // Exclude employees who already have proxy assignments in the selected date range
-                    ->whereNotIn('t.id', function ($subquery) use ($sub_institute_id, $syear, $from_date, $to_date) {
-                        $subquery->select('proxy_teacher_id')
-                            ->from('proxy_master')
-                            ->where('sub_institute_id', '=', $sub_institute_id)
-                            ->where('syear', '=', $syear)
-                            ->whereBetween('proxy_date', [$from_date, $to_date]);
-                    })
+                    
                     ->where(function ($q) use ($tval, $syear, $sub_institute_id) {
                         $q->whereNotIn('ti.teacher_id', function ($sub) use ($tval, $syear, $sub_institute_id) {
                             $sub->select('tt.teacher_id')
@@ -253,10 +252,10 @@ class proxyController extends Controller
                         })
                         ->orWhereNull('ti.week_day');
                     })
-                    ->groupBy('t.id')
+                    ->groupBy('ti.teacher_id')
                     ->orderBy('t.last_name')
                     ->get();
-
+                // dd($teacher_data);
                 $proxydata[] = [
                     'date'          => $val,
                     'standard_id'   => $tval['standard_id'],
@@ -272,6 +271,7 @@ class proxyController extends Controller
                     'batch_name'    => $tval['batch_name'],
                     'teacher_data'  => $teacher_data,
                 ];
+                // dd($proxydata);
             }
         }
 
@@ -282,18 +282,10 @@ class proxyController extends Controller
             ->join('tbluserprofilemaster', 'tbluserprofilemaster.id', "=", 'tbluser.user_profile_id')
             ->where(['tbluser.sub_institute_id' => $sub_institute_id, 'tbluserprofilemaster.parent_id' => 2])
             // Exclude employees who already have proxy assignments in the selected date range
-            ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id, $syear, $from_date, $to_date) {
-                $subquery->select('proxy_teacher_id')
-                    ->from('proxy_master')
-                    ->where('sub_institute_id', '=', $sub_institute_id)
-                    ->where('syear', '=', $syear)
-                    ->whereBetween('proxy_date', [$from_date, $to_date]);
-            })
+           
             ->orderBy('tbluser.last_name')
             ->get();
-
         $data['teacher_data'] = $user_data;
-        
         $type = $request->input('type');
         $data['department_id'] = $request->department_id;
         $data['selected_emp'] = $request->emp_id;
@@ -302,6 +294,7 @@ class proxyController extends Controller
         $data['teacher'] = $proxy_teacher_id;
         $data['from_date'] = $from_date;
         $data['to_date'] = $to_date;
+        
         // exit;
         return is_mobile($type, 'school_setup/add_proxy', $data, "view");
     }
@@ -501,3 +494,4 @@ class proxyController extends Controller
         return is_mobile($type, "proxy_master.index", $res);
     }
 }
+
