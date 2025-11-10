@@ -1283,8 +1283,8 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
     public function gunrate_receipt($receipt_id, $receipt_arr, $id_heads,$sub_institute_id='',$syear='',$inProcess='')
     {
         $months = [
-            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep',
-            10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Semester 1', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep',
+            10 => 'Oct', 11 => 'Nov', 12 => 'Semester 2',
         ];
         if($sub_institute_id==''){
             $sub_institute_id=session()->get($sub_institute_id);
@@ -1310,7 +1310,15 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $y = $monthId / 10000;
             $month = (int)$y;
             $year = substr($monthId, -4);
-            $month_name[] = $months[$month] . "/" . $year;
+            
+            // Convert to semester name for display
+            if ($month == 6) {
+                $month_name[] = "Semester 1";
+            } elseif ($month == 12) {
+                $month_name[] = "Semester 2";
+            } else {
+                $month_name[] = $months[$month] . "/" . $year;
+            }
         }
         
         $month_header_name = implode(', ', $month_header_name);
@@ -1351,7 +1359,15 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $y = $arr['term_id'] / 10000;
             $month = (int)$y;
             $year = substr($arr['term_id'], -4);
-            $month_name2 = $months[$month] . ',';
+            
+            // Convert to semester name for display
+            if ($month == 6) {
+                $month_name2 = "Semester 1,";
+            } elseif ($month == 12) {
+                $month_name2 = "Semester 2,";
+            } else {
+                $month_name2 = $months[$month] . ',';
+            }
             $fees_paid_name[$id]['term_id'] = substr($month_name2, 0, -1);
         }
 
@@ -1359,7 +1375,15 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $y = $arr['month_id'] / 10000;
             $month = (int)$y;
             $year = substr($arr['month_id'], -4);
-            $month_name2 = $months[$month] . ',';
+            
+            // Convert to semester name for display
+            if ($month == 6) {
+                $month_name2 = "Semester 1,";
+            } elseif ($month == 12) {
+                $month_name2 = "Semester 2,";
+            } else {
+                $month_name2 = $months[$month] . ',';
+            }
             $fees_paid_other_name[$id]['month_id'] = substr($month_name2, 0, -1);
         }
         $fees_paid = DB::table('fees_collect as fc')
@@ -2117,8 +2141,8 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $end_month = $data[0]['to_month'];
 
             $months = [
-                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
-                9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Semester 1', 7 => 'Jul', 8 => 'Aug',
+                9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Semester 2',
             ];
             $months_arr = [];
 
@@ -2409,6 +2433,33 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             }
         }
         // end 08-01-2025 by uma for ssmission
+
+        // Override month names for Semester 1 and 2
+        foreach ($month_arr as $key => $val) {
+            $month = (int)substr($key, 0, -4);
+            if ($month == 6) {
+                $month_arr[$key] = 'Semester 1';
+            } elseif ($month == 12) {
+                $month_arr[$key] = 'Semester 2';
+            }
+        }
+        foreach ($month_arr2 as $key => $val) {
+            $month = (int)substr($key, 0, -4);
+            if ($month == 6) {
+                $month_arr2[$key] = 'Semester 1';
+            } elseif ($month == 12) {
+                $month_arr2[$key] = 'Semester 2';
+            }
+        }
+        foreach ($year_arr as $key => $val) {
+            $month = (int)substr($key, 0, -4);
+            if ($month == 6) {
+                $year_arr[$key] = 'Semester 1';
+            } elseif ($month == 12) {
+                $year_arr[$key] = 'Semester 2';
+            }
+        }
+
         $currunt_month = date('m');
         $currunt_year = date('Y');
         $currunt_month_id = $currunt_month . $currunt_year;

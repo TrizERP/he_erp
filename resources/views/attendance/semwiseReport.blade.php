@@ -64,15 +64,18 @@
                     </select>
                 </div>
 
-                <div class="form-group col-md-2">
-                    <label>Report Type</label>
-                    <select class="form-control" name="report_type">
-                        @foreach ($report_type as $key => $value)
-                            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $value) selected @endif>
-                                {{ $value }}</option>
-                        @endforeach
-                    </select>
-                </div>
+               <div class="form-group col-md-2">
+    <label>Report Type</label>
+    <select class="form-control" name="report_type" required>
+        <option value="">Select</option>
+        @foreach ($report_type as $key => $value)
+            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $key) selected @endif>
+                {{ $value }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
 
                 <div class="form-group col-md-2">
                     <label>Below Percent(%)</label>
