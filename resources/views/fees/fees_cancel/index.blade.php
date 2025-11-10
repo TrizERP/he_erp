@@ -244,7 +244,7 @@
                         <div id="overlay" style="display:none;">
                             <center><p style="margin-top: 273px;color:red;font-weight: 700;">Please do not refresh the
                                     page, while the process is going on.</p><img
-                                    src="http://dev.triz.co.in/admin_dep/images/loader.gif"></center>
+                                    src="/admin_dep/images/loader.gif"></center>
                         </div>
                         <center>
                             <button id="ajax_PDF" type="button" class="btn btn-primary">Print Receipt</button>

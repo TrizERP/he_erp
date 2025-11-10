@@ -106,34 +106,55 @@ class feesRefundController extends Controller
 
         $fees_title = $getBk['final_fee_name'];
         $fees_paid_data = DB::table('tblstudent as s')
-            ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
-                $join->whereRaw("se.student_id = s.id AND se.sub_institute_id = s.sub_institute_id AND se.syear = '".$syear."'");
-            })
-            ->join('standard as st', function($join) use($marking_period_id) {
-                $join->on('st.id', '=', 'se.standard_id')
-                ->when($marking_period_id,function($query) use($marking_period_id){ // added on 03-03-2025
-                    $query->where('st.marking_period_id',$marking_period_id);
-                });
-            })
-            ->join('fees_collect as fc', function ($join) use ($syear) {
-                $join->whereRaw("fc.student_id = s.id AND fc.sub_institute_id = s.sub_institute_id AND fc.syear = '".$syear."'");
-            })->selectRaw('fc.*,s.enrollment_no')
-            ->where('s.id', $id)
-            ->where('s.sub_institute_id', $sub_institute_id)->get()->toArray();
+        ->join('tblstudent_enrollment as se', function ($join) {
+            $join->on('se.student_id', '=', 's.id')
+                 ->on('se.sub_institute_id', '=', 's.sub_institute_id');
+        })
+        ->join('standard as st', 'st.id', '=', 'se.standard_id')
+        ->join('fees_collect as fc', function ($join) {
+            $join->on('fc.student_id', '=', 's.id')
+                 ->on('fc.sub_institute_id', '=', 's.sub_institute_id')
+                 ->on('fc.syear', '=', 'se.syear')
+                 ->on('fc.standard_id', '=', 'se.standard_id');
+        })
+        ->select('fc.*', 's.enrollment_no')
+        ->where('s.id', $id)
+        ->where('fc.is_deleted', 'N')
+        ->where('s.sub_institute_id', $sub_institute_id)
+        ->get()
+        ->toArray();    
 
         $PAID_DATA = json_decode(json_encode($fees_paid_data), true);
 
         $paid_data_title_wise = array();
-        // echo "<pre>";print_r($fees_title);exit;                    
-        foreach ($PAID_DATA as $key => $val) {
+        //echo "<pre>";print_r($fees_title);print_r($PAID_DATA);exit;
+        $paid_data_title_wise = []; // To store sum per title
+
+        foreach ($PAID_DATA as $val) {
             foreach ($fees_title as $fees_title_name => $fees_title_id) {
-                if(isset($val[$fees_title_id])){
-                $paid_data_title_wise[$fees_title_id] = $val[$fees_title_id].'/'.$fees_title_name;
+                if (isset($val[$fees_title_id])) {
+                    // Convert to number (in case value is string)
+                    $amount = (float) $val[$fees_title_id];
+        
+                    // Add to existing total or initialize
+                    if (!isset($paid_data_title_wise[$fees_title_id])) {
+                        $paid_data_title_wise[$fees_title_id] = 0;
+                    }
+        
+                    $paid_data_title_wise[$fees_title_id] += $amount;
                 }
             }
         }
+        // Optional: Combine ID + title for display
+        $paid_data_title_display = [];
+        foreach ($fees_title as $fees_title_name => $fees_title_id) {
+            if (isset($paid_data_title_wise[$fees_title_id])) {
+                $paid_data_title_display[$fees_title_id] = $paid_data_title_wise[$fees_title_id] . '/' . $fees_title_name;
+            }
+        }
+        //echo "<pre>";print_r($paid_data_title_display);exit;
         $res['stu_data'] = $getBk['stu_data'];
-        $res['paid_data_title_wise'] = $paid_data_title_wise;
+        $res['paid_data_title_wise'] = $paid_data_title_display;
         $res['bank_data'] = bankmasterModel::get()->toArray();
         $res['fees_config_data'] = tblfeesConfigModel::where([
             'sub_institute_id' => $sub_institute_id, 'syear' => $syear,
@@ -309,7 +330,7 @@ class feesRefundController extends Controller
         $cheque_no = $request->input('cheque_no');
         $bank_name = $request->input('bank_name');
         $bank_branch = $request->input('bank_branch');
-        $refund_remark = $request->input('refund_remark');
+        $refund_remark = $request->input('refund_remark') ?? '';
         $marking_period_id=session()->get('term_id');
 
         $fees_controller = new fees_collect_controller;
@@ -457,7 +478,7 @@ class feesRefundController extends Controller
                         <tr class="double-border">
                             <td class="logo-width" align="left">';
 
-        $recHtml .= '    <img class="logo" src="'.$image_path.'" alt="SCHOOL LOGO">';
+        $recHtml .= '    <img class="logo" src="'.$image_path.'" alt="LOGO">';
         $recHtml .= '</td>';
         $recHtml .= '<td colspan="3" style="text-align:center !important;" align="center"> ';
         if ($receipt_book_arr->receipt_line_1 != '') {
@@ -572,6 +593,7 @@ class feesRefundController extends Controller
         $feesRefundLog['syear'] = $syear;
         $feesRefundLog['sub_institute_id'] = $sub_institute_id;
         $feesRefundLog['student_id'] = $student_id;
+        $feesRefundLog['standard_id'] = $standard_id;
         $feesRefundLog['fees_html'] = $style.$recHtml_for_insert;
         $feesRefundLog['payment_mode'] = $payment_mode;
         $feesRefundLog['receipt_date'] = $receiptdate;
@@ -579,7 +601,7 @@ class feesRefundController extends Controller
         $feesRefundLog['cheque_no'] = $cheque_no;
         $feesRefundLog['bank_name'] = $bank_name;
         $feesRefundLog['bank_branch'] = $bank_branch;
-        $feesRefundLog['refund_remarks'] = $refund_remarks;
+        $feesRefundLog['remarks'] = $refund_remark;
 
         foreach ($fees_title as $fees_title_name => $fees_title_id) {
             $feesRefundLog[$fees_title_id] = $refund_amount[$fees_title_id];

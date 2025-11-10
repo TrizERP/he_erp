@@ -24,7 +24,7 @@
         <p style="margin-top: 273px;color:red;font-weight: 700;">
             Please do not refresh the page, while the process is going on.
         </p>
-        <img src="../../admin_dep/images/loader.gif">
+        <img src="../admin_dep/images/loader.gif">
     </center>
 </div>
 

@@ -16,6 +16,7 @@ class marks_entry extends Model {
         'per',
         'comment',
         'is_absent',
+        'is_remedial',
         'sub_institute_id',
         'created_at',
         'updated_at'

@@ -41,6 +41,12 @@
                                 <option value="">Select</option>
                             </select>
                         </div>
+                        
+                        <div class="form-check col-md-4" style="margin-top: 32px;">
+                            <input type="hidden" name="is_remedial" value="0"> <!-- ensures unchecked sends 0 -->
+                            <input type="checkbox" name="is_remedial" id="is_remedial" value="1" class="form-check-input">
+                            <label for="is_remedial" class="form-check-label">Remedial</label>
+                        </div>
 
                         <div class="col-md-12 form-group">
                             <div class="table-responsive">

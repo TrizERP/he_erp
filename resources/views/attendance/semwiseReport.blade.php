@@ -64,15 +64,18 @@
                     </select>
                 </div>
 
-                <div class="form-group col-md-2">
-                    <label>Report Type</label>
-                    <select class="form-control" name="report_type">
-                        @foreach ($report_type as $key => $value)
-                            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $value) selected @endif>
-                                {{ $value }}</option>
-                        @endforeach
-                    </select>
-                </div>
+               <div class="form-group col-md-2">
+    <label>Report Type</label>
+    <select class="form-control" name="report_type" required>
+        <option value="">Select</option>
+        @foreach ($report_type as $key => $value)
+            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $key) selected @endif>
+                {{ $value }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
 
                 <div class="form-group col-md-2">
                     <label>Below Percent(%)</label>
@@ -161,7 +164,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                             <div style="text-align: left; width: 33%;">
                                 <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                    Sign of Coordinator
+                                    Sign of Faculty
                                 </div>
                             </div>
                             <div style="text-align: center; width: 33%;">
@@ -244,79 +247,141 @@ $(document).ready(function() {
         info: false,
         dom: 'Bfrtip',
         buttons: [
-            { extend: 'csv', text: ' CSV', title: 'All Subject Semesterwise Report' },
-            { extend: 'print', text: ' PRINT', title: '',
-              customize: function (win) {
-                $(win.document.body)
-                    .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
-                        <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
-                            Academic Year: {{ $syear }} - {{ $nextYear }}
-                        </h4>
-                        <h1 style="text-align:center; font-size:20px; margin-top:5px;">All Subject Semesterwise Report</h1>`);
+            { 
+                extend: 'csv', 
+                text: 'CSV', 
+                title: 'All Subject Semesterwise Report' 
+            },
+            { 
+                extend: 'print',
+                text: 'PRINT',
+                title: '',
+                customize: function (win) {
+                    // Add school details and report title
+                    $(win.document.body)
+                        .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
+                            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
+                                Academic Year: {{ $syear }} - {{ $nextYear }}
+                            </h4>
+                            <h1 style="text-align:center; font-size:20px; margin-top:5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;">
+                                All Subject Semesterwise Report
+                            </h1>`);
 
-                // Custom formatted date: DD-MM-YYYY hh:mmAM/PM
+                    // ✅ Hide % column in print if Percentage wise is selected
+                    var reportType = $('select[name="report_type"]').val();
+                    if (reportType === 'pw') {
+                        $(win.document.body).find('table#example th:last-child, table#example td:last-child').remove();
+                    }
+
+                    // Add print styles for bold borders and formatting
+                    const style = `
+                        <style>
+                            @media print {
+                                body {
+                                    font-family: Arial, Helvetica, sans-serif !important;
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                }
+
+                                table#example {
+                                    width: 100% !important;
+                                    border-collapse: collapse !important;
+                                    border: 3px solid black !important;
+                                    margin-top: 10px !important;
+                                }
+
+                                table#example th,
+                                table#example td {
+                                    border: 2px solid black !important;
+                                    padding: 6px 8px !important;
+                                    text-align: center !important;
+                                    font-size: 12px !important;
+                                }
+
+                                table#example thead th {
+                                    background-color: #f2f2f2 !important;
+                                    font-weight: bold !important;
+                                    border-bottom: 3px solid black !important;
+                                }
+
+                                table#example tbody tr:nth-child(odd) {
+                                    background-color: #f9f9f9 !important;
+                                }
+
+                                table#example tbody tr:nth-child(even) {
+                                    background-color: #ffffff !important;
+                                }
+
+                                .signature-block {
+                                    margin-top: 60px;
+                                    display: flex;
+                                    justify-content: space-between;
+                                    width: 100%;
+                                }
+
+                                .signature {
+                                    border-top: 3px solid #000;
+                                    padding-top: 5px;
+                                    width: 30%;
+                                    text-align: center;
+                                }
+
+                                .print-footer {
+                                    margin-top: 20px;
+                                    font-size: 12px;
+                                    text-align: left;
+                                }
+
+                                @page {
+                                    size: A4 landscape;
+                                    margin: 15mm 10mm 20mm 10mm;
+                                    @bottom-right {
+                                        content: "Page " counter(page) " / " counter(pages);
+                                        font-size: 12px;
+                                        font-family: Arial, Helvetica, sans-serif;
+                                    }
+                                }
+                            }
+                        </style>
+                    `;
+                    $(win.document.head).append(style);
+
+                    // Append signatures and print date
                     const now = new Date();
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const year = now.getFullYear();
-                    let hours = now.getHours();
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                    hours = hours % 12 || 12;
-                    const formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
-                    // Add signature section to print view
+                    const formatted = now.toLocaleString('en-IN', { hour12: true });
                     $(win.document.body).append(`
-                        <div style="margin-top: 60px; padding: 20px 0; width: 100%;color:black">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                                <div style="text-align: left; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of Coordinator
-                                    </div>
-                                </div>
-                                <div style="text-align: center; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of HOD.
-                                    </div>
-                                </div>
-                                <div style="text-align: right; width: 33%;">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
-                                        Sign of Principal
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-                            <div style="text-align: left; margin-top: 20px;">
-                                Printed on: ${formattedDateTime}
-                            </div>
+                        <div class="signature-block">
+                            <div class="signature">Sign of Faculty</div>
+                            <div class="signature">Sign of HOD</div>
+                            <div class="signature">Sign of Principal</div>
                         </div>
+                        <div class="print-footer">Printed on: ${formatted}</div>
                     `);
-
-                    //start PAGE 1 of 2
-			        var css = `@page {
-			            @bottom-right {
-			              content: "Page " counter(page) " of " counter(pages);
-			            }
-			           }
-			            body {counter-reset: page;
-			            }
-			        `;
-			        var head = win.document.head || win.document.getElementsByTagName('head')[0];
-			        var style = win.document.createElement('style');
-			        style.type = 'text/css';
-			        style.media = 'print';
-			        if (style.styleSheet){
-			            style.styleSheet.cssText = css;
-			        } else {
-			            style.appendChild(win.document.createTextNode(css));
-			        }
-			        head.appendChild(style);
-
-			        // Add page number footer element
-			        $(win.document.body).append('<div class="page-number"></div>');
-			        //end PAGE 1 of 2
-              }}
+                }
+            }
         ]
+    });
+
+    // ✅ Hide/show % column on screen dynamically based on report type
+    function togglePercentageColumn() {
+        var reportType = $('select[name="report_type"]').val();
+        var lastColumnIndex = table.columns().count() - 1; // index of last column
+
+        if (reportType === 'pw') {
+            table.column(lastColumnIndex).visible(false); // hide %
+        } else {
+            table.column(lastColumnIndex).visible(true); // show %
+        }
+    }
+
+    togglePercentageColumn(); // initial check on load
+
+    $('select[name="report_type"]').on('change', function() {
+        togglePercentageColumn();
     });
 });
 </script>
+
+
+
 @endsection

@@ -2,6 +2,48 @@
 @include('../includes.header')
 @include('../includes.sideNavigation')
 
+<style>
+/* ===== FONT SIZE AND BORDERS FOR ALL TABLES ===== */
+
+/* On screen (visible on page) */
+table, th, td {
+    font-size: 26px !important;
+    line-height: 1.6 !important;
+    padding: 10px !important;
+}
+
+/* On print */
+@media print {
+    table, th, td {
+        font-size: 28px !important;
+        line-height: 1.8 !important;
+        padding: 10px !important;
+        border: 2px solid #000 !important;
+        border-collapse: collapse !important;
+        color: #000 !important;
+    }
+
+    th {
+        font-weight: bold !important;
+        background-color: #f8f8f8 !important;
+    }
+
+    /* Hide non-print elements */
+    form, .btn, .alert, .navbar, .sidebar, .header, .no-print {
+        display: none !important;
+    }
+
+    /* Full width for printing */
+    body, #page-wrapper, .container-fluid, .card {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+}
+</style>
+
+
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row">
@@ -108,6 +150,7 @@
 </div>
 
 @include('includes.footerJs')
+
 <script type="text/javascript">
     $('#grade').prop('required', true);
     $('#standard').prop('required', true);
@@ -228,7 +271,6 @@
             $('#subject').prop('required', false);
         }
     }
-
-  
 </script>
+
 @include('includes.footer')
