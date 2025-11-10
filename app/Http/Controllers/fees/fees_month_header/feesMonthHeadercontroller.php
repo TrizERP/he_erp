@@ -37,31 +37,43 @@ class feesMonthHeadercontroller extends Controller
         $months_arr = [];
         $syear = session()->get('syear');
 
+        // Helper function to convert month to semester name
+        $getSemesterName = function($month, $year) use ($months)  {
+            // June (6) = Semester 1, December (12) = Semester 2
+            if ($month == 6) {
+                return "Semester 1";
+            } elseif ($month == 12) {
+                return "Semester 2";
+            }
+            // For other months, return original format
+            return $months[$month] . '/' . $year;
+        };
+
         if($data[0]['type'] == "yearly_fees")
         {
-            $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+            $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
         }
         else if($data[0]['type'] == "half_year_fees")
         {
-            $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+            $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
             $sixmonths = ($start_month+6);
-            $months_arr[$sixmonths.$syear] = $months[$sixmonths].'/'.$syear;
+            $months_arr[$sixmonths.$syear] = $getSemesterName($sixmonths, $syear);
 
         }
         else if($data[0]['type'] == "quarterly_fees")
         {
-            for ($i = $start_month; $i <= 12; $i++) 
+            for ($i = $start_month; $i <= 12; $i++)
             {
-                if ($start_month <= 12) 
+                if ($start_month <= 12)
                 {
-                    $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                    $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                     $start_month = ($start_month+3);
                 }
                 else
                 {
                     $start_month = 1;
                     ++$syear;
-                    $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                    $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                     break;
                 }
             }
@@ -69,7 +81,7 @@ class feesMonthHeadercontroller extends Controller
         else
         {
             for ($i = 1; $i <= 12; $i++) {
-                $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;
+                $months_arr[$start_month.$syear] = $getSemesterName($start_month, $syear);
                 if ($start_month == 12) {
                     $start_month = 0;
                     ++$syear;
