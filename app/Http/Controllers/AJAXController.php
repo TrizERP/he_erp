@@ -2462,15 +2462,17 @@ private function groupConsecutivePeriods($periods)
             ->selectRaw('tbluser.id,CONCAT_WS(" ",COALESCE(tbluser.last_name, "-"),COALESCE(tbluser.first_name, "-")) as full_name, tbluser.sub_institute_id, IfNULL(upm.name,"-") as user_profile')
             ->where('tbluser.sub_institute_id', $sub_institute_id)
             ->where('tbluser.status', 1)
+            ->where('tbluser.department_id', $department_id)
             // Exclude employees who have existing proxy assignments to prevent conflicts
             ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id) {
                 $subquery->select('proxy_teacher_id')
                     ->from('proxy_master')
                     ->where('sub_institute_id', '=', $sub_institute_id);
             })
-            ->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
+            /*->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
                 $q->whereIn('tbluser.id', $SubCordinates);
             })
+                */
             ->orderBy('tbluser.last_name')
             ->groupBy('tbluser.id')
             ->get()
