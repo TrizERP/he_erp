@@ -339,7 +339,7 @@ class fees_collect_controller extends Controller
  
          return is_mobile($type, "fees/fees_collect/show", $responce_arr, "view");
      }
-
+    }
     /**
      * function is to insert fees data into database by getting details from other functions
      *

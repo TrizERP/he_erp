@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use function App\Helpers\is_mobile;
+use function App\Helpers\getMonthHeader;
 
 class update_fees_breackoff_controller extends Controller
 {
@@ -43,16 +44,9 @@ class update_fees_breackoff_controller extends Controller
         $months_arr = array();
         $syear = session()->get('syear');
 
-        // Helper function to convert month to semester name
+        // Helper function to convert month to semester name using dynamic headers
         $getSemesterName = function($month, $year) use ($months){
-            // June (6) = Semester 1, December (12) = Semester 2
-            if ($month == 6) {
-                return "Semester 1";
-            } elseif ($month == 12) {
-                return "Semester 2";
-            }
-            // For other months, return original format
-            return $months[$month] . '/' . $year;
+            return getMonthHeader($month, $year);
         };
 
         for ($i = 1; $i <= 12; $i++) {
@@ -306,8 +300,8 @@ class update_fees_breackoff_controller extends Controller
             }
             $next_syear = ($syear+1);
             $month_name = [
-                "1".$syear => 'Jan', "2".$syear => 'Feb', "3".$syear => 'Mar',"4".$syear => 'Apr', "5".$syear => 'May', "6".$syear => 'Semester 1', "7".$syear => 'Jul', "8".$syear => 'Aug',
-                "9".$syear => 'Sep', "10".$syear => 'Oct', "11".$syear => 'Nov', "12".$syear => 'Semester 2', "1".$next_syear => 'Jan', "2".$next_syear => 'Feb', "3".$next_syear => 'Mar',
+                "1".$syear => 'Jan', "2".$syear => 'Feb', "3".$syear => 'Mar',"4".$syear => 'Apr', "5".$syear => 'May', "6".$syear => getMonthHeader(6, $syear), "7".$syear => 'Jul', "8".$syear => 'Aug',
+                "9".$syear => 'Sep', "10".$syear => 'Oct', "11".$syear => 'Nov', "12".$syear => getMonthHeader(12, $syear), "1".$next_syear => 'Jan', "2".$next_syear => 'Feb', "3".$next_syear => 'Mar',
             ];
 
             $grade_name = DB::table('academic_section')

@@ -32,6 +32,7 @@ use function Illuminate\Session\expired;
 use App\Models\fees\fees_breackoff\fees_breackoff;
 use function App\Helpers\SearchStudent;
 use function App\Helpers\getStudents;
+use function App\Helpers\getMonthHeader;
 use App\Http\Controllers\easy_com\send_sms_parents\send_sms_parents_controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
@@ -1283,8 +1284,8 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
     public function gunrate_receipt($receipt_id, $receipt_arr, $id_heads,$sub_institute_id='',$syear='',$inProcess='')
     {
         $months = [
-            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Semester 1', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep',
-            10 => 'Oct', 11 => 'Nov', 12 => 'Semester 2',
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
+            9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
         ];
         if($sub_institute_id==''){
             $sub_institute_id=session()->get($sub_institute_id);
@@ -1296,29 +1297,8 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         $month_name = [];
         
         foreach ($_REQUEST['months'] as $monthId) {
-            $month_header = DB::table('fees_month_header')
-                ->where('sub_institute_id', $sub_institute_id)
-                ->where('month_id', $monthId)
-                ->first();
-        
-            if ($month_header) {
-                $month_header_name[] = $month_header->header;
-            } else {
-                $month_header_name[] = 'N/A';
-            }
-        
-            $y = $monthId / 10000;
-            $month = (int)$y;
-            $year = substr($monthId, -4);
-            
-            // Convert to semester name for display
-            if ($month == 6) {
-                $month_name[] = "Semester 1";
-            } elseif ($month == 12) {
-                $month_name[] = "Semester 2";
-            } else {
-                $month_name[] = $months[$month] . "/" . $year;
-            }
+            $month_header_name[] = getMonthHeader(substr($monthId, 0, -4), substr($monthId, -4));
+            $month_name[] = getMonthHeader(substr($monthId, 0, -4), substr($monthId, -4));
         }
         
         $month_header_name = implode(', ', $month_header_name);
@@ -1359,32 +1339,14 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $y = $arr['term_id'] / 10000;
             $month = (int)$y;
             $year = substr($arr['term_id'], -4);
-            
-            // Convert to semester name for display
-            if ($month == 6) {
-                $month_name2 = "Semester 1,";
-            } elseif ($month == 12) {
-                $month_name2 = "Semester 2,";
-            } else {
-                $month_name2 = $months[$month] . ',';
-            }
-            $fees_paid_name[$id]['term_id'] = substr($month_name2, 0, -1);
+            $fees_paid_name[$id]['term_id'] = getMonthHeader($month, $year);
         }
 
         foreach ($fees_paid_other_name as $id => $arr) {
             $y = $arr['month_id'] / 10000;
             $month = (int)$y;
             $year = substr($arr['month_id'], -4);
-            
-            // Convert to semester name for display
-            if ($month == 6) {
-                $month_name2 = "Semester 1,";
-            } elseif ($month == 12) {
-                $month_name2 = "Semester 2,";
-            } else {
-                $month_name2 = $months[$month] . ',';
-            }
-            $fees_paid_other_name[$id]['month_id'] = substr($month_name2, 0, -1);
+            $fees_paid_other_name[$id]['month_id'] = getMonthHeader($month, $year);
         }
         $fees_paid = DB::table('fees_collect as fc')
             ->join('fees_receipt as fr', function ($join) {
@@ -2141,8 +2103,8 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $end_month = $data[0]['to_month'];
 
             $months = [
-                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Semester 1', 7 => 'Jul', 8 => 'Aug',
-                9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Semester 2',
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep',
+                10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
             ];
             $months_arr = [];
 
@@ -2434,30 +2396,21 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         }
         // end 08-01-2025 by uma for ssmission
 
-        // Override month names for Semester 1 and 2
+        // Override month names using dynamic headers
         foreach ($month_arr as $key => $val) {
             $month = (int)substr($key, 0, -4);
-            if ($month == 6) {
-                $month_arr[$key] = 'Semester 1';
-            } elseif ($month == 12) {
-                $month_arr[$key] = 'Semester 2';
-            }
+            $year = substr($key, -4);
+            $month_arr[$key] = getMonthHeader($month, $year);
         }
         foreach ($month_arr2 as $key => $val) {
             $month = (int)substr($key, 0, -4);
-            if ($month == 6) {
-                $month_arr2[$key] = 'Semester 1';
-            } elseif ($month == 12) {
-                $month_arr2[$key] = 'Semester 2';
-            }
+            $year = substr($key, -4);
+            $month_arr2[$key] = getMonthHeader($month, $year);
         }
         foreach ($year_arr as $key => $val) {
             $month = (int)substr($key, 0, -4);
-            if ($month == 6) {
-                $year_arr[$key] = 'Semester 1';
-            } elseif ($month == 12) {
-                $year_arr[$key] = 'Semester 2';
-            }
+            $year = substr($key, -4);
+            $year_arr[$key] = getMonthHeader($month, $year);
         }
 
         $currunt_month = date('m');

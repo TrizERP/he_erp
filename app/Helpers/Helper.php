@@ -2444,7 +2444,7 @@ if (!function_exists('get_string')) {
         }
     }
 
-    // 28-04-2025 
+    // 28-04-2025
     if (!function_exists('getDataWithId')) {
         function getDataWithId($id,$type,$table_name='',$field=''){
             $name='-';
@@ -2464,5 +2464,28 @@ if (!function_exists('get_string')) {
             }
            return $name;
        }
+    }
+
+    if (!function_exists('getMonthHeader')) {
+        function getMonthHeader($month, $year, $sub_institute_id = null) {
+            if (!$sub_institute_id) {
+                $sub_institute_id = session()->get('sub_institute_id');
+            }
+            $month_id = $month . $year;
+            $query = DB::table('fees_month_header')->where(['sub_institute_id' => $sub_institute_id, 'month_id' => $month_id])->first();
+            if ($query && $query->header) {
+                return $query->header;
+            } else {
+                // fallback to default
+                $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'];
+                if ($month == 6) {
+                    return "Semester 1";
+                } elseif ($month == 12) {
+                    return "Semester 2";
+                } else {
+                    return $months[$month] . '/' . $year;
+                }
+            }
+        }
     }
 }
