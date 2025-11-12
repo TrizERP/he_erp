@@ -161,55 +161,74 @@ $(document).ready(function() {
                 extend: 'print',
                 title: '',
                 customize: function(win) {
-                    const printable = win.document.body;
-                    printable.innerHTML = document.getElementById('printableArea').innerHTML;
+    const printable = win.document.body;
+    printable.innerHTML = document.getElementById('printableArea').innerHTML;
 
-                    // Add school details
-                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
+    // Add school details
+    $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
 
-                    // Add bold table borders
-                    const style = `
-                        <style>
-                            @media print {
-                                body { font-family: Arial, Helvetica, sans-serif; }
-                                table#example {
-                                    width: 100% !important;
-                                    border-collapse: collapse !important;
-                                    border: 3px solid #000 !important;
-                                }
-                                table#example th,
-                                table#example td {
-                                    border: 2px solid #000 !important;
-                                    padding: 6px 8px !important;
-                                    text-align: center !important;
-                                    font-size: 12px !important;
-                                }
-                                table#example thead th {
-                                    background-color: #f2f2f2 !important;
-                                    font-weight: bold !important;
-                                    border-bottom: 3px solid #000 !important;
-                                }
-                                .print-footer {
-                                    width: 100%;
-                                    text-align: right;
-                                    font-weight: 600;
-                                    font-family: Arial, Helvetica, sans-serif;
-                                    font-size: 12px;
-                                    margin-top: 10px;
-                                }
-                                @page { size: A4 portrait; margin: 15mm; }
-                            }
-                        </style>
-                    `;
-                    $(win.document.head).append(style);
-
-                    // Add print footer
-                    const now = new Date();
-                    const formatted = now.toLocaleString('en-IN', { hour12: true });
-                    $(win.document.body).append(`
-                        <div class="print-footer">Printed on: ${formatted}</div>
-                    `);
+    // Add bold table borders
+    const style = `
+        <style>
+            @media print {
+                body { 
+                    font-family: Arial, Helvetica, sans-serif; 
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
                 }
+
+                table#example {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                    border: 3px solid #000 !important;
+                    margin-top: 10px !important;
+                }
+
+                table#example th,
+                table#example td {
+                    border: 2px solid #000 !important;
+                    padding: 6px 8px !important;
+                    text-align: center !important;
+                    font-size: 12px !important;
+                }
+
+                table#example thead th {
+                    background-color: #f2f2f2 !important;
+                    font-weight: bold !important;
+                    border-bottom: 3px solid #000 !important;
+                }
+
+                .print-footer {
+                    width: 100%;
+                    text-align: right;
+                    font-weight: 600;
+                    font-family: Arial, Helvetica, sans-serif;
+                    font-size: 12px;
+                    margin-top: 10px;
+                }
+
+                @page {
+                    size: A4 portrait;
+                    margin: 15mm 10mm 20mm 10mm;
+                    @bottom-right {
+                        content: "Page " counter(page) " / " counter(pages);
+                        font-size: 12px;
+                        font-family: Arial, Helvetica, sans-serif;
+                    }
+                }
+            }
+        </style>
+    `;
+    $(win.document.head).append(style);
+
+    // Add print footer (timestamp)
+    const now = new Date();
+    const formatted = now.toLocaleString('en-IN', { hour12: true });
+    $(win.document.body).append(`
+        <div class="print-footer">Printed on: ${formatted}</div>
+    `);
+}
+
             },
             'csv', 'excel', 'pageLength'
         ]
