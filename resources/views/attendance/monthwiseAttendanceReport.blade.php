@@ -90,20 +90,21 @@
         </div>
 
         @if (!empty($data['student_data']))
-            <div class="card">
-                @php
-                    echo App\Helpers\get_school_details($grade_id, $standard_id, $division_id);
-                @endphp
+            <div class="card" id="printableArea">
 
-                <div style="text-align:center">
-                    <span style="font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif !important; display:block; margin-top: 15px; margin-bottom: 5px;">
-                        Academic Year : {{ $syear }} - {{ $nextYear }}
-                    </span>
+                {{-- ✅ SHOW SCHOOL DETAILS SAME AS PRINT --}}
+                <div class="school-detail">
+                     {!! App\Helpers\get_school_details($grade_id, $standard_id, $division_id) !!}
                 </div>
 
-                <h1 style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family: Arial, Helvetica, sans-serif !important;">
+                <div class="academic-year" style="text-align:center; font-size:15px; font-weight:600; margin-top:15px; font-family:Arial, Helvetica, sans-serif;">
+                    Academic Year : {{ $syear }} - {{ $nextYear }}
+                </div>
+
+                <h1 class="report-title" style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family:Arial, Helvetica, sans-serif;">
                     Subject Month to Month Report
                 </h1>
+
 
                 <div class="table-responsive">
                     <table id="example" class="table display" style="border:none !important">
@@ -193,20 +194,131 @@ $(document).ready(function() {
                 text: ' PRINT',
                 title: '',
                 customize: function (win) {
-                    $(win.document.body).find('th, td').css({
-                        'color':'black',
-                        'text-align':'center',
-                        
-                        'padding':'6px'
-                    });
-                    $(win.document.body).find('table').css({
-                        'border-collapse':'collapse',
-                        'width':'100%',
-                        
-                    });
-                    $(win.document.body).prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}`);
-                    $(win.document.body).prepend(`<center><span style='font-size:12px;font-weight:600;font-family:Arial,Helvetica,sans-serif !important;display:block;margin-top:15px;margin-bottom:5px;'>Academic Year : {{ $syear }} - {{ $nextYear }}</span></center>`);
-                    $(win.document.body).prepend("<h1 style='text-align:center;font-size:20px;font-weight:700;text-transform:uppercase;margin-top:5px;margin-bottom:15px;font-family:Arial,Helvetica,sans-serif !important;'>Subject Month to Month Report</h1>");
+                    $(win.document.body).html($('#printableArea').html());
+
+                    const style = `
+                          <style>
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 0cm 1.2cm 2cm 1.2cm; /* remove top margin for perfect alignment */
+        @bottom-right {
+            content: "Page " counter(page) " / " counter(pages);
+        }
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif !important;
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+     /* ✅ Hide export buttons */
+    .dt-buttons,
+    .btn {
+        display: none !important;
+    }
+
+    /* ===== SCHOOL DETAILS ===== */
+    .school-details {
+        text-align: center !important;
+        border: none !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .school-details h1,
+    .school-details h2,
+    .school-details h3,
+    .school-details h4 {
+        color: black !important;
+        white-space: nowrap !important;
+        margin-top: 0 !important;
+        margin-bottom: 5px !important;
+        text-align: center !important;
+    }
+
+    /* ===== REPORT TABLE: BOLD BLACK BORDERS ===== */
+    #example {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 3px solid black !important; /* 🔥 Bold outer border */
+        background: white !important;
+        box-sizing: border-box !important;
+        margin-top: 0 !important;
+        color: black !important;
+    }
+
+    #example th,
+    #example td {
+        border: 2px solid black !important; /* 🔥 Bold inner borders */
+         color: #000000 !important;
+        background: white !important;
+        text-align: center !important;
+        padding: 6px !important;
+        font-size: 13px !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+    #example th {
+        font-weight: bold !important;
+        background-color: #f2f2f2 !important;
+         color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* ===== SIGNATURE AREA ===== */
+.signature-block {
+    display: flex;
+    justify-content: space-between !important;
+    margin-top: 40px !important;
+    padding: 0 20px !important;
+    color: #000000 !important; 
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Ensure all inner text in signature section stays black */
+.signature-block * {
+    color: #000000 !important;
+}
+
+/* Signature line with black border and text */
+.signature-line {
+    border-top: 2px solid #000000 !important;
+    padding-top: 5px;
+    text-align: center;
+    width: 150px;
+    color: #000000 !important;
+    font-size: 13px !important;
+    font-weight: normal !important;
+    background: transparent !important;
+}
+
+    /* ===== FORCE BLACK TEXT EVERYWHERE ===== */
+    * {
+        color: black !important;
+    }
+
+    /* ===== FORCE BLACK TEXT EVERYWHERE ===== */
+    *,
+    h1, h2, h3, h4, h5, h6,
+    th, td, p, span, label, strong, b, i, u {
+        color: #000000 !important;
+        background: transparent !important;
+        border-color: #000000 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+
+
+                    `;
+                    $(win.document.head).append(style);
                 }
             }
         ]
@@ -297,74 +409,6 @@ $(document).on('change', '#lecture_type', function() {
     $('#lecture_type').trigger('change');
 @endif
 </script>
-
-<style>
-@media print {
-
-    /* ===== REMOVE BORDER FROM SCHOOL + ACADEMIC SECTION ===== */
-    .school-header,
-    .report-title,
-    .academic-section,
-    .academic-year {
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        color: black !important;
-        text-align: center !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-    }
-
-    .school-header {
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        margin-bottom: 5px !important;
-    }
-
-    .academic-section,
-    .academic-year {
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        margin-bottom: 5px !important;
-    }
-
-    /* ===== TABLE SECTION (BOLD BORDERS) ===== */
-    table {
-        width: 100%;
-        border-collapse: collapse !important;
-        border: 3px solid black !important;
-        margin-top: 10px !important;
-    }
-
-    table th,
-    table td {
-        border: 2px solid black !important;
-        color: black !important;
-        padding: 6px 8px !important;
-        text-align: center !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-        font-size: 13px !important;
-    }
-
-    table th {
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        background: #f9f9f9 !important;
-    }
-
-    /* ===== PAGE NUMBER (Bottom Right) ===== */
-    @page {
-        size: A4 portrait;
-        margin: 1.5cm;
-        @bottom-right {
-            content: "Page " counter(page) " / " counter(pages);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
-            color: black;
-        }
-    }
-}
-</style>
-
 
 
 
