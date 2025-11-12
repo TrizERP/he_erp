@@ -137,13 +137,32 @@
                                     <td>{{ $present }}</td>
                                     <td>{{ $absent }}</td>
                                     @php
-                                    	$per = round(100 * $present / $total,2);
+                                        $per = ($total > 0) ? round(100 * $present / $total, 2) : 0;
                                 	@endphp
                                     <td>{{ $per }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <div style="margin-top: 60px; padding: 20px 0; width: 100%; color:black">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                            <div style="text-align: left; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Faculty
+                                </div>
+                            </div>
+                            <div style="text-align: center; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of HOD.
+                                </div>
+                            </div>
+                            <div style="text-align: right; width: 33%;">
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Principal
+                                </div>
+                            </div>
+                        </div>
+                    </div>                    
                 </div>
             </div>
         @endif
@@ -199,6 +218,55 @@
                                 Academic Year: {{ $syear }} - {{ $nextYear }}
                             </h4>
                         `);
+                    // Add print styles for bold borders and formatting
+                    const style = `
+                        <style>
+                            @media print {
+                                .signature-block {
+                                    margin-top: 60px;
+                                    display: flex;
+                                    justify-content: space-between;
+                                    width: 100%;
+                                }
+
+                                .signature {
+                                    border-top: 3px solid #000;
+                                    padding-top: 5px;
+                                    width: 30%;
+                                    text-align: center;
+                                    color:#000;
+                                }
+                                .print-footer {
+                                    margin-top: 20px;
+                                    font-size: 12px;
+                                    text-align: left;
+                                    color:#000;
+                                }
+
+                                @page {
+                                    size: A4 landscape;
+                                    margin: 5mm 5mm 5mm 5mm;
+                                    @bottom-right {
+                                        content: "Page " counter(page) " / " counter(pages);
+                                        font-size: 12px;
+                                        font-family: Arial, Helvetica, sans-serif;
+                                    }
+                                }
+                            }
+                        </style>
+                    `;
+                    $(win.document.head).append(style);
+                        // Append signatures and print date
+                    const now = new Date();
+                    const formatted = now.toLocaleString('en-IN', { hour12: true });
+                    $(win.document.body).append(`
+                        <div class="signature-block">
+                            <div class="signature">Sign of Faculty</div>
+                            <div class="signature">Sign of HOD</div>
+                            <div class="signature">Sign of Principal</div>
+                        </div>
+                        <div class="print-footer">Printed on: ${formatted}</div>
+                    `);
                     }
                 },
             ],
