@@ -2495,13 +2495,9 @@ if (!function_exists('get_string')) {
             } else {
                 // fallback to default
                 $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'];
-                if ($month == 6) {
-                    return "Semester 1";
-                } elseif ($month == 12) {
-                    return "Semester 2";
-                } else {
+                
                     return $months[$month] . '/' . $year;
-                }
+                
             }
         }
     }
