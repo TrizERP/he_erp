@@ -16,9 +16,15 @@
         $syear = session()->get('syear');
         $nextYear = $syear + 1;
         $batch = [];
-        if (isset($data['from_date'])) $from_date = $data['from_date'];
-        if (isset($data['to_date'])) $to_date = $data['to_date'];
-        if (isset($data['batch'])) $batch = $data['batch'];
+        if (isset($data['from_date'])) {
+            $from_date = $data['from_date'];
+        }
+        if (isset($data['to_date'])) {
+            $to_date = $data['to_date'];
+        }
+        if (isset($data['batch'])) {
+            $batch = $data['batch'];
+        }
         if (isset($data['grade_id'])) {
             $grade_id = $data['grade_id'];
             $standard_id = $data['standard_id'];
@@ -32,16 +38,16 @@
         <form action="{{ route('semwise_report.create') }}">
             @csrf
             <div class="row">
+
                 {{ App\Helpers\SearchChain('2', 'single', 'grade,std,div', $grade_id, $standard_id, $division_id) }}
 
                 <div class="form-group col-md-2">
                     <label>Type</label>
                     <select class="form-control" name="att_type" id="att_type" required>
                         <option>Select</option>
-                        @foreach ($att_type as $value)
+                        @foreach ($att_type as $key => $value)
                             <option value="{{ $value }}" @if (isset($data['attendance_type']) && $data['attendance_type'] == $value) selected @endif>
-                                {{ $value }}
-                            </option>
+                                {{ $value }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -50,31 +56,31 @@
                     <label>Batch</label>
                     <select class="form-control" name="batch" id="batch">
                         @if (!empty($batch))
-                            @foreach ($batch as $value)
+                            @foreach ($batch as $key => $value)
                                 <option value="{{ $value->id }}" @if (isset($data['batch_id']) && $data['batch_id'] == $value->id) selected @endif>
-                                    {{ $value->title }}
-                                </option>
+                                    {{ $value->title }}</option>
                             @endforeach
                         @endif
                     </select>
                 </div>
 
-                <div class="form-group col-md-2">
-                    <label>Report Type</label>
-                    <select class="form-control" name="report_type" required>
-                        <option value="">Select</option>
-                        @foreach ($report_type as $key => $value)
-                            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $key) selected @endif>
-                                {{ $value }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+               <div class="form-group col-md-2">
+    <label>Report Type</label>
+    <select class="form-control" name="report_type" required>
+        <option value="">Select</option>
+        @foreach ($report_type as $key => $value)
+            <option value="{{ $key }}" @if (isset($data['report_type']) && $data['report_type'] == $key) selected @endif>
+                {{ $value }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
 
                 <div class="form-group col-md-2">
                     <label>Below Percent(%)</label>
                     <input type="number" class="form-control" name="below_percent"
-                        value="{{ $data['below_percent'] ?? '' }}" autocomplete="off">
+                        @if (isset($data['below_percent'])) value="{{ $data['below_percent'] }}" @endif autocomplete="off">
                 </div>
 
                 <div class="form-group col-md-2">
@@ -88,6 +94,7 @@
                     <input type="text" id="to_date" name="to_date" value="{{ $to_date }}"
                         class="form-control mydatepicker" autocomplete="off" required>
                 </div>
+
             </div>
 
             <div class="col-md-12 form-group">
@@ -104,159 +111,71 @@
             @csrf
             <div class="row">
                 <div class="table-responsive">
-                    <div class="school-details">
-                        {!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}
-                    </div>
+                    {!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}
 
+                    {{-- ✅ Academic Year Label Added Here --}}
                     @php
-                        $getInstitutes = session()->get('getInstitutes');
-                        $academicYears = session()->get('academicYears');
+                         $getInstitutes = session()->get('getInstitutes');
+                         $academicYears = session()->get('academicYears');
                     @endphp
-
                     <h4 style="text-align: center; font-size: 15px; font-weight: 600; font-family: Arial, Helvetica, sans-serif; margin-top: 8px;">
                         Academic Year: {{ $syear }} - {{ $nextYear }}
                     </h4>
 
+                    {{-- ✅ Report Title Below Academic Year --}}
                     <h1 style="text-align: center; font-size: 20px; margin-top: 5px; font-family: Arial, Helvetica, sans-serif; font-weight: 700;">
                         All Subject Semesterwise Report
                     </h1>
 
-                    <style>
-@media print {
-    @page {
-        size: A4 portrait;
-        margin: 1.2cm 1.5cm 2cm 1.5cm;
-        @bottom-right {
-            content: "Page " counter(page) " / " counter(pages);
-        }
-    }
+                    <table id="example" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>SR No <input type="checkbox" name="checkAll" id="checkAll"> </th>
+                                <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
+                                <th>{{ App\Helpers\get_string('studentname', 'request') }}</th>
+                                @php $tot = 0; $i = 1; @endphp
+                                @foreach ($data['header'] as $index => $value)
+                                    <th>{{ $value->short_name }}({{ $value->TOTAL_LEC }})</th>
+                                    @php $tot += isset($value->TOTAL_LEC) ? $value->TOTAL_LEC : 0; @endphp
+                                @endforeach
+                                <th>Total({{ $tot }})</th>
+                                <th class="text-left">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (isset($data['details']))
+                                @foreach ($data['details'] as $key => $val)
+                                    <tr>
+                                        <td>{{ $i++ }} <input type="checkbox" name="student[{{ $val['student_id'] }}]" id="singleCheck"></td>
+                                        <td>{{ $val['enrollment_no'] }}</td>
+                                        <td>{{ $val['student_name'] }}</td>
+                                        @foreach ($data['header'] as $index => $value)
+                                            <td>{{ $val['COURSE_' . $value->subject_id] ?? 0 }}</td>
+                                        @endforeach
+                                        <td>{{ $val['TOTAL'] }}</td>
+                                        <td>{{ $val['TOTAL_PERCENTAGE'] }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        </tbody>
+                    </table>
 
-    body {
-        font-family: Arial, Helvetica, sans-serif !important;
-        background: white !important;
-        color: black !important;
-    }
-
-    /* ===== SCHOOL DETAILS: BLACK TEXT, NO BORDER ===== */
-    .school-details,
-    .school-details * {
-        color: black !important;
-        background: white !important;
-        border: none !important;
-        margin-top: 0 !important;
-        padding: 0 !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-    }
-
-    /* ===== FULL TABLE BOLD BLACK BORDER (INNER + OUTER) ===== */
-    #example {
-        border-collapse: collapse !important;
-        width: 100% !important;
-        background: white !important;
-        border: 3px solid black !important; /* outer frame border */
-        box-sizing: border-box !important;
-    }
-
-    #example th,
-    #example td {
-        border: 2px solid black !important;  /* inner cell borders */
-        color: black !important;
-        background: white !important;
-        text-align: center !important;
-        padding: 6px !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-    }
-
-    #example th {
-        font-weight: bold !important;
-        background-color: #f5f5f5 !important;
-        -webkit-print-color-adjust: exact !important;
-    }
-
-    /* ===== HEADINGS ===== */
-    h1, h4 {
-        color: black !important;
-        margin-top: 0 !important;
-        text-align: center !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-    }
-
-    /* ===== SIGNATURE AREA ===== */
-    .signature-line {
-        display: inline-block;
-        border-top: 2px solid black !important;
-        padding-top: 5px;
-        margin-top: 50px;
-        color: black !important;
-    }
-
-    .signature-block {
-        display: flex;
-        justify-content: space-between !important;
-        align-items: flex-start !important;
-        width: 100% !important;
-        color: black !important;
-        margin-top: 60px !important;
-        padding: 20px 0 !important;
-    }
-
-    /* ===== FORCE ALL TEXT BLACK EVEN IN FOOTER OR HEADER ===== */
-    * {
-        color: black !important;
-    }
-}
-</style>
-<table id="example" class="table table-striped">
-    <thead>
-        <tr>
-            <th>SR No <input type="checkbox" name="checkAll" id="checkAll"> </th>
-            <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
-            <th>{{ App\Helpers\get_string('studentname', 'request') }}</th>
-            @php $tot = 0; $i = 1; @endphp
-            @foreach ($data['header'] as $value)
-                <th>{{ $value->short_name }}({{ $value->TOTAL_LEC }})</th>
-                @php $tot += $value->TOTAL_LEC ?? 0; @endphp
-            @endforeach
-            <th>Total({{ $tot }})</th>
-
-            {{-- ✅ Show % column only when report_type != "pw" --}}
-            @if(isset($data['report_type']) && $data['report_type'] != 'pw')
-                <th class="text-left">%</th>
-            @endif
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($data['details'] ?? [] as $val)
-            <tr>
-                <td>{{ $i++ }} <input type="checkbox" name="student[{{ $val['student_id'] }}]" id="singleCheck"></td>
-                <td>{{ $val['enrollment_no'] }}</td>
-                <td>{{ $val['student_name'] }}</td>
-
-                @foreach ($data['header'] as $value)
-                    <td>{{ $val['COURSE_' . $value->subject_id] ?? 0 }}</td>
-                @endforeach
-
-                <td>{{ $val['TOTAL'] }}</td>
-
-                {{-- ✅ Show % column only when report_type != "pw" --}}
-                @if(isset($data['report_type']) && $data['report_type'] != 'pw')
-                    <td>{{ $val['TOTAL_PERCENTAGE'] }}</td>
-                @endif
-            </tr>
-        @endforeach
-    </tbody>
-</table>
-
-                    <div class="signature-block" style="margin-top: 60px; padding: 20px 0; width: 100%; color:black;">
+                    <div style="margin-top: 60px; padding: 20px 0; width: 100%; color:black">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                             <div style="text-align: left; width: 33%;">
-                                <div class="signature-line">Sign of Faculty</div>
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Faculty
+                                </div>
                             </div>
                             <div style="text-align: center; width: 33%;">
-                                <div class="signature-line">Sign of HOD</div>
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of HOD.
+                                </div>
                             </div>
                             <div style="text-align: right; width: 33%;">
-                                <div class="signature-line">Sign of Principal</div>
+                                <div style="border-top: 1px solid #000; padding-top: 5px; display: inline-block;">
+                                    Sign of Principal
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -272,10 +191,9 @@
     </div>
     @endif
 </div>
-
 @include('includes.footerJs')
 
-<script>
+<script type="text/javascript">
 $(document).ready(function() {
     $('#batch_div').hide();
     var selectVal = $('#att_type').val();
@@ -310,8 +228,10 @@ $(document).ready(function() {
         }
     });
 
+    // jQuery checkAll functionality
     $('#checkAll').on('change', function() {
-        $('input[name^="student["]').prop('checked', $(this).is(':checked'));
+        var isChecked = $(this).is(':checked');
+        $('input[name^="student["]').prop('checked', isChecked);
     });
 });
 </script>
@@ -320,7 +240,7 @@ $(document).ready(function() {
 
 <script>
 $(document).ready(function() {
-    $('#example').DataTable({
+    var table = $('#example').DataTable({
         paging: false,
         ordering: false,
         searching: false,
@@ -337,139 +257,131 @@ $(document).ready(function() {
                 text: 'PRINT',
                 title: '',
                 customize: function (win) {
+                    // Add school details and report title
+                    $(win.document.body)
+                        .prepend(`{!! App\Helpers\get_school_details($grade_id ?? '', $standard_id ?? '', $division_id ?? '') !!}
+                            <h4 style="text-align:center; font-size:13px; font-weight:600; font-family:Arial, Helvetica, sans-serif;">
+                                Academic Year: {{ $syear }} - {{ $nextYear }}
+                            </h4>
+                            <h1 style="text-align:center; font-size:20px; margin-top:5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;">
+                                All Subject Semesterwise Report
+                            </h1>`);
 
-                    // ✅ Always prepend school details, even when % column is shown/hidden
-                    $(win.document.body).prepend(`
-                        <div class="school-details">
-                            {!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}
-                        </div>
-                        <h4 style="text-align:center;font-size:13px;font-weight:600;font-family:Arial,Helvetica,sans-serif;color:black;">
-                            Academic Year: {{ $syear }} - {{ $nextYear }}
-                        </h4>
-                        <h1 style="text-align:center;font-size:20px;margin-top:5px;font-weight:700;font-family:Arial,Helvetica,sans-serif;color:black;">
-                            All Subject Semesterwise Report
-                        </h1>
-                    `);
+                    // ✅ Hide % column in print if Percentage wise is selected
+                    var reportType = $('select[name="report_type"]').val();
+                    if (reportType === 'pw') {
+                        $(win.document.body).find('table#example th:last-child, table#example td:last-child').remove();
+                    }
 
-                    
-
-                    // ✅ Add custom CSS for borders and colors
+                    // Add print styles for bold borders and formatting
                     const style = `
-        <style>
-@media print {
-    @page {
-        size: A4 portrait;
-        margin: 0cm 1.5cm 2cm 1.5cm; /* remove top margin for perfect alignment */
-        @bottom-right {
-            content: "Page " counter(page) " / " counter(pages);
-        }
-    }
+                        <style>
+                            @media print {
+                                body {
+                                    font-family: Arial, Helvetica, sans-serif !important;
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                }
 
-    body {
-        font-family: Arial, Helvetica, sans-serif !important;
-        background: white !important;
-        color: black !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
+                                table#example {
+                                    width: 100% !important;
+                                    border-collapse: collapse !important;
+                                    border: 3px solid black !important;
+                                    margin-top: 10px !important;
+                                }
 
-    /* ===== SCHOOL DETAILS ===== */
-    .school-details {
-        text-align: center !important;
-        border: none !important;
-        background: transparent !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-    }
+                                table#example th,
+                                table#example td {
+                                    border: 2px solid black !important;
+                                    padding: 6px 8px !important;
+                                    text-align: center !important;
+                                    font-size: 12px !important;
+                                }
 
-    .school-details h1,
-    .school-details h2,
-    .school-details h3,
-    .school-details h4 {
-        color: black !important;
-        margin-top: 0 !important;
-        margin-bottom: 5px !important;
-        text-align: center !important;
-    }
+                                table#example thead th {
+                                    background-color: #f2f2f2 !important;
+                                    font-weight: bold !important;
+                                    border-bottom: 3px solid black !important;
+                                }
 
-    /* ===== REPORT TABLE: BOLD BLACK BORDERS ===== */
-    #example {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        border: 3px solid black !important; 
-        background: white !important;
-        box-sizing: border-box !important;
-        margin-top: 0 !important;
-         color: black !important;
-    }
+                                table#example tbody tr:nth-child(odd) {
+                                    background-color: #f9f9f9 !important;
+                                }
 
-    #example th,
-    #example td {
-        border: 2px solid black !important; 
-        color: black !important;
-        background: white !important;
-        text-align: center !important;
-        padding: 6px !important;
-        font-size: 13px !important;
-        font-family: Arial, Helvetica, sans-serif !important;
-    }
+                                table#example tbody tr:nth-child(even) {
+                                    background-color: #ffffff !important;
+                                }
 
-    #example th {
-        font-weight: bold !important;
-        background-color: #f2f2f2 !important;
-        -webkit-print-color-adjust: exact !important;
-    }
+                                .signature-block {
+                                    margin-top: 60px;
+                                    display: flex;
+                                    justify-content: space-between;
+                                    width: 100%;
+                                }
 
-    /* ===== SIGNATURE AREA ===== */
-    .signature-block {
-        display: flex;
-        justify-content: space-between !important;
-        margin-top: 40px !important;
-        padding: 0 20px !important;
-        color: black !important;
-    }
+                                .signature {
+                                    border-top: 3px solid #000;
+                                    padding-top: 5px;
+                                    width: 30%;
+                                    text-align: center;
+                                }
 
-    .signature-line {
-        border-top: 2px solid black !important;
-        padding-top: 5px;
-        text-align: center;
-        width: 150px;
-    }
+                                .print-footer {
+                                    margin-top: 20px;
+                                    font-size: 12px;
+                                    text-align: left;
+                                }
 
-    /* ===== FORCE BLACK TEXT EVERYWHERE ===== */
-    * {
-        color: black !important;
-    }
-}
-</style>
+                                @page {
+                                    size: A4 landscape;
+                                    margin: 15mm 10mm 20mm 10mm;
+                                    @bottom-right {
+                                        content: "Page " counter(page) " / " counter(pages);
+                                        font-size: 12px;
+                                        font-family: Arial, Helvetica, sans-serif;
+                                    }
+                                }
+                            }
+                        </style>
                     `;
                     $(win.document.head).append(style);
 
-                    // ✅ Signature area always at end
+                    // Append signatures and print date
+                    const now = new Date();
+                    const formatted = now.toLocaleString('en-IN', { hour12: true });
                     $(win.document.body).append(`
-                        <div class="signature-block" style="margin-top: 60px; padding: 20px 0; width: 100%; color:black;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                                <div style="text-align: left; width: 33%;">
-                                    <div class="signature-line" style="border-top:2px solid black; padding-top:5px;">Sign of Faculty</div>
-                                </div>
-                                <div style="text-align: center; width: 33%;">
-                                    <div class="signature-line" style="border-top:2px solid black; padding-top:5px;">Sign of HOD</div>
-                                </div>
-                                <div style="text-align: right; width: 33%;">
-                                    <div class="signature-line" style="border-top:2px solid black; padding-top:5px;">Sign of Principal</div>
-                                </div>
-                            </div>
+                        <div class="signature-block">
+                            <div class="signature">Sign of Faculty</div>
+                            <div class="signature">Sign of HOD</div>
+                            <div class="signature">Sign of Principal</div>
                         </div>
-
-                       
+                        <div class="print-footer">Printed on: ${formatted}</div>
                     `);
                 }
             }
         ]
     });
+
+    // ✅ Hide/show % column on screen dynamically based on report type
+    function togglePercentageColumn() {
+        var reportType = $('select[name="report_type"]').val();
+        var lastColumnIndex = table.columns().count() - 1; // index of last column
+
+        if (reportType === 'pw') {
+            table.column(lastColumnIndex).visible(false); // hide %
+        } else {
+            table.column(lastColumnIndex).visible(true); // show %
+        }
+    }
+
+    togglePercentageColumn(); // initial check on load
+
+    $('select[name="report_type"]').on('change', function() {
+        togglePercentageColumn();
+    });
 });
 </script>
+
 
 
 @endsection
