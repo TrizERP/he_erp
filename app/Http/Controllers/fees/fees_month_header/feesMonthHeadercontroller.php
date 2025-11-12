@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use function App\Helpers\is_mobile;
-
+use function App\Helpers\getMonthHeader;
 class feesMonthHeadercontroller extends Controller
 {
 
@@ -37,16 +37,9 @@ class feesMonthHeadercontroller extends Controller
         $months_arr = [];
         $syear = session()->get('syear');
 
-        // Helper function to convert month to semester name
+        // Helper function to convert month to semester name using dynamic headers
         $getSemesterName = function($month, $year) use ($months)  {
-            // June (6) = Semester 1, December (12) = Semester 2
-            if ($month == 6) {
-                return "Semester 1";
-            } elseif ($month == 12) {
-                return "Semester 2";
-            }
-            // For other months, return original format
-            return $months[$month] . '/' . $year;
+            return getMonthHeader($month, $year);
         };
 
         if($data[0]['type'] == "yearly_fees")
