@@ -58,7 +58,16 @@ class update_fees_breackoff_controller extends Controller
             $start_month = $start_month + 1;
         }
 
-        $school_data['data']['ddMonth'] = $months_arr;
+        // Filter months to only include those with non-empty headers in fees_month_header
+        $existing_months = DB::table('fees_month_header')
+            ->where('sub_institute_id', session()->get('sub_institute_id'))
+            ->whereNotNull('header')
+            ->where('header', '!=', '')
+            ->pluck('month_id')
+            ->toArray();
+
+        $filtered_months = array_intersect_key($months_arr, array_flip($existing_months));
+        $school_data['data']['ddMonth'] = $filtered_months;
         $type = $request->input('type');
         return is_mobile($type, "fees/update_fees_breackoff/show", $school_data, "view");
     }
@@ -298,11 +307,6 @@ class update_fees_breackoff_controller extends Controller
                     $paid_arr['old'][$p_arr->student_quota] = 'Y';
                 }
             }
-            $next_syear = ($syear+1);
-            $month_name = [
-                "1".$syear => 'Jan', "2".$syear => 'Feb', "3".$syear => 'Mar',"4".$syear => 'Apr', "5".$syear => 'May', "6".$syear => getMonthHeader(6, $syear), "7".$syear => 'Jul', "8".$syear => 'Aug',
-                "9".$syear => 'Sep', "10".$syear => 'Oct', "11".$syear => 'Nov', "12".$syear => getMonthHeader(12, $syear), "1".$next_syear => 'Jan', "2".$next_syear => 'Feb', "3".$next_syear => 'Mar',
-            ];
 
             $grade_name = DB::table('academic_section')
             ->where('id', $_REQUEST['grade'])->get();
@@ -310,10 +314,15 @@ class update_fees_breackoff_controller extends Controller
             $std_name = DB::table('standard')
             ->where('id', $_REQUEST['standard'])->get();
 
+            $month_id = $_REQUEST['month_id'];
+            $month = (int) substr($month_id, 0, -4);
+            $year = (int) substr($month_id, -4);
+            $month_display = getMonthHeader($month, $year);
+
             $school_data['data']['paid_arr'] = $paid_arr;
             $school_data['grade']= $grade_name[0]->title;
             $school_data['standard']=$std_name[0]->name;
-            $school_data['month']=$month_name[$_REQUEST['month_id']];
+            $school_data['month']=$month_display;
             //END If fees collected breakoff cant be edited
 
             return is_mobile($type, "fees/update_fees_breackoff/edit", $school_data, "view");
