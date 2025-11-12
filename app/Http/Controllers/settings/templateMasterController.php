@@ -133,19 +133,20 @@ class templateMasterController extends Controller
         <li><b><< student_address >></b> : Student Address</li>
         <li><b><< admission_year >></b> : Admission year</li>
         <li><b><< year >></b> : Student Year like FY, Sy, TY</li>
-        <li><b><< current_year >></b> : Current Year like 2024-25</li>
+        <li><b><< current_year >></b> : Current Year for.e.g: 2002-03</li>
         <li><b><< date >></b> : Today Date</li>
         <li><b><< tution_fees >></b> : Student Regular Fees</li>
-        <li><b><< small_his_her >></b> : His/Her in Small</li>
+        <li><b><< small_his_her >></b> : his/her in Small</li>
         <li><b><< cap_his_her >></b> : His/Her in Capital</li>
-        <li><b><< small_he_she >></b> : He/She in Small</li>
+        <li><b><< small_he_she >></b> : he/she in Small</li>
         <li><b><< cap_he_she >></b> : He/She in Capital</li>
-        <li><b><< sem_start_date >></b> : Semister Start Date</li>
-        <li><b><< sem_end_date >></b> : Semister End Date</li>
+        <li><b><< sem_start_date >></b> : Semester Start Date</li>
+        <li><b><< sem_end_date >></b> : Semester End Date</li>
         <li><b><< pass_year >></b> : Passing Year</li>
         <li><b><< cgpa >></b> : CGPA</li>
         <li><b><< branch_name >></b> : Branch Name</li>
-        <li><b><< school_stream >></b> : School Name</li>
+        <li><b><< semester_stream >></b> : Semester stream</li>
+        <li><b><< short_standard_name >></b> : Semester short name</li>
         </ul>";
 
         return is_mobile($type, 'settings/view_all_tag', $data, "view");
