@@ -157,7 +157,7 @@ Route::get('payphi', function ($id = null) {
         Route::post('fees/fees_refund', 'showFees')->name('show_fees');
         Route::post('fees/save_fees_refund', 'saveFeesRefund')->name('save_fees_refund');
          Route::get('fees_refund_report_index', 'feesRefundReportIndex')->name("fees_refund_report_index");
-    Route::post('fees_refund_report', 'feesRefundReport')->name("fees_refund_report");
+    Route::get('fees_refund_report', 'feesRefundReport')->name("fees_refund_report");
     });
 
 

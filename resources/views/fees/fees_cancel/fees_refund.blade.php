@@ -17,15 +17,15 @@
     <div class="container-fluid">
         <div class="row bg-title">
             <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">Fees Refund Report</h4>
+                <h4 class="page-title">Fees Refund</h4>
             </div>
         </div>
 
         <div class="row bg-title">
             <div class="col-md-3 d-flex">
                 <input type="checkbox" id="toggle_cancel_refund" name="toggle_cancel_refund" checked
-                       data-toggle="toggle" data-on="Fees Cancel" data-off="Fees Refund" data-onstyle="warning"
-                       data-offstyle="danger" onchange="show_fees_cancel_refund();">
+                       data-toggle="toggle" data-on="Fees Refund" data-off="Fees Cancel" data-onstyle="danger"
+                       data-offstyle="warning" onchange="show_fees_cancel_refund();">
             </div>
         </div>
 
@@ -88,7 +88,7 @@
 
                     <div class="col-md-12 form-group">
                         <center>
-                            <input type="submit" name="submit" value="Search Refund Reports" class="btn btn-success">
+                            <input type="submit" name="submit" value="Search" class="btn btn-success">
                         </center>
                     </div>
                 </div>
@@ -168,10 +168,10 @@
     <script>
         function show_fees_cancel_refund() {
             if ($("#toggle_cancel_refund").prop("checked") == true) {
-                var path = "{{ route('fees_cancel.index') }}";
+                var path = "{{ route('fees_refund.index') }}";
                 location.href = path;
             } else {
-                var path1 = "{{ route('fees_refund.index') }}";
+                var path1 = "{{ route('fees_cancel.index') }}";
                 location.href = path1;
             }
         }
@@ -187,7 +187,7 @@
                 buttons: [
                     {
                         extend: 'pdfHtml5',
-                        title: 'Fees Refund Report',
+                        title: 'Fees Refund',
                         orientation: 'landscape',
                         pageSize: 'LEGAL',
                         exportOptions: {
@@ -201,9 +201,9 @@
                             });
                         }
                     },
-                    {extend: 'csv', text: ' CSV', title: 'Fees Refund Report'},
-                    {extend: 'excel', text: ' EXCEL', title: 'Fees Refund Report'},
-                    {extend: 'print', text: ' PRINT', title: 'Fees Refund Report'},
+                    {extend: 'csv', text: ' CSV', title: 'Fees Refund'},
+                    {extend: 'excel', text: ' EXCEL', title: 'Fees Refund'},
+                    {extend: 'print', text: ' PRINT', title: 'Fees Refund'},
                     'pageLength'
                 ],
             });
