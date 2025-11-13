@@ -156,6 +156,22 @@ class fees_breackoff_controller extends Controller
             }
             ++$start_month;
         } */
+$monthHeader = DB::table('fees_month_header')
+        ->where('sub_institute_id', session()->get('sub_institute_id'))
+        ->whereNotNull('header')
+        ->where('header', '!=', '')
+        ->orderBy('month_id')
+        ->get();
+
+    $months_arr = [];
+
+    foreach ($monthHeader as $m) {
+        $y = $m->month_id / 10000;
+        $month = (int)$y;
+        $year = substr($m->month_id, -4);
+
+        $months_arr[$m->month_id] = getMonthHeader($month, $year);
+    }
 
         $dataStore['data']['ddMonth'] = $months_arr;
 
