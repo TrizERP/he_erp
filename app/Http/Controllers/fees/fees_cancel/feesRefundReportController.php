@@ -15,7 +15,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use function App\Helpers\is_mobile;
 
-class feesRefundController extends Controller
+class feesRefundReportController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -106,55 +106,34 @@ class feesRefundController extends Controller
 
         $fees_title = $getBk['final_fee_name'];
         $fees_paid_data = DB::table('tblstudent as s')
-        ->join('tblstudent_enrollment as se', function ($join) {
-            $join->on('se.student_id', '=', 's.id')
-                 ->on('se.sub_institute_id', '=', 's.sub_institute_id');
-        })
-        ->join('standard as st', 'st.id', '=', 'se.standard_id')
-        ->join('fees_collect as fc', function ($join) {
-            $join->on('fc.student_id', '=', 's.id')
-                 ->on('fc.sub_institute_id', '=', 's.sub_institute_id')
-                 ->on('fc.syear', '=', 'se.syear')
-                 ->on('fc.standard_id', '=', 'se.standard_id');
-        })
-        ->select('fc.*', 's.enrollment_no')
-        ->where('s.id', $id)
-        ->where('fc.is_deleted', 'N')
-        ->where('s.sub_institute_id', $sub_institute_id)
-        ->get()
-        ->toArray();    
+            ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
+                $join->whereRaw("se.student_id = s.id AND se.sub_institute_id = s.sub_institute_id AND se.syear = '".$syear."'");
+            })
+            ->join('standard as st', function($join) use($marking_period_id) {
+                $join->on('st.id', '=', 'se.standard_id')
+                ->when($marking_period_id,function($query) use($marking_period_id){ // added on 03-03-2025
+                    $query->where('st.marking_period_id',$marking_period_id);
+                });
+            })
+            ->join('fees_collect as fc', function ($join) use ($syear) {
+                $join->whereRaw("fc.student_id = s.id AND fc.sub_institute_id = s.sub_institute_id AND fc.syear = '".$syear."'");
+            })->selectRaw('fc.*,s.enrollment_no')
+            ->where('s.id', $id)
+            ->where('s.sub_institute_id', $sub_institute_id)->get()->toArray();
 
         $PAID_DATA = json_decode(json_encode($fees_paid_data), true);
 
         $paid_data_title_wise = array();
-        //echo "<pre>";print_r($fees_title);print_r($PAID_DATA);exit;
-        $paid_data_title_wise = []; // To store sum per title
-
-        foreach ($PAID_DATA as $val) {
+        // echo "<pre>";print_r($fees_title);exit;                    
+        foreach ($PAID_DATA as $key => $val) {
             foreach ($fees_title as $fees_title_name => $fees_title_id) {
-                if (isset($val[$fees_title_id])) {
-                    // Convert to number (in case value is string)
-                    $amount = (float) $val[$fees_title_id];
-        
-                    // Add to existing total or initialize
-                    if (!isset($paid_data_title_wise[$fees_title_id])) {
-                        $paid_data_title_wise[$fees_title_id] = 0;
-                    }
-        
-                    $paid_data_title_wise[$fees_title_id] += $amount;
+                if(isset($val[$fees_title_id])){
+                $paid_data_title_wise[$fees_title_id] = $val[$fees_title_id].'/'.$fees_title_name;
                 }
             }
         }
-        // Optional: Combine ID + title for display
-        $paid_data_title_display = [];
-        foreach ($fees_title as $fees_title_name => $fees_title_id) {
-            if (isset($paid_data_title_wise[$fees_title_id])) {
-                $paid_data_title_display[$fees_title_id] = $paid_data_title_wise[$fees_title_id] . '/' . $fees_title_name;
-            }
-        }
-        //echo "<pre>";print_r($paid_data_title_display);exit;
         $res['stu_data'] = $getBk['stu_data'];
-        $res['paid_data_title_wise'] = $paid_data_title_display;
+        $res['paid_data_title_wise'] = $paid_data_title_wise;
         $res['bank_data'] = bankmasterModel::get()->toArray();
         $res['fees_config_data'] = tblfeesConfigModel::where([
             'sub_institute_id' => $sub_institute_id, 'syear' => $syear,
@@ -330,7 +309,7 @@ class feesRefundController extends Controller
         $cheque_no = $request->input('cheque_no');
         $bank_name = $request->input('bank_name');
         $bank_branch = $request->input('bank_branch');
-        $refund_remark = $request->input('refund_remark') ?? '';
+        $refund_remarks = $request->input('refund_remark');
         $marking_period_id=session()->get('term_id');
 
         $fees_controller = new fees_collect_controller;
@@ -478,7 +457,7 @@ class feesRefundController extends Controller
                         <tr class="double-border">
                             <td class="logo-width" align="left">';
 
-        $recHtml .= '    <img class="logo" src="'.$image_path.'" alt="LOGO">';
+        $recHtml .= '    <img class="logo" src="'.$image_path.'" alt="SCHOOL LOGO">';
         $recHtml .= '</td>';
         $recHtml .= '<td colspan="3" style="text-align:center !important;" align="center"> ';
         if ($receipt_book_arr->receipt_line_1 != '') {
@@ -592,8 +571,8 @@ class feesRefundController extends Controller
         $feesRefundLog['receipt_no'] = $RECEIPT_NO;
         $feesRefundLog['syear'] = $syear;
         $feesRefundLog['sub_institute_id'] = $sub_institute_id;
-        $feesRefundLog['student_id'] = $student_id;
         $feesRefundLog['standard_id'] = $standard_id;
+        $feesRefundLog['student_id'] = $student_id;
         $feesRefundLog['fees_html'] = $style.$recHtml_for_insert;
         $feesRefundLog['payment_mode'] = $payment_mode;
         $feesRefundLog['receipt_date'] = $receiptdate;
@@ -601,7 +580,7 @@ class feesRefundController extends Controller
         $feesRefundLog['cheque_no'] = $cheque_no;
         $feesRefundLog['bank_name'] = $bank_name;
         $feesRefundLog['bank_branch'] = $bank_branch;
-        $feesRefundLog['remarks'] = $refund_remark;
+        $feesRefundLog['remarks'] = $refund_remarks;
 
         foreach ($fees_title as $fees_title_name => $fees_title_id) {
             $feesRefundLog[$fees_title_id] = $refund_amount[$fees_title_id];
@@ -627,4 +606,130 @@ class feesRefundController extends Controller
 
         return is_mobile($type, "fees/fees_cancel/receipt_view", $res, "view");
     }
+    public function feesRefundReportIndex(Request $request)
+{
+    $type = $request->input('type');
+    $sub_institute_id = $request->session()->get('sub_institute_id');
+    $grade = $request->input('grade');
+    $standard = $request->input('standard');
+    $division = $request->input('division');
+    $enrollment_no = $request->input('enrollment_no');
+    $from_date = $request->input('from_date');
+    $to_date = $request->input('to_date');
+
+    $res['status_code'] = 1;
+    $res['message'] = "Success";
+    $res['grade_id'] = $grade;
+    $res['standard_id'] = $standard;
+    $res['division_id'] = $division;
+    $res['enrollment_no'] = $enrollment_no;
+    $res['from_date'] = $from_date;
+    $res['to_date'] = $to_date;
+
+    return is_mobile($type, "fees/fees_report/show_fees_refund_report", $res, "view");
+}
+
+/**
+ * Generate fees refund report
+ *
+ * @param Request $request
+ * @return Response
+ */
+public function feesRefundReport(Request $request)
+{
+    $type = $request->input('type');
+    $sub_institute_id = $request->session()->get('sub_institute_id');
+    $syear = $request->session()->get('syear');
+
+    $grade = $request->input('grade');
+    $standard = $request->input('standard');
+    $division = $request->input('division');
+    $enrollment_no = $request->input('enrollment_no');  // ✅ Added
+    $from_date = $request->input('from_date');
+    $to_date = $request->input('to_date');
+    $marking_period_id = session()->get('term_id');
+
+    $result = DB::table('fees_refund as fr')
+        ->join('tblstudent as ts', function ($join) {
+            $join->whereRaw('ts.id = fr.student_id AND ts.sub_institute_id = fr.sub_institute_id');
+        })
+        ->join('tblstudent_enrollment as te', function ($join) {
+            $join->whereRaw('te.student_id = ts.id AND te.syear = fr.syear');
+        })
+        ->join('standard as s', function ($join) use ($marking_period_id) {
+            $join->on('s.id', '=', 'te.standard_id');
+            if ($marking_period_id) {
+                $join->where('s.marking_period_id', $marking_period_id);
+            }
+        })
+        ->join('division as d', function ($join) {
+            $join->whereRaw('d.id = te.section_id AND d.sub_institute_id = te.sub_institute_id');
+        })
+        ->join('academic_section as ac', function ($join) {
+            $join->whereRaw('ac.id = te.grade_id');
+        })
+        ->join('tbluser as u', function ($join) {
+            $join->whereRaw('u.id = fr.created_by');
+        })
+        ->selectRaw("
+            fr.id,
+            fr.receipt_no,
+            ts.enrollment_no, 
+            CONCAT_WS(' ', ts.first_name, ts.middle_name, ts.last_name) AS student_name,
+            ac.title as grade_name,
+            s.name as std_name,
+            d.name as division_name,
+            fr.amount,
+            fr.payment_mode,
+            fr.remarks,
+            DATE_FORMAT(fr.receipt_date, '%d-%m-%Y') AS refund_date,
+            DATE_FORMAT(fr.created_date, '%d-%m-%Y %H:%i:%s') AS created_on,
+            CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS refund_by,
+            fr.cheque_no,
+            fr.bank_name,
+            fr.bank_branch
+        ")
+        ->where('te.syear', $syear)
+        ->where('fr.sub_institute_id', $sub_institute_id)
+        ->where('fr.syear', $syear)
+        ->whereRaw("DATE_FORMAT(fr.receipt_date, '%Y-%m-%d') BETWEEN ? AND ?", [$from_date, $to_date]);
+
+    // ✔️ Standard
+    if ($standard != '') {
+        $result = $result->where('te.standard_id', $standard);
+    }
+
+    // ✔️ Division
+    if ($division != '') {
+        $result = $result->where('te.section_id', $division);
+    }
+
+    // ✔️ Grade
+    if ($grade != '') {
+        $result = $result->where('te.grade_id', $grade);
+    }
+
+    // ✔️ Enrollment Number (NEWLY ADDED)
+    if ($enrollment_no != '') {
+        $result = $result->where('ts.enrollment_no', $enrollment_no);
+    }
+
+    $result = $result->orderBy('fr.created_date', 'desc')->get()->toArray();
+    $result = array_map(function ($value) {
+        return (array)$value;
+    }, $result);
+
+    $res['status_code'] = 1;
+    $res['message'] = "Success";
+    $res['report_data'] = $result;
+    $res['grade_id'] = $grade;
+    $res['standard_id'] = $standard;
+    $res['division_id'] = $division;
+    $res['enrollment_no'] = $enrollment_no; 
+    $res['from_date'] = $from_date;
+    $res['to_date'] = $to_date;
+
+    return is_mobile($type, "fees/fees_report/show_fees_refund_report", $res, "view");
+}
+
 }

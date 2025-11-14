@@ -11,14 +11,24 @@
         </div>
         
         @php
-            $grade_id = $standard_id = $division_id = $from_date = $to_date = '';
+            $grade_id = $standard_id = $division_id= $enrollment_no = $from_date = $to_date = '';
 
             if(isset($data['grade_id'])){
                 $grade_id = $data['grade_id'];
                 $standard_id = $data['standard_id'];
                 $division_id = $data['division_id'];
-                $from_date = $data['from_date'] ?? '';
-                $to_date = $data['to_date'] ?? '';
+            }
+            if(isset($data['enrollment_no']))
+            {
+                $enrollment_no = $data['enrollment_no'];
+            }
+            if(isset($data['from_date']))
+            {
+                $from_date = $data['from_date'];
+            }
+            if(isset($data['to_date']))
+            {
+                $to_date = $data['to_date'];
             }
         @endphp
 
@@ -34,11 +44,15 @@
                     </div>
             @endif
             
-            <form action="{{ route('fees_refund_report') }}" method="POST">
+            <form action="{{ route('fees_refund_report_fees') }}" method="get">
                 @csrf
                 <div class="row">
                     {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
-
+                     <div class="col-md-4 form-group">
+                        <label>Enrollment No</label>
+                        <input type="text" id="enrollment_no" name="enrollment_no"
+                                 value="{{$enrollment_no}}" class="form-control">
+                    </div>
                     <div class="col-md-4 form-group">
                         <label>From Date</label>
                         <input type="text" id="from_date" name="from_date" value="{{ $from_date }}" 
