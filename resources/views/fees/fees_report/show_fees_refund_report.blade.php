@@ -44,7 +44,7 @@
                     </div>
             @endif
             
-            <form action="{{ route('fees_refund_report_fees') }}" method="get">
+            <form action="{{ route('fees_refund_report_fees') }}" method="POST">
                 @csrf
                 <div class="row">
                     {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}

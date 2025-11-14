@@ -88,7 +88,7 @@
                 <div class="col-md-3 form-group">
                     <label>Fees Status:</label>
                     <select class="form-control" name="fees_status">
-                        <option value="">All</option>
+                        <option value="">-Select-</option>
                         <option value="paid"
                             {{ isset($data['fees_status']) && $data['fees_status'] == 'paid' ? 'selected' : '' }}>Paid
                         </option>
@@ -159,7 +159,7 @@
                                 <th>Mother Mobile</th>
                                 <th>Total Amount Payable</th>
                                 <th>Paid Amount</th>
-                                <th>Status</th>
+                                <!--<th>Status</th>-->
                             </tr>
                         </thead>
 
@@ -195,7 +195,7 @@
                                     <td>{{($value['total_payable']) }}</td>
                                     <td>{{ ($value['total_paid']) }}</td>
 
-                                    <td><span class="label label-success">PAID</span></td>
+                                    <!--<td><span class="label label-success">PAID</span></td>-->
                                 </tr>
                             @endforeach
                         </tbody>
@@ -381,7 +381,7 @@
                     'pageLength'
                 ],
                 order: [
-                    [1, 'asc']
+                    [0, 'asc']
                 ],
 
                 // === FOOTER TOTAL LOGIC ===

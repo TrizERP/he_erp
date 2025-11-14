@@ -18,13 +18,13 @@
                 <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
                     <h4 class="page-title">Fees Refund</h4> </div>
             </div>
-        <div class="row bg-title">
+        <!--<div class="row bg-title">
             <div class="col-md-3 d-flex">
                 <input type="checkbox" id="toggle_cancel_refund" name="toggle_cancel_refund" checked
                        data-toggle="toggle" data-on="Fees Refund" data-off="Fees Cancel" data-onstyle="danger"
                        data-offstyle="warning" onchange="show_fees_cancel_refund();">
             </div>
-        </div>
+        </div>-->
         @php
             $grade_id = $standard_id = $division_id = $enrollment_no = $from_date = $to_date = '';
 
@@ -68,7 +68,7 @@
                                     <input type="text" id="enrollment_no" name="enrollment_no"
                                            value="{{$enrollment_no}}" class="form-control">
                                 </div>
-
+<!--
                                 <div class="col-md-4 form-group">
                                     <label>From Date</label>
                                     <input type="text" id="from_date" name="from_date" value="{{$from_date}}"
@@ -79,7 +79,7 @@
                                     <input type="text" id="to_date" name="to_date" value="{{$to_date}}"
                                            class="form-control mydatepicker" autocomplete="off">
                                 </div>
-
+-->
                                 <div class="col-md-12 form-group">
                                     <center>
                                         <input type="submit" name="submit" value="Search" class="btn btn-success">
@@ -163,7 +163,7 @@
         $(document).ready(function () {
             $('#example').DataTable({
                 "order": [
-                    [1, 'asc']
+                    [0, 'asc']
                 ],
                 "columnDefs": [{
                     "orderable": false,
