@@ -53,6 +53,7 @@ use App\Http\Controllers\fees\update_fees_breackoff\update_fees_breackoff_contro
 use App\Http\Controllers\fees\fees_breackoff\monthlyBreakoffController;
 use App\Http\Controllers\fees\fees_month_header\feesMonthHeadercontroller;
 use App\Http\Controllers\fees\fees_report\studentBreakoffReportController;
+use App\Http\Controllers\fees\fees_cancel\feesRefundReportController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -156,8 +157,7 @@ Route::get('payphi', function ($id = null) {
     Route::controller(feesRefundController::class)->group(function () {
         Route::post('fees/fees_refund', 'showFees')->name('show_fees');
         Route::post('fees/save_fees_refund', 'saveFeesRefund')->name('save_fees_refund');
-         Route::get('fees_refund_report_index', 'feesRefundReportIndex')->name("fees_refund_report_index");
-    Route::get('fees_refund_report', 'feesRefundReport')->name("fees_refund_report");
+    
     });
 
 
@@ -189,8 +189,11 @@ Route::get('payphi', function ($id = null) {
         Route::post('fees_cancel_report', 'feesCancelReport')->name("fees_cancel_report");
     });
 
-    Route::get('fees_refund_report_index', [feesRefundController::class,'index'])->name("fees_refund_report_index");
-    Route::post('fees_refund_report', [feesRefundController::class,'feesRefundReport'])->name("fees_refund_report");
+    Route::get('fees_refund_report_index',[feesRefundReportController::class, 'feesRefundReportIndex'])->name('fees_refund_report_index');
+    Route::get('fees_refund_report_fees',[feesRefundReportController::class, 'feesRefundReport'])->name('fees_refund_report_fees');
+
+    //Route::get('fees_refund_report_index', [feesRefundController::class,'index'])->name("fees_refund_report_index");
+    //Route::post('fees_refund_report', [feesRefundController::class,'feesRefundReport'])->name("fees_refund_report");
 
     Route::resource('fees_monthly_report', feesMonthlyReportController::class);
     Route::post('getfeesMonthlyReport', [feesMonthlyReportController::class, 'getfeesMonthlyReport'])->name('getfeesMonthlyReport');

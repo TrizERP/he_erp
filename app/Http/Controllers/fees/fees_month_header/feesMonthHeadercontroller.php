@@ -85,7 +85,9 @@ class feesMonthHeadercontroller extends Controller
 
         $result = array();
         $result = DB::table('fees_month_header')
-            ->where('sub_institute_id', session()->get('sub_institute_id'))->get()->toArray();
+            ->where('sub_institute_id', session()->get('sub_institute_id'))
+            ->where('syear', session()->get('syear'))
+            ->get()->toArray();
             
         /* for ($i = 1; $i <= 12; $i++) {
             $months_arr[$start_month.$syear] = $months[$start_month].'/'.$syear;

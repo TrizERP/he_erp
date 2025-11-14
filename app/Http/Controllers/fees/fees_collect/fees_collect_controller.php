@@ -2583,7 +2583,10 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         // start 08-01-2025 by uma for ssmission fees heads
         $changeMonthHead = [76];
         if(in_array($sub_institute_id,$changeMonthHead)){
-            $getMonthHeaders = DB::table('fees_month_header')->where('sub_institute_id',$sub_institute_id)->get()->toArray();
+            $getMonthHeaders = DB::table('fees_month_header')
+                ->where('sub_institute_id',$sub_institute_id)
+                ->where('syear', $syear)
+                ->get()->toArray();
             if(!empty($getMonthHeaders)){
                 foreach ($getMonthHeaders as $key => $value) {
                     if(isset($month_arr[$value->month_id])){
@@ -3372,6 +3375,7 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         // ---------------- HEADER MONTH ----------------
         $res['header_month'] = DB::table('fees_month_header')
             ->where('sub_institute_id', $sub_institute_id)
+            ->where('syear', $syear)
             ->get()
             ->pluck('month_id');
 

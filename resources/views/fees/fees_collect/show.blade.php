@@ -111,7 +111,7 @@
                                 <td>{{$arr->division_name }}</td>                                 
                                 <td>{{$arr->stu_quota }}</td>                                 
                                 <td>{{$arr->mobile }}</td>
-                                <td>{{$arr->uniqueid }}</td>
+                                <td>{{$arr->uniqueid }}</td>                                        
                                 <td>{{$arr->bkoff }}</td>
                                 <td>
                                     <a href="{{ route('fees_collect.edit',$arr->student_id)}}?std={{$arr->standard_id}}"><button style="float:left;" type="button" class="btn btn-info btn-outline ">Collect Fees</button></a>
