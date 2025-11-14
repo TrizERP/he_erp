@@ -57,228 +57,246 @@ class feesStatusController extends Controller
     }
 
     public function feesStatusReport(Request $request)
-{
-    $type             = $request->input('type');
-    $grade            = $request->input('grade');
-    $standard         = $request->input('standard');
-    $division         = $request->input('division');
-    $month            = $request->input('month');
-    $fees_head        = (array)$request->input('fees_head');
-    $number_type      = $request->input('number_type');
-    $fees_status      = $request->input('fees_status', 'unpaid');
-    $sub_institute_id = (int)$request->session()->get('sub_institute_id');
+    {
+        $type             = $request->input('type');
+        $grade            = $request->input('grade');
+        $standard         = $request->input('standard');
+        $division         = $request->input('division');
+        $month            = $request->input('month');
+        $fees_head        = (array)$request->input('fees_head');
+        $number_type      = $request->input('number_type');
+        $fees_status      = $request->input('fees_status', 'unpaid');
+        $sub_institute_id = (int)$request->session()->get('sub_institute_id');
 
-    // ***** ADDED FOR BK LOGIC *****
-    $syear             = session()->get('syear');
-    $last_syear        = $syear - 1;
-    $marking_period_id = session()->get('term_id');
+        // ***** ADDED FOR BK LOGIC *****
+        $syear             = session()->get('syear');
+        $last_syear        = $syear - 1;
+        $marking_period_id = session()->get('term_id');
 
-    $months = FeeMonthId();
+        $months = FeeMonthId();
 
-    $number_types = [
-        "mobile"         => "Father Mobile",
-        "student_mobile" => "Student Mobile",
-        "mother_mobile"  => "Mother Mobile",
-    ];
+        $number_types = [
+            "mobile"         => "Father Mobile",
+            "student_mobile" => "Student Mobile",
+            "mother_mobile"  => "Mother Mobile",
+        ];
 
-    // ============ LOAD HEADS ============
-    $feesHead = fees_title::where([
-        'sub_institute_id' => $sub_institute_id,
-        'other_fee_id' => 0
-    ])
-    ->orderBy('sort_order')
-    ->pluck('display_name', 'fees_title')
-    ->toArray();
-    asort($feesHead);
+        // ============ LOAD HEADS ============
+        $feesHead = fees_title::where([
+            'sub_institute_id' => $sub_institute_id,
+            'other_fee_id' => 0
+        ])
+        ->orderBy('sort_order')
+        ->pluck('display_name', 'fees_title')
+        ->toArray();
+        asort($feesHead);
 
-    // ============ STUDENTS ============
-    $studentData = SearchStudent($grade, $standard, $division);
+        // ============ STUDENTS ============
+        $studentData = SearchStudent($grade, $standard, $division);
 
-    if (count($studentData) === 0) {
-        return is_mobile($type, "fees_status_report.index", [
-            'status_code' => 0,
-            'message' => "No student found please check your search panel"
-        ]);
-    }
-
-    $student_ids = [];
-    foreach ($studentData as $s) {
-        $student_ids[] = (int)$s['student_id'];
-    }
-
-    $uiHeadCols = array_values($fees_head);
-
-    // ============ BREAKOFF DATA ============
-    $breakoffData = FeeBreakoffHeadWise($student_ids);
-
-    $displayBreakoff = [];
-    $displayBreakoffByHead = [];
-
-    foreach ($student_ids as $sid) {
-        if (empty($breakoffData[$sid]['breakoff'])) continue;
-
-        foreach ($breakoffData[$sid]['breakoff'] as $termId => $heads) {
-
-            if (!empty($month) && !in_array($termId, $month)) continue;
-
-            foreach ($heads as $head => $row) {
-                if (!in_array($head, $uiHeadCols, true)) continue;
-                $title = $row['title'];
-                $amt   = (float)($row['amount'] ?? 0);
-
-                $displayBreakoff[$sid][$title] =
-                    ($displayBreakoff[$sid][$title] ?? 0) + $amt;
-
-                $displayBreakoffByHead[$sid][$head] =
-                    ($displayBreakoffByHead[$sid][$head] ?? 0) + $amt;
-            }
+        if (count($studentData) === 0) {
+            return is_mobile($type, "fees_status_report.index", [
+                'status_code' => 0,
+                'message' => "No student found please check your search panel"
+            ]);
         }
-    }
 
-    // ============ PAID AMOUNTS ============
-    $whereRaw = "sub_institute_id = {$sub_institute_id} AND is_deleted != 'Y'";
-
-    if (!empty($month)) {
-        $whereRaw .= " AND term_id IN (" . implode(",", $month) . ")";
-    }
-
-    $whereRaw .= " AND student_id IN (" . implode(",", $student_ids) . ")";
-
-    $paidRows = DB::table("fees_collect")->whereRaw($whereRaw)->get();
-
-    $paidAmounts = [];
-    foreach ($paidRows as $r) {
-        foreach ($uiHeadCols as $headName) {
-            if (isset($r->$headName)) {
-                $paidAmounts[$r->student_id][$headName] =
-                    ($paidAmounts[$r->student_id][$headName] ?? 0)
-                    + (float)$r->$headName;
-            }
+        $student_ids = [];
+        foreach ($studentData as $s) {
+            $student_ids[] = (int)$s['student_id'];
         }
-    }
 
-    // ============ PREVIOUS YEAR DUE ============
-    $previousDues = array_fill_keys($student_ids, 0.0);
+        // ============ GET STUDENT STATUS FROM ENROLLMENT TABLE ============
+        $studentStatuses = DB::table('tblstudent_enrollment')
+            ->whereIn('student_id', $student_ids)
+            ->select('student_id', 'end_date')
+            ->get()
+            ->keyBy('student_id')
+            ->toArray();
 
-    foreach ($student_ids as $sid) {
-        // load previous year breakoff for exactly one student at a time
-        $prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
+        $uiHeadCols = array_values($fees_head);
 
-        $due = 0;
-        if (!empty($prevBk[$sid]['breakoff'])) {
-            foreach ($prevBk[$sid]['breakoff'] as $m => $heads) {
-                foreach ($heads as $row) {
-                    $amount = (float)($row['amount'] ?? 0);
-                    $paid   = (float)($row['paid_amount'] ?? 0);
-                    $due   += max($amount - $paid, 0);
+        // ============ BREAKOFF DATA ============
+        $breakoffData = FeeBreakoffHeadWise($student_ids);
+
+        $displayBreakoff = [];
+        $displayBreakoffByHead = [];
+
+        foreach ($student_ids as $sid) {
+            if (empty($breakoffData[$sid]['breakoff'])) continue;
+
+            foreach ($breakoffData[$sid]['breakoff'] as $termId => $heads) {
+
+                if (!empty($month) && !in_array($termId, $month)) continue;
+
+                foreach ($heads as $head => $row) {
+                    if (!in_array($head, $uiHeadCols, true)) continue;
+                    $title = $row['title'];
+                    $amt   = (float)($row['amount'] ?? 0);
+
+                    $displayBreakoff[$sid][$title] =
+                        ($displayBreakoff[$sid][$title] ?? 0) + $amt;
+
+                    $displayBreakoffByHead[$sid][$head] =
+                        ($displayBreakoffByHead[$sid][$head] ?? 0) + $amt;
                 }
             }
         }
-        $previousDues[$sid] = $due;
-    }
 
-    // ============ FILTER PAID / UNPAID ============
-    $filtered = [];
+        // ============ PAID AMOUNTS ============
+        $whereRaw = "sub_institute_id = {$sub_institute_id} AND is_deleted != 'Y'";
 
-    foreach ($student_ids as $sid) {
-        $charges = array_sum($displayBreakoffByHead[$sid] ?? []);
-        $paid    = array_sum($paidAmounts[$sid] ?? []);
-        $prevDue = $previousDues[$sid];
-
-        $currentDue = max($charges - $paid, 0);
-        $totalDue   = $currentDue + $prevDue;
-
-        if ($fees_status == "paid" && $totalDue == 0) {
-            $filtered[] = $sid;
-        } elseif ($fees_status == "unpaid" && $totalDue > 0) {
-            $filtered[] = $sid;
-        } elseif ($fees_status == "") {
-            $filtered[] = $sid;
+        if (!empty($month)) {
+            $whereRaw .= " AND term_id IN (" . implode(",", $month) . ")";
         }
-    }
 
-    $finalFeesData = [];
-    foreach ($filtered as $sid) {
-        if (isset($breakoffData[$sid])) {
-            $finalFeesData[$sid] = $breakoffData[$sid];
+        $whereRaw .= " AND student_id IN (" . implode(",", $student_ids) . ")";
+
+        $paidRows = DB::table("fees_collect")->whereRaw($whereRaw)->get();
+
+        $paidAmounts = [];
+        foreach ($paidRows as $r) {
+            foreach ($uiHeadCols as $headName) {
+                if (isset($r->$headName)) {
+                    $paidAmounts[$r->student_id][$headName] =
+                        ($paidAmounts[$r->student_id][$headName] ?? 0)
+                        + (float)$r->$headName;
+                }
+            }
         }
-    }
 
-    $finalBreakoff = array_intersect_key($displayBreakoff, array_flip($filtered));
-    $finalPrevDue  = array_intersect_key($previousDues, array_flip($filtered));
+        // ============ PREVIOUS YEAR DUE ============
+        $previousDues = array_fill_keys($student_ids, 0.0);
 
-    // ==========================================================
-    // ⭐⭐ TOTAL PAYABLE EXACT LIKE BK ⭐⭐
-    // ==========================================================
-    foreach ($finalFeesData as $sid => &$data) {
-        // RECEIPTS
-        $syear = $request->session()->get('syear');
-        $receipts = DB::table("fees_collect")
-            ->where("student_id", $sid)
-            ->where("sub_institute_id", $sub_institute_id)
-            ->where("is_deleted", "!=", "Y")
-            ->where("syear", $syear - 1)
-            ->get();
+        foreach ($student_ids as $sid) {
+            // load previous year breakoff for exactly one student at a time
+            $prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
 
-        $data['all_receipts'] = $receipts->pluck("receipt_no")->toArray();
-        $data['total_paid']   = $receipts->sum("amount");
-
-        // ***** FULL BK LOGIC FOR TOTAL PAYABLE *****
-        // 1) Regular breakoff (current year)
-        $bk1 = FeeBreackoff([$sid], '', $syear, $marking_period_id);
-
-        // 2) Additional fees (current year)
-        $other1 = OtherBreackOff([$sid], [], '', null, null, $syear, $sub_institute_id);
-
-        // 3) Regular breakoff (previous year)
-        $bk2 = FeeBreackoff([$sid], '', $last_syear, $marking_period_id);
-
-        // 4) Additional fees (previous year)
-        $other2 = OtherBreackOff([$sid], [], '', null, null, $last_syear, $sub_institute_id);
-
-        // SUM current year
-        $sum1 = 0;
-        if (!empty($bk1)) {
-            foreach ($bk1 as $obj) $sum1 += $obj->bkoff;
+            $due = 0;
+            if (!empty($prevBk[$sid]['breakoff'])) {
+                foreach ($prevBk[$sid]['breakoff'] as $m => $heads) {
+                    foreach ($heads as $row) {
+                        $amount = (float)($row['amount'] ?? 0);
+                        $paid   = (float)($row['paid_amount'] ?? 0);
+                        $due   += max($amount - $paid, 0);
+                    }
+                }
+            }
+            $previousDues[$sid] = $due;
         }
-        foreach ($other1 as $v) $sum1 += $v;
 
-        // SUM previous year
-        $sum2 = 0;
-        if (!empty($bk2)) {
-            foreach ($bk2 as $obj) $sum2 += $obj->bkoff;
+        // ==========================================================
+        // TOTAL PAYABLE EXACT LIKE BK & FILTERING
+        // ==========================================================
+        $finalFeesData = [];
+        $filtered = [];
+
+        foreach ($student_ids as $sid) {
+            if (!isset($breakoffData[$sid])) continue;
+
+            $data = $breakoffData[$sid];
+
+            // ADD STUDENT STATUS - Check if student is inactive/cancelled
+            $isActive = true;
+            if (isset($studentStatuses[$sid]) && !empty($studentStatuses[$sid]->end_date)) {
+                $data['student_status'] = 'In Active';
+                $isActive = false;
+            } else {
+                $data['student_status'] = 'Active';
+            }
+
+            // RECEIPTS
+            $receipts = DB::table("fees_collect")
+                ->where("student_id", $sid)
+                ->where("sub_institute_id", $sub_institute_id)
+                ->where("is_deleted", "!=", "Y")
+                ->get();
+
+            $data['all_receipts'] = $receipts->pluck("receipt_no")->toArray();
+            $data['total_paid']   = $receipts->sum("amount");
+
+            // ***** FULL BK LOGIC FOR TOTAL PAYABLE *****
+            // 1) Regular breakoff (current year)
+            $bk1 = FeeBreackoff([$sid], '', $syear, $marking_period_id);
+
+            // 2) Additional fees (current year)
+            $other1 = OtherBreackOff([$sid], [], '', null, null, $syear, $sub_institute_id);
+
+            // 3) Regular breakoff (previous year)
+            $bk2 = FeeBreackoff([$sid], '', $last_syear);
+
+            // 4) Additional fees (previous year)
+            $other2 = OtherBreackOff([$sid], [], '', null, null, $last_syear, $sub_institute_id);
+
+            // SUM current year
+            $current_year_total = 0;
+            if (!empty($bk1)) {
+                foreach ($bk1 as $obj) $current_year_total += $obj->bkoff;
+            }
+            foreach ($other1 as $v) $current_year_total += $v;
+
+            // SUM previous year
+            $previous_year_total = 0;
+            if (!empty($bk2)) {
+                foreach ($bk2 as $obj) $previous_year_total += $obj->bkoff;
+            }
+            foreach ($other2 as $v) $previous_year_total += $v;
+            
+            // Set separate totals
+            $data['current_year_total']  = $current_year_total;
+            $data['previous_year_total'] = $previous_year_total;
+            // Combined total
+            $data['total_payable'] = $current_year_total + $previous_year_total;
+
+            // FILTER BASED ON COMPLETE PAYABLE VS PAID AND STUDENT STATUS
+            $totalPayable = $data['total_payable'];
+            $totalPaid = $data['total_paid'];
+
+            // MODIFIED FILTER LOGIC: Exclude inactive students from "paid" status
+            if ($fees_status == "paid") {
+                // Only show paid students who are ACTIVE
+                if ($totalPayable <= $totalPaid && $isActive) {
+                    $filtered[] = $sid;
+                    $finalFeesData[$sid] = $data;
+                }
+            } elseif ($fees_status == "unpaid") {
+                // Show unpaid students (both active and inactive)
+                if ($totalPayable > $totalPaid) {
+                    $filtered[] = $sid;
+                    $finalFeesData[$sid] = $data;
+                }
+            } else {
+                // Show all students when no status filter
+                $filtered[] = $sid;
+                $finalFeesData[$sid] = $data;
+            }
         }
-        foreach ($other2 as $v) $sum2 += $v;
 
-        $data['total_payable'] = $sum1 + $sum2;
+        $finalBreakoff = array_intersect_key($displayBreakoff, array_flip($filtered));
+        $finalPrevDue  = array_intersect_key($previousDues, array_flip($filtered));
+
+        // FINAL
+        $res = [
+            'status_code'    => 1,
+            'message'        => "Success",
+            'grade_id'       => $grade,
+            'standard_id'    => $standard,
+            'division_id'    => $division,
+            'months'         => $months,
+            'month'          => $month,
+            'fees_heads'     => $feesHead,
+            'fees_head'      => $fees_head,
+            'fees_data'      => $finalFeesData,
+            'number_type'    => $number_type,
+            'number_types'   => $number_types,
+            'fees_details'   => $finalBreakoff,
+            'previous_dues'  => $finalPrevDue,
+            'fees_status'    => $fees_status,
+            'student_statuses' => $studentStatuses // optional, if you want direct access
+        ];
+
+        return is_mobile($type, "fees/fees_report/status_report", $res, "view");
     }
-
-    unset($data);
-
-    // FINAL
-    $res = [
-        'status_code'    => 1,
-        'message'        => "Success",
-        'grade_id'       => $grade,
-        'standard_id'    => $standard,
-        'division_id'    => $division,
-        'months'         => $months,
-        'month'          => $month,
-        'fees_heads'     => $feesHead,
-        'fees_head'      => $fees_head,
-        'fees_data'      => $finalFeesData,
-        'number_type'    => $number_type,
-        'number_types'   => $number_types,
-        'fees_details'   => $finalBreakoff,
-        'previous_dues'  => $finalPrevDue,
-        'fees_status'    => $fees_status
-    ];
-
-    return is_mobile($type, "fees/fees_report/status_report", $res, "view");
-}
-
-
-
     /**
      * Remove the specified resource from storage.
      *

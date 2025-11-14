@@ -195,7 +195,13 @@
                                     <td>{{($value['total_payable']) }}</td>
                                     <td>{{ ($value['total_paid']) }}</td>
 
-                                    <td><span class="label label-success">PAID</span></td>
+                                    <td>
+                                        @if(($value['student_status'] ?? 'Active') == 'Active')
+                                            <span class="label label-success">Active</span>
+                                        @else
+                                            <span class="label label-danger">In Active</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
