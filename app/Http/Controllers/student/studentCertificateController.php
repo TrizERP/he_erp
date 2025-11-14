@@ -339,6 +339,8 @@ class studentCertificateController extends Controller
         $current_year = $syear."-".substr(($syear+1), -2 );
         
         $branch_name = $value['branch_name'] ?? '';
+        $school_stream = $value['school_stream'] ?? '';
+        $short_standard_name = $value['short_standard_name'] ?? '';
         $pass_year = $value['pass_year'] ?? '';
         $cgpa = $value['cgpa'] ?? '';
         $tution_fees =  $value['tution_fees'] ?? '';
@@ -362,7 +364,8 @@ class studentCertificateController extends Controller
         $html_content = str_replace(htmlspecialchars("<<pass_year>>"), strtoupper($pass_year), $html_content);
         $html_content = str_replace(htmlspecialchars("<<cgpa>>"), strtoupper($cgpa), $html_content);
         $html_content = str_replace(htmlspecialchars("<<branch_name>>"), strtoupper($branch_name), $html_content);
-        $html_content = str_replace(htmlspecialchars("<<school_stream>>"), strtoupper($branch_name), $html_content);
+        $html_content = str_replace(htmlspecialchars("<<semester_stream>>"), strtoupper($school_stream), $html_content);
+        $html_content = str_replace(htmlspecialchars("<<short_standard_name>>"), strtoupper($short_standard_name), $html_content);
 
         // end 14-08-2024
         // student fees cetificate

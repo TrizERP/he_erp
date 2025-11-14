@@ -66,6 +66,7 @@ public function create(Request $request)
     $join_tbl = "";
     $join = [];
     $responce_arr = [];
+    $term_id = session()->get('term_id');
 
     // 1️⃣ Decide which table to use
     if ($request->input('tbl') == 'staff') {
@@ -181,7 +182,10 @@ public function create(Request $request)
             $query->leftJoin('academic_section as acad', 'e.grade_id', '=', 'acad.id');
             
             // Join with standard table
-            $query->leftJoin('standard as std', 'e.standard_id', '=', 'std.id');
+            $query->join('standard as std', function($join) use ($term_id) {
+			    $join->on('e.standard_id', '=', 'std.id')
+			         ->where('std.marking_period_id', '=', $term_id);
+			});
             
             // Join with division table
             $query->leftJoin('division as div', 'e.section_id', '=', 'div.id');

@@ -23,6 +23,7 @@ class fees_breackoff_controller extends Controller
      */
     public function index(Request $request)
     {
+        //dd(session()->all());
         if (session()->has('data')) { // check if it exists
             $data_arr = session('data'); // to retrieve value
             if (isset($data_arr['message'])) {
@@ -188,45 +189,57 @@ $monthHeader = DB::table('fees_month_header')
      */
     public function store(Request $request)
     {
-        if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'insert')
+        
+        if ($request->input('action') === 'insert')
         {
-            $all_data = $_REQUEST['NewValues'];
+            // safely get NewValues, default to empty array to avoid "Undefined array key" notices
+            $all_data = $request->input('NewValues', []);
 
-            foreach ($all_data as $id => $arr) {
-                foreach ($arr as $ids => $val) {
-                    if ($val == '' || $val == null) {
-                        unset($all_data[$id][$ids]);
-                    }
-                }
+            // if nothing was submitted, return with a friendly message instead of throwing a PHP notice
+            if (empty($all_data)) {
+                $res = [
+                    "status" => 0,
+                    "message" => "No values provided to insert.",
+                ];
+                $type = $request->input('type');
+                return is_mobile($type, "fees_breackoff.index", $res, "redirect");
             }
-
+ 
+             foreach ($all_data as $id => $arr) {
+                 foreach ($arr as $ids => $val) {
+                     if ($val == '' || $val == null) {
+                         unset($all_data[$id][$ids]);
+                     }
+                 }
+             }
+ 
             foreach ($all_data as $id => $arr) {
                 if (count($arr) == 0) {
                     unset($all_data[$id]);
                 }
             }
             $req = session()->get('req');
-
+ 
             foreach ($req['grade'] as $grade_id => $grade) {
                 foreach ($req['standard'] as $std_id => $std) {
                     foreach ($all_data as $quota_id => $arr) {
                         foreach ($arr as $title_id => $amount) {
                             foreach ($req['month'] as $month_id => $on) {
                                 $syear = session()->get('syear');
-                                $admission_year = session()->get('syear');
+                                $admission_year = $request->input('admission_year');
                                 $sub_institute_id = session()->get('sub_institute_id');
-
+ 
                                 $checkNewfeesBreakoff = fees_breackoff::where([
                                     'syear'            => $syear, 'admission_year' => $admission_year,
                                     'fee_type_id'      => $title_id, 'quota' => $quota_id, 'grade_id' => $grade,
                                     'standard_id'      => $std, 'month_id' => $month_id,
                                     'sub_institute_id' => $sub_institute_id,
                                 ])->get()->toArray();
-
+ 
                                 if (count($checkNewfeesBreakoff) == 0) {
                                     DB::table('fees_breackoff')->insert([
                                         'syear'            => session()->get('syear'),
-                                        'admission_year'   => session()->get('syear'),
+                                        'admission_year'   => $request->input('admission_year'),
                                         'fee_type_id'      => $title_id,
                                         'quota'            => $quota_id,
                                         'grade_id'         => $grade,
@@ -237,129 +250,67 @@ $monthHeader = DB::table('fees_month_header')
                                         'created_at'       => date('Y-m-d H:i:s'),
                                     ]);
                                 }
-
+ 
                             }
                         }
                     }
                 }
             }
-
-            $cur_syear = session()->get('syear');
-            $sub_institute_id = session()->get('sub_institute_id');
-
-            $old_year = DB::table('tblstudent')
-                ->selectRaw('distinct(admission_year)')
-                ->where('sub_institute_id', $sub_institute_id)
-                ->where('admission_year', '<', $cur_syear)->get()->toArray();
-
-            $all_data = $_REQUEST['OldValues'];
-            foreach ($all_data as $id => $arr) {
-                foreach ($arr as $ids => $val) {
-                    if ($val == '' || $val == null) {
-                        unset($all_data[$id][$ids]);
-                    }
-                }
-            }
-
-            foreach ($all_data as $id => $arr) {
-                if (count($arr) == 0) {
-                    unset($all_data[$id]);
-                }
-            }
-
-            foreach ($old_year as $year_id => $year_arr) {
-                foreach ($req['grade'] as $grade_id => $grade) {
-                    foreach ($req['standard'] as $std_id => $std) {
-                        foreach ($all_data as $quota_id => $arr) {
-                            foreach ($arr as $title_id => $amount) {
-                                foreach ($req['month'] as $month_id => $on) {
-                                    $syear = session()->get('syear');
-                                    $admission_year = $year_arr->admission_year;
-                                    $sub_institute_id = session()->get('sub_institute_id');
-
-                                    $checkOldfeesBreakoff = fees_breackoff::where([
-                                        'syear'            => $syear, 'admission_year' => $admission_year,
-                                        'fee_type_id'      => $title_id, 'quota' => $quota_id, 'grade_id' => $grade,
-                                        'standard_id'      => $std, 'month_id' => $month_id,
-                                        'sub_institute_id' => $sub_institute_id,
-                                    ])->get()->toArray();
-
-                                    if (count($checkOldfeesBreakoff) == 0) {
-                                        DB::table('fees_breackoff')->insert([
-                                            'syear'            => session()->get('syear'),
-                                            'admission_year'   => $year_arr->admission_year,
-                                            'fee_type_id'      => $title_id,
-                                            'quota'            => $quota_id,
-                                            'grade_id'         => $grade,
-                                            'standard_id'      => $std,
-                                            'month_id'         => $month_id,
-                                            'amount'           => $amount,
-                                            'sub_institute_id' => session()->get('sub_institute_id'),
-                                            'created_at'       => date('Y-m-d H:i:s'),
-                                        ]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
+ 
             $res = [
                 "status"  => 1,
                 "message" => "Fees Structure Saved Successfully",
             ];
-
+ 
             $type = $request->input('type');
-
+ 
             return is_mobile($type, "fees_breackoff.index", $res, "redirect");
         }
         else
         {
-
+ 
             $grade = DB::table('academic_section')
                 ->whereIn('id', $_REQUEST['grade'])->get();
             $grade_arr = [];
-
+ 
             foreach ($grade as $id => $arr) {
                 $grade_arr[] = $arr->title;
             }
-
+ 
             $standard = DB::table('standard')
                 ->whereIn('id', $_REQUEST['standard'])->get();
             $standard_arr = [];
             foreach ($standard as $id => $arr) {
                 $standard_arr[] = $arr->name;
             }
-
+ 
             $months = [
                 1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
                 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
             ];
             $ReqMonths = $_REQUEST["month"] ?? [];
             $months_arr = [];
-
+ 
             foreach ($ReqMonths as $id => $on) {
                 $y = $id / 10000;
                 $month = (int) $y;
                 $year = substr($id, -4);
                 $months_arr[] = getMonthHeader($month, $year);
             }
-
+ 
             $where_arr = [
                 'other_fee_id'     => 0,
                 'sub_institute_id' => session()->get('sub_institute_id'),
                 'syear'            => session()->get('syear'),
             ];
-
+ 
             $fees_title = DB::table('fees_title')
                 ->where($where_arr)->orderBy('sort_order')->get();
             $title_arr = [];
             foreach ($fees_title as $id => $arr) {
                 $title_arr[$arr->id] = $arr->display_name;
             }
-
+ 
             $where_arr = [
                 'sub_institute_id' => session()->get('sub_institute_id'),
             ];
@@ -369,23 +320,43 @@ $monthHeader = DB::table('fees_month_header')
             foreach ($student_quota as $id => $arr) {
                 $quota_arr[$arr->id] = $arr->title;
             }
-
+ 
             $req = [
                 "grade"    => $_REQUEST['grade'],
                 "standard" => $_REQUEST['standard'],
                 "month"    => $_REQUEST['month'],
             ];
-
+ 
             $request->session()->put('req', $req);
-
+ 
             $school_data['data']['grade_arr'] = $grade_arr;
             $school_data['data']['std_arr'] = $standard_arr;
             $school_data['data']['month_arr'] = $months_arr;
             $school_data['data']['title_arr'] = $title_arr;
             $school_data['data']['quota_arr'] = $quota_arr;
+            $academicYears = DB::table('academic_year')->get();
+            $admission_year = $request->input('admission_year');
+            $feesBreackoff = DB::table('fees_breackoff')
+            ->where('sub_institute_id', session()->get('sub_institute_id'))
+            ->where('admission_year', $admission_year)
+            ->first();
             $type = $request->input('type');
+            //dd($admission_year, $school_data);
             // echo "<pre>";print_r($school_data);exit;
-            return is_mobile($type, "fees/fees_breackoff/edit", $school_data, "view");
+            $viewData = [
+                'data' => [
+                    'grade_arr' => $grade_arr,
+                    'std_arr' => $standard_arr,
+                    'month_arr' => $months_arr,
+                    'title_arr' => $title_arr,
+                    'quota_arr' => $quota_arr,
+                ],
+                'feesBreackoff' => $feesBreackoff,
+                'academicYears' => $academicYears,
+                'selected_admission_year' => $admission_year,
+            ];
+
+            return is_mobile($type, "fees/fees_breackoff/edit", $viewData, "view");
         }
     }
 
@@ -436,6 +407,8 @@ $monthHeader = DB::table('fees_month_header')
 
     public function ajax_checkFeesStructure(Request $request)
     {
+        
+
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 

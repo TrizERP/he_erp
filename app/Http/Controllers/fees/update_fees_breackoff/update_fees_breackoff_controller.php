@@ -323,6 +323,7 @@ class update_fees_breackoff_controller extends Controller
             $school_data['grade']= $grade_name[0]->title;
             $school_data['standard']=$std_name[0]->name;
             $school_data['month']=$month_display;
+            $school_data['selected_admission_year'] = $request->input('admission_year');
             //END If fees collected breakoff cant be edited
 
             return is_mobile($type, "fees/update_fees_breackoff/edit", $school_data, "view");

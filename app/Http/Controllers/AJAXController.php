@@ -724,41 +724,73 @@ private function groupConsecutivePeriods($periods)
 
     public function getExamList(Request $request)
     {
-        $where = array(
-            "re.sub_institute_id" => session()->get('sub_institute_id'),
-            "re.syear" => session()->get('syear'),
-            "re.term_id" => $request->term_id,
-            "re.standard_id" => $request->standard_id,
-            "re.subject_id" => $request->subject_id,
-        );
-        if (isset($request->exam_id) && $request->exam_id != '') {
-            $where = [
-                "re.sub_institute_id" => session()->get('sub_institute_id'),
-                "re.syear" => session()->get('syear'),
-                "re.standard_id" => $request->standard_id,
-                "re.exam_id" => $request->exam_id
-            ];
-            $group = "re.title";
+        // Normalize the remedial flag:
+        // - "1" => only remedial
+        // - "0" => only non-remedial (0 or NULL)
+        // - anything else / missing => ALL
+        $remedialParam = $request->input('is_remedial', null);
+        $remedialMode  = ($remedialParam === '0' || $remedialParam === 0 || $remedialParam === 1 || $remedialParam === '1')
+            ? (int)$remedialParam
+            : null; // null means "all"
+
+        $where = [
+            're.sub_institute_id' => session()->get('sub_institute_id'),
+            're.syear'            => session()->get('syear'),
+            're.term_id'          => $request->term_id,
+            're.standard_id'      => $request->standard_id,
+            're.subject_id'       => $request->subject_id,
+        ];
+
+        if (!empty($request->exam_id)) {
+            $where['re.exam_id'] = $request->exam_id;
         }
 
-        if ($request->has('searchType') && $request->searchType == 'co') {
-            $where['re.subject_id'] = $request->subject_id;
-            return DB::table('result_create_exam as re')
+        // Helper closure to apply remedial filter
+        $applyRemedialFilter = function ($query) use ($remedialMode) {
+            if ($remedialMode === 1) {
+                // Only remedial
+                $query->where('re.is_remedial', 1);
+            } elseif ($remedialMode === 0) {
+                // Only non-remedial (0 or NULL)
+                $query->where(function ($q) {
+                    $q->whereNull('re.is_remedial')->orWhere('re.is_remedial', 0);
+                });
+            }
+            // else: ALL (no filter)
+        };
+
+        // --- CO branch ----------------------------------------------------------
+        if ($request->has('searchType') && $request->searchType === 'co') {
+            $query = DB::table('result_create_exam as re')
                 ->join('lo_category as lc', 'lc.id', '=', 're.co_id')
-                ->where($where)
-                ->pluck('re.title', 're.id');
+                ->where($where);
+
+            $applyRemedialFilter($query);
+
+            // Avoid grouping collisions: select distinct id+title
+            $rows = $query->select('re.id', 're.title')
+                        ->distinct()
+                        ->orderBy('re.title')
+                        ->get();
+
+            return response()->json($rows->pluck('title', 'id'));
         }
 
-        $std_sub_map = DB::table('result_create_exam as re')
+        // --- Default branch -----------------------------------------------------
+        $query = DB::table('result_create_exam as re')
             ->where($where);
-        if (isset($group)) {
-            $std_sub_map->groupBy($group);
-        }
-        $std_sub_map->where('re.exam_id', $request->exam_id);
-        $std_sub_map = $std_sub_map->pluck('re.title', 're.id');
 
-        return response()->json($std_sub_map);
+        $applyRemedialFilter($query);
+
+        // Avoid groupBy('re.title'); use DISTINCT on id+title instead
+        $rows = $query->select('re.id', 're.title')
+                    ->distinct()
+                    ->orderBy('re.title')
+                    ->get();
+
+        return response()->json($rows->pluck('title', 'id'));
     }
+
 
     public function getExamsMasterList(Request $request)
     {
@@ -775,6 +807,52 @@ private function groupConsecutivePeriods($periods)
         return response()->json($std_sub_map);
     }
 
+    public function getFailedStudents(Request $request)
+    {
+    try {
+        // ✅ Required parameters
+        $subInstituteId = session()->get('sub_institute_id');
+        $termId         = $request->term_id;
+        $standardId     = $request->standard_id;
+        $subjectId      = $request->subject_id;
+
+        // ✅ Base validation
+        if (!$subInstituteId || !$termId || !$standardId || !$subjectId) {
+            return response()->json(['error' => 'Missing required parameters'], 400);
+        }
+
+        // ✅ Core query: the same one you confirmed working in MySQL
+        $failedStudents = DB::table('result_marks as rm')
+            ->join('result_create_exam as rce', 'rm.exam_id', '=', 'rce.id')
+            ->where('rm.sub_institute_id', $subInstituteId)
+            ->where('rce.term_id', $termId)
+            ->where('rce.standard_id', $standardId)
+            ->where('rce.subject_id', $subjectId)
+            // Optional: include exam filtering if needed
+            ->when($request->exam_id, function ($query) use ($request) {
+                $query->where('rce.exam_id', $request->exam_id);
+            })
+            ->select(
+                'rm.student_id',
+                DB::raw('SUM(rm.points) AS obtained_marks'),
+                DB::raw('SUM(rce.points) AS total_marks'),
+                DB::raw('MAX(rce.cutoff) AS cutoff_reference'),
+                DB::raw("CASE WHEN SUM(rm.points) < MAX(rce.cutoff) THEN 'Fail' ELSE 'Pass' END AS result_status")
+            )
+            ->groupBy('rm.student_id')
+            ->havingRaw('SUM(rm.points) < MAX(rce.cutoff)')
+            ->get();
+
+        // ✅ If you only want IDs for filtering:
+        // $failedIds = $failedStudents->pluck('student_id')->toArray();
+
+        return response()->json($failedStudents, 200);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+    }
+    
 
     public function getCoScholasticParentList(Request $request)
     {

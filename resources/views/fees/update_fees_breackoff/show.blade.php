@@ -1,7 +1,9 @@
 @include('includes.headcss')
 @include('includes.header')
 @include('includes.sideNavigation')
-
+    @php
+        $academicYears = session('academicYears', []);
+    @endphp
 <div id="page-wrapper">
     <div class="container-fluid">
         <div class="row">            
@@ -21,7 +23,16 @@
             @csrf
                 <div class="row">                    
                     {{ App\Helpers\SearchChain('4','single','grade,std') }}
-                                                 
+                    {{--  Admission Year Dropdown --}}
+                    <div class="col-md-4 form-group">
+                        <label>Admission Year</label>
+                        <select name="admission_year" id="admission_year" class="form-control" required>
+                            <option value="">--Select--</option>
+                                                @foreach ($academicYears as $year)
+                                                    <option value="{{ $year->syear }}">{{ $year->syear }}</option>
+                                                @endforeach
+                        </select>
+                    </div>                               
                     <div class="col-md-4 form-group">
                         <label>Month</label>
     					{{-- <div class="custom-select"> --}}

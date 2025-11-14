@@ -21,8 +21,8 @@
         <div class="row bg-title">
             <div class="col-md-3 d-flex">
                 <input type="checkbox" id="toggle_cancel_refund" name="toggle_cancel_refund" checked
-                       data-toggle="toggle" data-on="Fees Cancel" data-off="Fees Refund" data-onstyle="warning"
-                       data-offstyle="danger" onchange="show_fees_cancel_refund();">
+                       data-toggle="toggle" data-on="Fees Refund" data-off="Fees Cancel" data-onstyle="danger"
+                       data-offstyle="warning" onchange="show_fees_cancel_refund();">
             </div>
         </div>
         @php
@@ -152,10 +152,10 @@
     <script>
         function show_fees_cancel_refund() {
             if ($("#toggle_cancel_refund").prop("checked") == true) {
-                var path = "{{ route('fees_cancel.index') }}";
+                var path = "{{ route('fees_refund.index') }}";
                 location.href = path;
             } else {
-                var path1 = "{{ route('fees_refund.index') }}";
+                var path1 = "{{ route('fees_cancel.index') }}";
                 location.href = path1;
             }
         }
@@ -168,7 +168,42 @@
                 "columnDefs": [{
                     "orderable": false,
                     "targets": 0
-                }]
+                }],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'pdfHtml5',
+                        title: 'Fees Refund',
+                        orientation: 'landscape',
+                        pageSize: 'LEGAL',
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        customize: function (doc) {
+                            doc.content.push({
+                                text: 'Total Refund Amount: {{ $total_refund_amount ?? 0 }}',
+                                alignment: 'right',
+                                margin: [0, 10, 0, 0]
+                            });
+                        }
+                    },
+                    {extend: 'csv', text: ' CSV', title: 'Fees Refund'},
+                    {extend: 'excel', text: ' EXCEL', title: 'Fees Refund'},
+                    {extend: 'print', text: ' PRINT', title: 'Fees Refund'},
+                    'pageLength'
+                ],
+            });
+
+            $('#example thead tr').clone(true).appendTo('#example thead');
+            $('#example thead tr:eq(1) th').each(function (i) {
+                var title = $(this).text();
+                $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+                $('input', this).on('keyup change', function () {
+                    if (table.column(i).search() !== this.value) {
+                        table.column(i).search(this.value).draw();
+                    }
+                });
             });
         });
     </script>

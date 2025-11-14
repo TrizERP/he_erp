@@ -216,13 +216,13 @@ class marks_entry_controller extends Controller
      * @throws NotFoundExceptionInterface
      * @return Response
      */
-public function create(Request $request)
+    public function create(Request $request)
 {
     // Get exam creations based on exam or exam_master
     $exam_creations = exam_creation::select('id', 'points')
-        ->when($request->exam != '', function($q) use($request) {
+        ->when($request->exam != '', function ($q) use ($request) {
             $q->where('id', $request->exam);
-        }, function($q) use($request) {
+        }, function ($q) use ($request) {
             $q->where('exam_id', $request->exam_master);
         })->get();
 
@@ -231,8 +231,8 @@ public function create(Request $request)
 
     // Get marks entries
     $marks_entries = marks_entry::where('sub_institute_id', session()->get('sub_institute_id'))
-        ->when($request->exam != '', function($q) use($request) {
-            $q->where('exam_id', $request->exam); 
+        ->when($request->exam != '', function ($q) use ($request) {
+            $q->where('exam_id', $request->exam);
         })->get();
 
     // Build response array
@@ -259,26 +259,70 @@ public function create(Request $request)
         "sub_institute_id" => session()->get('sub_institute_id'),
         "module_name" => "result_mark"
     ];
-    
+
     $check_approve = DB::table('result_exam_approve')->where($approve_status)->first();
-    if(isset($check_approve->created_by)) {
+    if (isset($check_approve->created_by)) {
         $approved_user = DB::table('tbluser')
             ->where('id', $check_approve->created_by)
             ->where('status', 1)
             ->first();
     }
-    
+
     $responce_arr['approve_status'] = $check_approve;
     $responce_arr['approved_user'] = $approved_user ?? '';
-
+    //dd($student_data);
     // Process student data
     if (!empty($student_data)) {
+        // ✅ Show only failed students if checkbox selected
+        if ($request->has('is_remedial') && $request->is_remedial == 1) {
+            $failed_students = DB::table('result_marks as rm')
+            ->join('result_create_exam as rce', 'rm.exam_id', '=', 'rce.id')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('rm.student_id', '=', 'se.student_id')
+                    ->on('rce.standard_id', '=', 'se.standard_id')
+                    ->on('rce.sub_institute_id', '=', 'se.sub_institute_id');
+            })
+            ->where('rm.sub_institute_id', session()->get('sub_institute_id'))
+            ->where('rce.exam_id', $request->exam_master)
+            ->where('rce.term_id', $request->term)
+            ->where('rce.standard_id', $request->standard)
+            ->where('rce.subject_id', $request->subject)
+            ->where('se.section_id', $request->division)
+            ->where('se.syear', session()->get('syear'))
+            ->select(
+                'rm.student_id',
+                'se.grade_id',
+                'se.standard_id',
+                'se.section_id',
+                DB::raw('SUM(rm.points) AS obtained_marks'),
+                DB::raw('SUM(rce.points) AS total_marks'),
+                DB::raw('MAX(rce.cutoff) AS cutoff_reference')
+            )
+            ->groupBy('rm.student_id', 'se.grade_id', 'se.standard_id', 'se.section_id')
+            ->havingRaw('SUM(rm.points) < MAX(rce.cutoff)')
+            ->pluck('rm.student_id')
+            ->toArray();
+            
+                // ✅ Fix: match by integer comparison
+            $student_data = array_values(array_filter($student_data, function ($student) use ($failed_students) {
+                $id = isset($student['student_id'])
+                    ? (int)$student['student_id']
+                    : (int)$student['id'];
+                return in_array($id, $failed_students);
+            }));
+        }
+        
+        // ✅ Continue with your normal mapping logic
         foreach ($student_data as $student) {
-            $student_id = $student['student_id'];
+            $student_id = (int)($student['student_id'] ?? $student['id']);
             $responce_arr['stu_data'][$student_id] = [];
             $responce_arr['stu_data'][$student_id]['enrollment_no'] = $student['enrollment_no'];
-            $responce_arr['stu_data'][$student_id]['name'] = $student['first_name'].' '.$student['middle_name'].' '.$student['last_name'];
-            // Check if student has elective subject
+            $responce_arr['stu_data'][$student_id]['name'] =
+                $student['first_name'] . ' ' .
+                $student['middle_name'] . ' ' .
+                $student['last_name'];
+
+            // ✅ Check if student has elective subject
             $has_elective = DB::table("sub_std_map as sm")
                 ->where([
                     "sm.sub_institute_id" => session()->get('sub_institute_id'),
@@ -301,11 +345,12 @@ public function create(Request $request)
                 }
             }
 
-            // Map exam results for student
+            // ✅ Map exam results
             foreach ($exam_creations as $exam) {
                 $marks = $marks_entries->where('student_id', $student_id)
                     ->where('exam_id', $exam->id)
                     ->first();
+
                 $responce_arr['stu_data'][$student_id][$exam->id] = [
                     'points' => $marks ? $marks->points : 0,
                     'outof' => $exam->points,
@@ -317,7 +362,8 @@ public function create(Request $request)
             }
         }
     }
-    // return $responce_arr['stu_data'];
+
+    // Return to view
     return is_mobile($request->input('type'), "result/marks_entry/add", $responce_arr, "view");
 }
 
@@ -526,6 +572,8 @@ public function store(Request $request)
     $sub_institute_id = session()->get('sub_institute_id');
     $all_data = [];
 
+    $is_remedial = $request->has('is_remedial') ? 1 : 0;
+
     if (isset($_REQUEST["type"]) && $_REQUEST["type"] == "API") {
         $sub_institute_id = $_REQUEST["sub_institute_id"];
         $all_data = json_decode($_REQUEST["data"], 1);
@@ -539,7 +587,14 @@ public function store(Request $request)
                 'sub_institute_id' => $sub_institute_id,
                 'student_id' => $student_id,
                 'exam_id' => $exam_id,
-            ])->get()->toArray();
+            ])->exists();
+            // ✅ Common fields used in both insert and update
+            $baseData = [
+                'student_id' => $student_id,
+                'exam_id' => $exam_id,
+                'sub_institute_id' => $sub_institute_id,
+                'is_remedial' => $is_remedial, // <-- store remedial flag
+            ];
 
             if (!empty($check) && $check > 0) {
                 if ($arr['points'] != '') {

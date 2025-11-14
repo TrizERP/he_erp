@@ -34,10 +34,6 @@
                                         <div class="table-responsive">
                                             <table class="table table-stripped">
                                                 <tr>
-                                                    <td>{{ App\Helpers\get_string('uniqueid','request')}}</td>
-                                                    <td><?php echo $data['stu_data']['uniqueid']; ?></td>
-                                                </tr>
-                                                <tr>
                                                     <td>{{ App\Helpers\get_string('studentname','request')}}</td>
                                                     <td><?php echo $data['stu_data']['name']; ?></td>
                                                 </tr>
@@ -48,10 +44,6 @@
                                                 <tr>
                                                     <td>Parent Email</td>
                                                     <td><?php echo $data['stu_data']['email']; ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>{{ App\Helpers\get_string('studentquota','request')}}</td>
-                                                    <td><?php echo $data['stu_data']['student_quota']; ?></td>
                                                 </tr>
                                             </table>
                                         </div>
@@ -71,10 +63,12 @@
                                                     <td>Contact No</td>
                                                     <td><?php echo $data['stu_data']['mobile']; ?></td>
                                                 </tr>
+                                                <!--
                                                 <tr style="color: red;">
                                                     <td>Pending Fees</td>
                                                     <td><?php echo $data['stu_data']['pending']; ?></td>
                                                 </tr>
+                                                -->
                                             </table>
                                         </div>
                                     </div>
@@ -155,11 +149,13 @@
                                                     <input type="text" name="refund_remark" id="refund_remark"
                                                            class="form-control">
                                                 </td>
+                                            </tr>
+                                            <tr>
                                                 <td>Payment Mode</td>
                                                 <td>
                                                     <select class="form-control" required="required" name="PAYMENT_MODE"
                                                             id="payment_mode" onchange="sh_bankDetail(this.value);">
-                                                        <option value="">Select Payment Mode</option>
+                                                        <option value="">--Select--</option>
                                                         <option value="Cash">Cash</option>
                                                         <option value="Cheque">Cheque</option>
                                                         <option value="DD">DD</option>
@@ -169,14 +165,15 @@
                                                 </td>
                                                 <td>Receipt Date</td>
                                                 <td><input type="text" name="receiptdate" id="receiptdate"
-                                                           class="form-control mydatepicker" autocomplete="off"></td>
+                                                           class="form-control mydatepicker" autocomplete="off"
+                                                           value="<?php echo date('Y-m-d'); ?>"></td>
                                             </tr>
                                             <tr class="bnakDetail">
                                                 <td>Cheque/DD Date</td>
                                                 <td><input type="text" name="cheque_date" id="cheque_date"
                                                            class="form-control mydatepicker" autocomplete="off"
                                                            value="<?php echo date('Y-m-d'); ?>"></td>
-                                                <td>Cheque/DD No/Transaction No</td>
+                                                <td>Cheque/DD/Trans.No</td>
                                                 <td><input type="text" name="cheque_no" id="cheque_no"
                                                            class="form-control"></td>
                                             </tr>
@@ -185,7 +182,7 @@
                                                 <td>Bank Name</td>
                                                 <td>
                                                     <select class="form-control" name="bank_name" id="bank_name">
-                                                        <option value="">Select Bank Name</option>
+                                                        <option value="">--Select--</option>
                                                         @if(!empty($data['bank_data']))
                                                             @foreach($data['bank_data'] as $key => $value)
                                                                 <option
@@ -203,7 +200,7 @@
                                         </table>
                                     </div>
                                     <div class="table-responsive col-md-12">
-                                        <div class="col-md-6 form-group">
+                                        <div class="col-md-12 form-group text-center">
                                             <input type="submit" name="submit" onclick="return checkForm();"
                                                    value="Save" class="btn btn-success">
                                         </div>

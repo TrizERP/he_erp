@@ -1975,7 +1975,7 @@ if (!function_exists('get_string')) {
         }
     }
 
-    function get_school_details($grade = '', $std = '', $div = '')
+    function get_school_details($grade = '', $std = '', $div = '', $subject='')
     {
 
         $marking_period_id = session()->get('term_id');
@@ -2067,6 +2067,23 @@ if (!function_exists('get_string')) {
                 $html .= '</td>';
             }
             $html .= '</tr>';
+        
+        if ($subject) {
+
+            $record = DB::table('sub_std_map')
+                ->where('sub_institute_id', session()->get('sub_institute_id'))
+                ->where('subject_id', $subject)
+                ->where('standard_id', $std)
+                ->first();
+
+            $subject_name = $record->display_name ?? '';
+
+            $html .= '<tr>';
+            $html .= '<td colspan="3" style="text-align:center !important;" align="center">
+            <span style=" font-size: 18px;font-weight: 700;font-family: Arial, Helvetica, sans-serif !important;">Subject : <u>' . $subject_name . '</u></span>';
+            $html .= '</tr>';
+        }
+
             $html .= '</tbody>';
             $html .= '</table>';
         }

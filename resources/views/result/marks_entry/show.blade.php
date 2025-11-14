@@ -37,6 +37,13 @@
                             </select>
                         </div>
 
+                        <!-- Remedial Checkbox -->
+                        <div class="form-check mt-2">
+                            <input type="hidden" name="is_remedial" value="0">
+                            <input type="checkbox" id="is_remedial" name="is_remedial" value="1" class="form-check-input">
+                            <label class="form-check-label" for="is_remedial">Show Remedial Exams Only</label>
+                        </div>
+
                         {{-- Exam Selection --}}
                         <div class="col-md-3 form-group">
                             <label for="exam">Select Exam:</label>
@@ -102,16 +109,32 @@
         $('#exam').empty().append('<option value="">Select</option>');
     });
 
-    // Fetch exams based on exam master
-    $('#exam_master').on('change', function () {
-        fetchDropdownData('/api/get-exam-list', {
-            standard_id: $("#standard").val(),
-            subject_id: $("#subject").val(),
-            term_id: $("#term").val(),
-            exam_id: $("#exam_master").val(),
-            'searchType' : 'co',
-        }, '#exam');
-    });
+    // When Exam Master changes, load exams
+$('#exam_master').on('change', function () {
+    loadExamList();
+});
+
+// When Remedial checkbox changes, reload exams automatically
+$('#is_remedial').on('change', function () {
+    loadExamList();
+});
+
+function loadExamList() {
+    const params = {
+        standard_id: $("#standard").val(),
+        subject_id: $("#subject").val(),
+        term_id: $("#term").val(),
+        exam_id: $("#exam_master").val(),
+        searchType: 'co',
+    };
+
+    // ✅ Send is_remedial only when checkbox is checked
+    if ($('#is_remedial').is(':checked')) {
+        params.is_remedial = 1;
+    }
+
+    fetchDropdownData('/api/get-exam-list', params, '#exam');
+}
 
     // Helper function to reset dropdowns
     function resetDropdowns(selectors) {

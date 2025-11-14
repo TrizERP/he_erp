@@ -35,6 +35,19 @@
                                 </select>
                             </div>
 
+                            <div class="form-check col-md-4" style="margin-top: 32px;">
+                                <input type="hidden" name="is_remedial" value="0">
+                                <input 
+                                    type="checkbox" 
+                                    name="is_remedial" 
+                                    id="is_remedial" 
+                                    value="1" 
+                                    class="form-check-input"
+                                    @if(isset($data['is_remedial']) && $data['is_remedial'] == 1) checked @endif
+                                >
+                                <label class="form-check-label" for="is_remedial">Remedial</label>
+                            </div>                      
+
                             <input type="hidden" value="{{$data['con_point']}}" name="con_point">
                             <input type="hidden" value="{{$data['app_disp_status']}}" name="app_disp_status">
                             <!--
@@ -55,6 +68,7 @@
                                         <th>Name</th>
                                         <th>Marks</th>
                                         <th>Sort Order</th>
+                                        <th>Cutoff</th>
                                         <th>Exam Date</th>
                                     </tr>
                                 </thead>
@@ -78,6 +92,9 @@
                                             <input type="text" name="sort_order" value="{{ $data['sort_order'] }}" class="form-control" />
                                         </td>
                                         <td>
+                                            <input type="text" name="cutoff" value="{{ $data['cutoff'] ?? '' }}" class="form-control" />
+                                        </td>
+                                        <td>
                                             <input type="text" name="exam_date" value="{{ $data['exam_date'] }}" class="form-control mydatepicker" autocomplete="off" />
                                         </td>
                                     </tr>
@@ -88,11 +105,6 @@
                             </tfoot>
                         </table>
                         </div>
-                        <div class="col-md-4 form-group">
-    <label>Cutoff</label>
-    <input type="text" name="cutoff" value="{{ $data['cutoff'] ?? '' }}" class="form-control">
-</div>
-
                         <div class="col-md-12 form-group">
                             <center>
                                 <input type="submit" name="submit" value="Save" class="btn btn-success" >
@@ -191,7 +203,8 @@ $('#subject').on('change',function(){
     var grade = $("#grade").val();
     var standard = $("#standard").val();
     var subject = $(this).val();
-    var co_id = "{{ $data['cutoff'] }}";
+    var co_id = "{{ $data['co_id'] }}";
+    var cutoff = "{{ $data['cutoff'] }}";
 
     getCO(grade,standard,subject,co_id);
 })
@@ -210,7 +223,8 @@ $(document).ready(function () {
     @endif
 
     var subject ="{{ $data['subject_id'] }}";
-    var co_id = "{{ $data['cutoff'] }}";
+    var co_id = "{{ $data['co_id'] }}";
+    var cutoff = "{{ $data['cutoff'] }}";
     // console.log('grade='+grade+',standard='+standard+',subject='+subject+',co_id='+co_id);
     // console.log(grade +'-'+ standard +'-'+ subject +'-'+ co_id);
     if (grade && standard && subject && co_id) {
