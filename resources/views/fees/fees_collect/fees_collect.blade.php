@@ -73,13 +73,13 @@
                                         } 
 								@endphp
 								<!-- hills previous pending fees Previous Year Fees Not Display in Current Year - Rajesh 01-07-2024  -->
-								@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['previous_fees'] > 0)
+								@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['stu_data']['previous_fees'] > 0)
 								<tr>
 									<td>Previous Fees</td>
-									<td>@php $bk[]= $data['previous_fees']; echo number_format($data['previous_fees'] ) @endphp</td>
+									<td>@php $bk[]= $data['stu_data']['previous_fees']; echo $data['stu_data']['previous_fees'] @endphp</td>
 									<td>0</td>
 									<td>0</td>
-									<td>@php $remain[] = $data['previous_fees']; echo number_format($data['previous_fees']) @endphp</td>
+									<td>@php $remain[] = $data['stu_data']['previous_fees']; echo $data['stu_data']['previous_fees'] @endphp</td>
 								</tr>
 								@endif
 								<!-- end previous fees  -->
@@ -202,26 +202,15 @@
 												{{ $data['stu_data']['email']; }}
 											</td>
 										</tr>										
-										{{-- <tr>
+										<tr>
 											<td style="color: red;">Pending Fees</td>
 											<td style="color: red;">
 											<!-- for hills  previous fees  -->
-											@if(!in_array(session()->get('sub_institute_id'),[48,61,133]) && $data['stu_data']['previous_fees'] > 0)
+											@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['stu_data']['previous_fees'] > 0)
 											 	{{($data['stu_data']['previous_fees'] + $data['stu_data']['pending']) }}
 											@else
 												{{$data['stu_data']['pending']}}
 											@endif
-											</td>
-										</tr> --}}
-										<tr>
-											<td style="color: red;">Pending Fees</td>
-											<td style="color: red;">
-												<!-- for hills previous fees  -->
-												@if(!in_array(session()->get('sub_institute_id'),[48,61]) && $data['previous_fees'] > 0)
-													{{ number_format(($data['previous_fees'] + $data['stu_data']['pending'])) }}
-												@else
-													{{ number_format($data['stu_data']['pending'], 2) }}
-												@endif
 											</td>
 										</tr>
 										@if (Session::get('sub_institute_id') == '181')
@@ -250,13 +239,13 @@
 							<input type="hidden" name="enrollment" value="{{ $data['stu_data']['enrollment']; }}">
 							<input type="hidden" name="roll_no" value="{{ $data['stu_data']['roll_no']; }}">
 							<input type="hidden" name="medium" value="{{ $data['stu_data']['medium']; }}">
-							<input type="hidden" name="standard_short_name" value="{{ $data['stu_data']['standard_short_name']; }}">
-							<input type="hidden" name="standard_medium" value="{{ $data['stu_data']['standard_medium']; }}">							
 							<input type="hidden" name="father_name" value="{{ $data['stu_data']['father_name']; }}">
 							<input type="hidden" name="mother_name" value="{{ $data['stu_data']['mother_name']; }}">
 							<!-- // 2024-06-24 by uma -->
 							<input type="hidden" name="student_batch" value="{{ $data['stu_data']['student_batch']; }}">
 							<input type="hidden" name="pan_card" id="pan_card">
+							<input type="hidden" name="standard_short_name" value="{{ $data['stu_data']['standard_short_name']; }}">
+							<input type="hidden" name="standard_medium" value="{{ $data['stu_data']['standard_medium']; }}">
 							
 							<div class="table-responsive col-md-12" style="border-top: 2px solid black;">
 								<table class="table table-stripped">
@@ -344,9 +333,7 @@
 												@php
                                                         $total = [];
                                                         foreach ($data['final_fee_new'] as $id => $val) {
-															
 												@endphp
-						
 												<tr>
 													<td style="width: 10%">
 														<input type="checkbox" name="" id="" <?=( isset($val[ 'mandatory']) && $val[
@@ -720,54 +707,54 @@
 			
 			// }
 
-			function checkForm() {
+function checkForm() {
 
-				if ($('#no_heads').length != 0) {
-					var paragraphs = $('#no_heads').find('p');
-					if (paragraphs.length != 0) {		
-						paragraphs.each(function(index, element) {
-						alert('Head not added in Receipt Book Master : ' + $(element).text());
-						});
-						return false;	
-					}	
-				}
+    if ($('#no_heads').length != 0) {
+        var paragraphs = $('#no_heads').find('p');
+		if (paragraphs.length != 0) {		
+			paragraphs.each(function(index, element) {
+			alert('Head not added in Receipt Book Master : ' + $(element).text());
+			});
+			return false;	
+		}	
+    }
 
-				if ($('#payment_mode').val() == '') {
-					alert("Please select Payment Mode.");
-					return false;
-				}
-				if ($('#receiptdate').val() == '') {
-					alert("Please select Receipt Date.");
-					return false;
-				}
-				if ($('#payment_mode').val() != 'Cash') {
-					if ($('#cheque_date').val() == '') {
-						alert("Please select Cheque Date.");
-						return false;
-					}
-					if ($('#cheque_no').val() == '') {
-						alert("Please select Cheque Number.");
-						return false;
-					}
-					if ($('#bank_name').val() == '') {
-						alert("Please select Bank Name.");
-						return false;
-					}
-					if ($('#bank_branch').val() == '') {
-						alert("Please select Bank Branch.");
-						return false;
-					}
-				}
-				
-				// Submit the form
-				if(sub==0){
-				$('#formId').submit();
-				// Prevent the default form submission
-				return true;
-				}else{
-					return false;
-				}
-			}
+    if ($('#payment_mode').val() == '') {
+        alert("Please select Payment Mode.");
+        return false;
+    }
+    if ($('#receiptdate').val() == '') {
+        alert("Please select Receipt Date.");
+        return false;
+    }
+    if ($('#payment_mode').val() != 'Cash') {
+        if ($('#cheque_date').val() == '') {
+            alert("Please select Cheque Date.");
+            return false;
+        }
+        if ($('#cheque_no').val() == '') {
+            alert("Please select Cheque Number.");
+            return false;
+        }
+        if ($('#bank_name').val() == '') {
+            alert("Please select Bank Name.");
+            return false;
+        }
+        if ($('#bank_branch').val() == '') {
+            alert("Please select Bank Branch.");
+            return false;
+        }
+    }
+	
+    // Submit the form
+	if(sub==0){
+    $('#formId').submit();
+    // Prevent the default form submission
+    return true;
+	}else{
+		return false;
+	}
+}
 
 
 			$('#fees_head').on('change', '.allField1', function() {
