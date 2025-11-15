@@ -226,7 +226,7 @@
                                     <th>{{ $data['fees_heads'][$dv] }}</th>
                                 @endforeach
 
-                                <th>Previous Due</th>
+                                <th>Previous Fees</th>
                                 <th>Amount</th>
                             </tr>
                         </thead>
@@ -277,7 +277,7 @@
                                                 <td>{{ $data['fees_details'][$value['id']][$data['fees_heads'][$dv]] }}
                                                 </td>
                                             @else
-                                                <td>00</td>
+                                                <td>0</td>
                                             @endif
                                         @endforeach
 
@@ -401,7 +401,7 @@
                         .trim().toLowerCase());
 
                     // 3) Indexes we care about
-                    const prevIdx = headers.indexOf('previous due');
+                    const prevIdx = headers.indexOf('previous fees');
                     const amtIdx = headers.indexOf('amount');
 
                     // 4) Helper to parse numbers like "16,000.00"
