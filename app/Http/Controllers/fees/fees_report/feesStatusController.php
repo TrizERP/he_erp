@@ -162,7 +162,76 @@ class feesStatusController extends Controller
 
     foreach ($student_ids as $sid) {
         // load previous year breakoff for exactly one student at a time
-        $prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
+        //$prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
+
+//BY RAJESH ALL PREVIOUS        
+    $data = DB::table('tblstudent_enrollment as a')
+    ->select('a.syear', 'a.standard_id', 's.marking_period_id')
+    ->join('standard as s', 's.id', '=', 'a.standard_id')
+    ->whereNull('a.end_date')
+    ->where('a.sub_institute_id', $sub_institute_id)
+    ->where('a.student_id', $sid)
+    ->where('a.standard_id', '<', $standard)
+    ->get()->toArray();    
+
+    $previous_standard = [];
+
+    foreach ($data as $row) {
+        $previous_standard[] = [
+            'last_syear'             => $row->syear,
+            'last_std'               => $row->standard_id,
+            'last_marking_period_id' => $row->marking_period_id,
+        ];
+    }
+
+        $prevBk = [];
+
+        foreach ($previous_standard as $item) {
+        
+            $merged_head_results = FeeBreakoffHeadWise(
+                [$sid],
+                '',
+                '',
+                '',
+                $item['last_syear'],
+                '',
+                $item['last_marking_period_id']
+            );
+        
+            if (!empty($merged_head_results)) {
+        
+                foreach ($merged_head_results as $row) {
+        
+                    $id = $row['id'];
+        
+                    // If first record for this ID → set full data
+                    if (!isset($prevBk[$id])) {
+                        $prevBk[$id] = $row;
+                    } else {
+        
+                        // ────────────────
+                        // MERGE ONLY BREAKOFF
+                        // ────────────────
+                        if (!empty($row['breakoff'])) {
+        
+                            // Initialize breakoff if missing
+                            if (!isset($prevBk[$id]['breakoff'])) {
+                                $prevBk[$id]['breakoff'] = [];
+                            }
+        
+                            // Flat merge → newer breakoff replaces older breakoff
+                            $prevBk[$id]['breakoff'] =
+                                array_replace(
+                                    $prevBk[$id]['breakoff'],
+                                    $row['breakoff']
+                                );
+                        }
+                    }
+                }
+            }
+        }
+//echo "<pre>";print_r($prevBk);exit;
+//END RAJESH        
 
         $due = 0;
         if (!empty($prevBk[$sid]['breakoff'])) {
@@ -216,8 +285,8 @@ class feesStatusController extends Controller
         $receipts = DB::table("fees_collect")
             ->where("student_id", $sid)
             ->where("sub_institute_id", $sub_institute_id)
-            ->where("is_deleted", "!=", "Y")
-            ->where("syear", $syear - 1)
+            ->where("is_deleted", "=", "N")
+            //->where("syear", $syear - 1)
             ->get();
 
         $data['all_receipts'] = $receipts->pluck("receipt_no")->toArray();
@@ -251,6 +320,7 @@ class feesStatusController extends Controller
         foreach ($other2 as $v) $sum2 += $v;
 
         $data['total_payable'] = $sum1 + $sum2;
+
     }
 
     unset($data);
@@ -276,8 +346,6 @@ class feesStatusController extends Controller
 
     return is_mobile($type, "fees/fees_report/status_report", $res, "view");
 }
-
-
 
     /**
      * Remove the specified resource from storage.
