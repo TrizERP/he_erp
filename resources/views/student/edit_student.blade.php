@@ -95,7 +95,8 @@ br {
                             <li class="nav-item"><a href="#section-linemove-14" class="nav-link" aria-selected="false" data-toggle="tab"><span>Parent Communication</span></a></li>
                             <li class="nav-item"><a href="#section-linemove-15" class="nav-link" aria-selected="false" data-toggle="tab"><span>Leave Application</span></a></li>
                             <li class="nav-item"><a href="#section-linemove-16" class="nav-link" aria-selected="false" data-toggle="tab"><span>Transport Details</span></a></li>
-                         
+                            <li class="nav-item"><a href="#section-linemove-17" data-id="Achivement" class="nav-link" aria-selected="false" data-toggle="tab"><span>Achievement</span></a></li>
+
                         </ul>
                             
                             @if(isset($data['data']))
@@ -107,7 +108,7 @@ br {
                             @endif
                             
                             <div class="tab-content">
-                                
+
                                 <!-- START STUDENT INFORMATION -->
                                 <div class="tab-pane p-3 active" id="section-linemove-1" role="tabpanel">                                
                                     <form action="{{ route('add_student.update', $student_data->id) }}" enctype="multipart/form-data" method="post">
@@ -1395,6 +1396,101 @@ br {
                                 </div>
                                 <!-- END LEAVE APPLICATION --> 
 
+                                  <!-- START STUDENT Achivement -->                                
+                                <div class="tab-pane p-3" id="section-linemove-17" role="tabpanel">                                
+                                
+                                @php
+                                    if(isset($data['student_document'])){
+                                        $student_document = $data['student_document'];
+                                    }else{
+                                        $student_document = array();
+                                    }
+                                @endphp                                
+                                   
+                                    <form name="student_document_form" id="student_document_form" enctype="multipart/form-data" method="post">
+                                    {{ method_field("POST") }}
+                                    @csrf
+                                        <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
+                                            <div id="past_document">
+                                            <div class="row">
+                                                <div class="col-md-4 form-group">
+                                                     <label>Title</label>
+                                                     <input type="text" id='document_title' name="document_title" class="form-control" required>
+                                                </div>                                            
+                                                <div class="col-md-4 form-group">
+                                                    <label>Description</label>
+                                                    <input type="text" id='document_title' name="document_title" class="form-control" required>
+                                                </div>                                            
+                                                <div class="col-md-4 form-group">
+                                                    <label>Type </label>
+                                                    <select id="document_type" name="document_type" class="form-control" required>
+                                                               <option value="">Select Type</option>
+                                                               <option value="Sports">Sports</option>
+                                                               <option value="Cultural">Cultural</option>
+                                                               <option value="Academic">Academic</option>
+                                                               <option value="Competition">Competition</option>
+                                                               <option value="Tournament">Tournament</option>
+                                                     </select>
+                                                </div>  
+                                                 <div class="col-md-4 form-group">
+                                                    <label>Level </label>
+                                                     <select id="document_level" name="document_level" class="form-control" required>
+                                                            <option value="">Select Level</option>
+                                                            <option value="School Level">School Level</option>
+                                                            <option value="District Level">District Level</option>
+                                                            <option value="State Level">State Level</option>
+                                                            <option value="National Level">National Level</option>
+                                                            <option value="International Level">International Level</option>
+                                                      </select>
+                                                 </div>  
+                                                 <div class="col-md-4 form-group">
+                                                    <label>File Path </label>
+                                                    <input type="file" id='file_name' name="file_name" class="form-control" required>
+                                                </div>  
+                                            </div>                                              
+                                        </div>
+                                    @if(Session::get('user_profile_name') != 'Student')                                
+                                        <div class="col-md-12 form-group">
+                                            <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
+                                        </div>
+                                    @endif    
+                                    </form> 
+                                    <div class="table-responsive">
+                                        <table id="example" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>                                                            
+                                                    <th>Description</th>
+                                                    <th>Type</th>
+                                                    <th>Level</th>
+                                                    <th>File Path</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            @php
+                                            $j=1;
+                                            @endphp
+                                            @if(isset($data['data']))
+                                               @foreach($student_document as $pkey => $docdata)
+                                                <tr>
+                                                    <td>{{$j}}</td>                                                            
+                                                    <td>{{$docdata['document_type']}}</td>
+                                                    <td>{{$docdata['document_title']}}</td>
+                                                    <td>{{$docdata['created_on']}}</td>
+                                                    <td><a target="_blank" href="../../../../storage/student_document/{{$docdata['file_name']}}">{{$docdata['file_name']}}</a></td>
+                                                </tr>
+                                            @php
+                                            $j++;
+                                            @endphp
+                                                @endforeach
+                                            @endif
+                                            </tbody>
+                                        </table>
+                                    </div>                                
+                                </div>
+                                <!-- END STUDENT achivement -->
+                                
+
                                  <!-- START Transport -->
                                  <div class="tab-pane p-3" id="section-linemove-16" role="tabpanel">
                                     <div class="tab-pane p-3" id="section-linemove-14" role="tabpanel">
@@ -1494,7 +1590,7 @@ br {
         </div>
     </div>
 </div>
-
+ 
 <!--Modal: Add ChapterModal-->
 <div id="printThis">
     <div class="modal fade right modal-scrolling" id="ChapterModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
