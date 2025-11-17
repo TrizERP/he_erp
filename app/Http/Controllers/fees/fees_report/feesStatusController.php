@@ -102,19 +102,24 @@ class feesStatusController extends Controller
     }
 
     $student_ids = [];
+
     foreach ($studentData as $s) {
-        $student_ids[] = (int)$s['student_id'];
+        $student_ids[] = [
+            'student_id'  => (int)$s['student_id'],
+            'standard_id' => (int)$s['standard_id']
+        ];
     }
 
     $uiHeadCols = array_values($fees_head);
 
     // ============ BREAKOFF DATA ============
-    $breakoffData = FeeBreakoffHeadWise($student_ids);
+    $onlyStudentIds = array_column($student_ids, 'student_id');
+    $breakoffData = FeeBreakoffHeadWise($onlyStudentIds);
 
     $displayBreakoff = [];
     $displayBreakoffByHead = [];
 
-    foreach ($student_ids as $sid) {
+    foreach ($onlyStudentIds as $sid) {
         if (empty($breakoffData[$sid]['breakoff'])) continue;
 
         foreach ($breakoffData[$sid]['breakoff'] as $termId => $heads) {
@@ -142,7 +147,7 @@ class feesStatusController extends Controller
         $whereRaw .= " AND term_id IN (" . implode(",", $month) . ")";
     }
 
-    $whereRaw .= " AND student_id IN (" . implode(",", $student_ids) . ")";
+    $whereRaw .= " AND student_id IN (" . implode(",", $onlyStudentIds) . ")";
 
     $paidRows = DB::table("fees_collect")->whereRaw($whereRaw)->get();
 
@@ -158,9 +163,12 @@ class feesStatusController extends Controller
     }
 
     // ============ PREVIOUS YEAR DUE ============
-    $previousDues = array_fill_keys($student_ids, 0.0);
+    $previousDues = array_fill_keys($onlyStudentIds, 0.0);
 
     foreach ($student_ids as $sid) {
+
+    $student_id = $sid['student_id'];        // student_id
+    $standard_id = $sid['standard_id'];       // standard_id (use in query)
         // load previous year breakoff for exactly one student at a time
         //$prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
 
@@ -170,8 +178,8 @@ class feesStatusController extends Controller
     ->join('standard as s', 's.id', '=', 'a.standard_id')
     ->whereNull('a.end_date')
     ->where('a.sub_institute_id', $sub_institute_id)
-    ->where('a.student_id', $sid)
-    ->where('a.standard_id', '<', $standard)
+    ->where('a.student_id', $student_id)
+    ->where('a.standard_id', '<', $standard_id)
     ->get()->toArray();    
 
     $previous_standard = [];
@@ -189,7 +197,7 @@ class feesStatusController extends Controller
         foreach ($previous_standard as $item) {
         
             $merged_head_results = FeeBreakoffHeadWise(
-                [$sid],
+                [$student_id],
                 '',
                 '',
                 '',
@@ -234,8 +242,8 @@ class feesStatusController extends Controller
 //END RAJESH        
 
         $due = 0;
-        if (!empty($prevBk[$sid]['breakoff'])) {
-            foreach ($prevBk[$sid]['breakoff'] as $m => $heads) {
+        if (!empty($prevBk[$student_id]['breakoff'])) {
+            foreach ($prevBk[$student_id]['breakoff'] as $m => $heads) {
                 foreach ($heads as $row) {
                     $amount = (float)($row['amount'] ?? 0);
                     $paid   = (float)($row['paid_amount'] ?? 0);
@@ -243,19 +251,19 @@ class feesStatusController extends Controller
                 }
             }
         }
-        $previousDues[$sid] = $due;
+        $previousDues[$student_id] = $due;
     }
 
     // ============ FILTER PAID / UNPAID ============
     $filtered = [];
 
-    foreach ($student_ids as $sid) {
+    foreach ($onlyStudentIds as $sid) {
         $charges = array_sum($displayBreakoffByHead[$sid] ?? []);
         $paid    = array_sum($paidAmounts[$sid] ?? []);
         $prevDue = $previousDues[$sid];
-
-        $currentDue = max($charges - $paid, 0);
-        $totalDue   = $currentDue + $prevDue;
+        //$currentDue = max($charges - $paid, 0);
+        //$totalDue   = $currentDue + $prevDue;
+        $totalDue   = $charges + $prevDue;
 
         if ($fees_status == "paid" && $totalDue == 0) {
             $filtered[] = $sid;
