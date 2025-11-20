@@ -117,8 +117,11 @@ class tblstudentController extends Controller
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
-        $res['data'] = $data;
+        $res['data'] = $student_data;
         $res['custom_fields'] = $dataCustomFields;
+
+        $res['student_data'] = $student_data ?? null;
+
 		if (count($finalfieldsData) > 0) {
 			$res['data_fields'] = $finalfieldsData;
         }
@@ -136,7 +139,7 @@ class tblstudentController extends Controller
 
 		$type = $request->input('type');
 
-		return is_mobile($type, "student/add_student", $res, "view");
+		return is_mobile($type, "student/edit_student", $res, "view");
 	}
 
     /**
@@ -900,6 +903,59 @@ die; */
      * @param  int  $id
      * @return RedirectResponse|Response
      */
+
+
+public function achievementStore(Request $request)
+{
+    $request->validate([
+        'student_id' => 'required',
+        'title' => 'required',
+        'description' => 'required',
+        'type' => 'required',
+        'level' => 'required',
+        'file_path' => 'nullable|file|mimes:jpg,png,pdf,docx'
+    ]);
+
+    $fileName = null;
+
+    if ($request->hasFile('file_path')) {
+        $fileName = time() . '.' . $request->file_path->extension();
+        $request->file_path->move(public_path('uploads/achievement'), $fileName);
+    }
+
+
+    \DB::table('achievements')->insert([
+        'student_id' => $request->student_id,
+        'title' => $request->title,
+        'description' => $request->description,
+        'type' => $request->type,
+        'level' => $request->level,
+        'file_path' => $fileName,
+        'created_at' => now(),
+    ]);
+
+    return back()->with('success', 'Achievement Added Successfully');
+
+    
+    
+}
+
+
+public function achievementList($student_id)
+{
+    // fetch student details
+    $student_data = \DB::table('students')->where('id', $student_id)->first();
+
+    // fetch achievements
+    $achievement = \DB::table('achievements')
+        ->where('student_id', $student_id)
+        ->get();
+
+    return view('student.achievement', compact('achievement', 'student_id', 'student_data'));
+}
+
+
+
 	public function update(Request $request, $id)
 	{
 

@@ -1407,7 +1407,7 @@ br {
                                     }
                                 @endphp                                
                                    
-                                    <form name="student_document_form" id="student_document_form" enctype="multipart/form-data" method="post">
+                                    <form name="student_document_form" id="student_document_form" enctype="multipart/form-data" action="{{ route('achievement.store') }}"  method="post">
                                     {{ method_field("POST") }}
                                     @csrf
                                         <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
@@ -1432,17 +1432,7 @@ br {
                                                                <option value="Tournament">Tournament</option>
                                                      </select>
                                                 </div>  
-                                                 <div class="col-md-4 form-group">
-                                                    <label>Level </label>
-                                                     <select id="document_level" name="document_level" class="form-control" required>
-                                                            <option value="">Select Level</option>
-                                                            <option value="School Level">School Level</option>
-                                                            <option value="District Level">District Level</option>
-                                                            <option value="State Level">State Level</option>
-                                                            <option value="National Level">National Level</option>
-                                                            <option value="International Level">International Level</option>
-                                                      </select>
-                                                 </div>  
+                                                 
                                                  <div class="col-md-4 form-group">
                                                     <label>File Path </label>
                                                     <input type="file" id='file_name' name="file_name" class="form-control" required>
