@@ -2,6 +2,15 @@
 
 namespace App\Http\Controllers\student;
 
+namespace App\Models\student;
+
+use Illuminate\Database\Eloquent\Model;
+
+class tblstudentAchievementModel extends Model
+{
+    protected $table = 'tblstudent_achievement';
+}
+
 use App\Http\Controllers\Controller;
 use App\Models\admission\admissionEnquiryModel;
 use App\Models\fees\NACH\ac_typeModel;
@@ -14,6 +23,7 @@ use App\Models\school_setup\sub_std_mapModel;
 use App\Models\settings\tblcustomfieldsModel;
 use App\Models\settings\tblfields_dataModel;
 use App\Models\student\documentTypeModel;
+use App\Models\student\tblstudentAchievementModel;
 use App\Models\student\houseModel;
 use App\Models\student\studentHealthModel;
 use App\Models\student\studentHWModel;
@@ -621,6 +631,21 @@ class tblstudentController extends Controller
 			->get()
 			->toArray();
 
+
+
+            $studentAchievement = tblstudentAchievementModel::select(
+        'tblstudent_achievement.*',
+        't.achievement_type'
+    )
+    ->join('achievement_type as t', 't.id', '=', 'tblstudent_achievement.achievement_type_id')
+    ->where([
+        'sub_institute_id' => $sub_institute_id,
+        'student_id' => $id
+    ])
+    ->get()
+    ->toArray();
+
+
 		$studentfeesdetails = tblstudentFeesDetailModel::where(['sub_institute_id' => $sub_institute_id, 'student_id' => $id])->get()->toArray();
         
         $getAnacdotals = Anacdotal::where(['sub_institute_id' => $sub_institute_id, 'student_id' => $id, 'syear' => $syear])->get()->toArray();
@@ -907,37 +932,28 @@ die; */
 
 public function achievementStore(Request $request)
 {
-    $request->validate([
+    $validated = $request->validate([
         'student_id' => 'required',
+        'achievement_type_id' => 'required',
         'title' => 'required',
         'description' => 'required',
-        'type' => 'required',
-        'level' => 'required',
-        'file_path' => 'nullable|file|mimes:jpg,png,pdf,docx'
+        'file' => 'nullable|file',
     ]);
 
-    $fileName = null;
+    $achievement = new tblstudentAchievementModel();
+    $achievement->student_id = $request->student_id;
+    $achievement->achievement_type_id = $request->achievement_type_id;
+    $achievement->title = $request->title;
+    $achievement->description = $request->description;
+    $achievement->sub_institute_id = session('sub_institute_id');
 
-    if ($request->hasFile('file_path')) {
-        $fileName = time() . '.' . $request->file_path->extension();
-        $request->file_path->move(public_path('uploads/achievement'), $fileName);
+    if ($request->hasFile('file')) {
+        $achievement->file_path = $request->file('file')->store('achievement_files');
     }
 
+    $achievement->save();
 
-    \DB::table('achievements')->insert([
-        'student_id' => $request->student_id,
-        'title' => $request->title,
-        'description' => $request->description,
-        'type' => $request->type,
-        'level' => $request->level,
-        'file_path' => $fileName,
-        'created_at' => now(),
-    ]);
-
-    return back()->with('success', 'Achievement Added Successfully');
-
-    
-    
+    return redirect()->back()->with('success', 'Achievement added successfully');
 }
 
 
@@ -952,8 +968,11 @@ public function achievementList($student_id)
         ->get();
 
     return view('student.achievement', compact('achievement', 'student_id', 'student_data'));
-}
 
+    Route::post('/achievement/store', [StudentController::class, 'achievementStore'])
+        ->name('achievement.store');
+
+}
 
 
 	public function update(Request $request, $id)

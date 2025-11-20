@@ -1407,44 +1407,25 @@ br {
                                     }
                                 @endphp                                
                                    
-                                    <form name="student_document_form" id="student_document_form" enctype="multipart/form-data" action="{{ route('achievement.store') }}"  method="post">
-                                    {{ method_field("POST") }}
-                                    @csrf
-                                        <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
-                                            <div id="past_document">
-                                            <div class="row">
-                                                <div class="col-md-4 form-group">
-                                                     <label>Title</label>
-                                                     <input type="text" id='document_title' name="document_title" class="form-control" required>
-                                                </div>                                            
-                                                <div class="col-md-4 form-group">
-                                                    <label>Description</label>
-                                                    <input type="text" id='document_title' name="document_title" class="form-control" required>
-                                                </div>                                            
-                                                <div class="col-md-4 form-group">
-                                                    <label>Type </label>
-                                                    <select id="document_type" name="document_type" class="form-control" required>
-                                                               <option value="">Select Type</option>
-                                                               <option value="Sports">Sports</option>
-                                                               <option value="Cultural">Cultural</option>
-                                                               <option value="Academic">Academic</option>
-                                                               <option value="Competition">Competition</option>
-                                                               <option value="Tournament">Tournament</option>
-                                                     </select>
-                                                </div>  
-                                                 
-                                                 <div class="col-md-4 form-group">
-                                                    <label>File Path </label>
-                                                    <input type="file" id='file_name' name="file_name" class="form-control" required>
-                                                </div>  
-                                            </div>                                              
-                                        </div>
-                                    @if(Session::get('user_profile_name') != 'Student')                                
-                                        <div class="col-md-12 form-group">
-                                            <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
-                                        </div>
-                                    @endif    
-                                    </form> 
+                                    <form action="{{ route('achievement.store') }}" method="POST" enctype="multipart/form-data">
+    @csrf
+
+    <input type="hidden" name="student_id" value="{{ $student->id }}">
+
+    <select name="achievement_type_id" required>
+        @foreach ($achievementTypes as $type)
+            <option value="{{ $type->id }}">{{ $type->achievement_type }}</option>
+        @endforeach
+    </select>
+
+    <input type="text" name="title" required>
+    <textarea name="description" required></textarea>
+    <input type="text" name="type" required>
+    <input type="file" name="file">
+
+    <button type="submit">Save Achievement</button>
+</form>
+
                                     <div class="table-responsive">
                                         <table id="example" class="table table-striped">
                                             <thead>
