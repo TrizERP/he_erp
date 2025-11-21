@@ -422,6 +422,7 @@ class tblstudentController extends Controller
             $syear = session()->get('syear');
 		}
 
+
         // $data = file_get_contents('https://erp.triz.co.in/get_adminParentCommunicationListAPI');
         // $payload = array(
 		//     // 'exp' => time() + 7200,
@@ -920,29 +921,30 @@ die; */
 
 public function achievementStore(Request $request)
 {
-    $validated = $request->validate([
+    $request->validate([
         'student_id' => 'required',
-        'achievement_type_id' => 'required',
         'title' => 'required',
         'description' => 'required',
-        'file' => 'nullable|file',
+        'type' => 'required',
+        'file_path' => 'nullable|file',
     ]);
 
-    $achievement = new tblstudentAchievementModel();
+    $achievement = new studentAchievementModel();
     $achievement->student_id = $request->student_id;
-    $achievement->achievement_type_id = $request->achievement_type_id;
     $achievement->title = $request->title;
     $achievement->description = $request->description;
-    $achievement->sub_institute_id = session('sub_institute_id');
+    $achievement->type = $request->type;
 
-    if ($request->hasFile('file')) {
-        $achievement->file_path = $request->file('file')->store('achievement_files');
+    if ($request->hasFile('file_path')) {
+        $achievement->file_path = $request->file('file_path')->store('student_achievement');
     }
 
     $achievement->save();
 
     return redirect()->back()->with('success', 'Achievement added successfully');
 }
+
+
 
 
 public function achievementList($student_id)
@@ -956,8 +958,6 @@ public function achievementList($student_id)
         ->get();
 
     return view('student.achievement', compact('achievement', 'student_id', 'student_data'));
-
-    
 
 }
 
