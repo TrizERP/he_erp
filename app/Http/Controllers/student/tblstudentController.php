@@ -631,17 +631,7 @@ class tblstudentController extends Controller
 
 
 
-            $studentAchievement = tblstudentAchievementModel::select(
-        'tblstudent_achievement.*',
-        't.achievement_type'
-    )
-    ->join('achievement_type as t', 't.id', '=', 'tblstudent_achievement.achievement_type_id')
-    ->where([
-        'sub_institute_id' => $sub_institute_id,
-        'student_id' => $id
-    ])
-    ->get()
-    ->toArray();
+           
 
 
 		$studentfeesdetails = tblstudentFeesDetailModel::where(['sub_institute_id' => $sub_institute_id, 'student_id' => $id])->get()->toArray();
