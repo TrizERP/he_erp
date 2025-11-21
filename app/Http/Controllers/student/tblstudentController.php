@@ -957,8 +957,7 @@ public function achievementList($student_id)
 
     return view('student.achievement', compact('achievement', 'student_id', 'student_data'));
 
-    Route::post('/achievement/store', [StudentController::class, 'achievementStore'])
-        ->name('achievement.store');
+    
 
 }
 
