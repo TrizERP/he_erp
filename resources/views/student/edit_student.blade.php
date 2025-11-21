@@ -1433,7 +1433,6 @@ br {
                                                     <th>Title</th>                                                            
                                                     <th>Description</th>
                                                     <th>Type</th>
-                                                    <th>Level</th>
                                                     <th>File Path</th>
                                                 </tr>
                                             </thead>

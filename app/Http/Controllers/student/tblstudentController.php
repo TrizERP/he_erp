@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\student;
 
-namespace App\Models\student;
+
 
 use Illuminate\Database\Eloquent\Model;
 
-class tblstudentAchievementModel extends Model
-{
-    protected $table = 'tblstudent_achievement';
-}
 
 use App\Http\Controllers\Controller;
 use App\Models\admission\admissionEnquiryModel;
@@ -23,7 +19,7 @@ use App\Models\school_setup\sub_std_mapModel;
 use App\Models\settings\tblcustomfieldsModel;
 use App\Models\settings\tblfields_dataModel;
 use App\Models\student\documentTypeModel;
-use App\Models\student\tblstudentAchievementModel;
+use App\Models\student\studentAchievementModel;
 use App\Models\student\houseModel;
 use App\Models\student\studentHealthModel;
 use App\Models\student\studentHWModel;
@@ -102,6 +98,7 @@ class tblstudentController extends Controller
         $houseData = houseModel::where(['sub_institute_id' => $sub_institute_id])->get();
         $casteData = casteModel::select()->get();
         $document_type = documentTypeModel::select()->get();
+        $studentachievement = studentAchievementModel::select()->get();
         $transport_kilometer_data = add_transport_kilometer_rate::where([
             'sub_institute_id' => $sub_institute_id, 'syear' => $syear,
         ])->get();
@@ -558,6 +555,7 @@ class tblstudentController extends Controller
         $houseData = houseModel::where(['sub_institute_id' => $sub_institute_id])->get();
         $casteData = casteModel::select()->get();
         $document_type_data = documentTypeModel::select()->get();
+        $studentachievement_data = studentAchievementModel::select()->get();
         $transport_kilometer_data = add_transport_kilometer_rate::where([
             'sub_institute_id' => $sub_institute_id, 'syear' => $syear,
         ])->get();
