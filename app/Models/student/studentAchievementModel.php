@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class studentAchievementModel extends Model
 {
-    protected $table = 'tblstudent_achievement';
+    protected $table = 'student_document_type';
 
     public $timestamps = false;
 
