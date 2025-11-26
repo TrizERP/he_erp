@@ -94,8 +94,14 @@ Route::group(['prefix' => 'student', 'middleware' => ['session', 'menu', 'logRou
     Route::resource('bulk_student_batch', bulkStudentBatchController::class);
     Route::resource('anacdotal', studentAnacdotalController::class);
 
-Route::get('/student/{id}/achievements', [App\Http\Controllers\student\classworkAttachementController::class, 'showStudentAchievements'])
-    ->name('student.achievements.show');
+// show achievements for a student
+Route::get('/student/{id}/achievements', [App\Http\Controllers\student\classworkAttachementController::class, 'index'])
+    ->name('student.achievements.index');
+
+// store achievement (form action uses this)
+Route::post('/student/{id}/achievements', [App\Http\Controllers\student\classworkAttachementController::class, 'store'])
+    ->name('student.achievements.store');
+
 
 
     Route::get('selected_student_view', [rollOverController::class, 'selected_student_view'])->name("selected_student_view");

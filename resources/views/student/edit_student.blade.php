@@ -1399,33 +1399,30 @@ br {
                                   <!-- START STUDENT Achivement -->                                
                                 <div class="tab-pane p-3" id="section-linemove-17" role="tabpanel">                                
                                 
-                                @php
-                                    if(isset($data['$studentachievement'])){
-                                        $studentachievement = $data['studentachievement'];
-                                    }else{
-                                        $studentachievement = array();
-                                    }
-                                @endphp                                
-                                   
-                                    <form name="classwork_attachment_form" id="classwork_attachment_form" enctype="multipart/form-data" method="post">
+                                    @if(isset($data['studentachievement']))
+                                        @php $studentachievement = $data['studentachievement']; @endphp
+                                    @else
+                                        @php $studentachievement = []; @endphp
+                                    @endif               
+                                                        
+                                    <form name="classwork_attachment_form" id="classwork_attachment_form" enctype="multipart/form-data" method="post"  action="{{ route('student.achievements.store', ['id' => $student_data['id']]) }}">
                                         {{ method_field("POST") }}
                                         @csrf
 
-                                        <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
-
+                                     <input type="hidden" name="student_id" value="{{ $student_data['id'] }}">
                                         <div id="past_document">
                                             <div class="row">
+
+                                             <div class="col-md-4 form-group">
+                                                    <label>Document Title</label>
+                                                    <input type="text" id='document_title' name="document_title" class="form-control" required>
+                                                </div>
 
                                                 <div class="col-md-4 form-group">
                                                     <label>Document Type</label>
                                                     <input id='document_type_id' name="document_type_id" class="form-control" required>
                                                 </div>
-
-                                                <div class="col-md-4 form-group">
-                                                    <label>Document Title</label>
-                                                    <input type="text" id='document_title' name="document_title" class="form-control" required>
-                                                </div>
-
+                                                
                                                 <div class="col-md-4 form-group">
                                                     <label>File</label>
                                                     <input type="file" id='file_name' name="file_name" class="form-control" required>
@@ -1448,38 +1445,57 @@ br {
 
                                     </form>
 
-                                    <div class="table-responsive">
+                                  <div class="table-responsive">
                                         <table id="example" class="table table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th>Sr No.</th>                                                            
-                                                    <th> Type</th>
-                                                    <th> Title</th>
+                                                    <th>Sr No.</th>
+                                                    <th>Title</th>
+                                                    <th>Document Type</th>
                                                     <th>Description</th>
-                                                    <th>File Name</th>
+                                                    <th>Created On</th>
+                                                    <th>File</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                            @php
-                                            $j=1;
-                                            @endphp
-                                            @if(isset($data['data']))
-                                               @foreach($studentachievement as $pkey => $docdata)
-                                                <tr>
-                                                    <td>{{$j}}</td>                                                            
-                                                    <td>{{$docdata['title']}}</td>
-                                                    <td>{{$docdata['description']}}</td>
-                                                    <td>{{$docdata['created_on']}}</td>
-                                                    <td><a target="_blank" href="../../../../storage/student_document/{{$docdata['file_path']}}">{{$docdata['file_path']}}</a></td>
-                                                </tr>
-                                            @php
-                                            $j++;
-                                            @endphp
-                                                @endforeach
-                                            @endif
+                                                @php $j = 1; @endphp
+
+                                                @if(!empty($studentachievement) && count($studentachievement) > 0)
+                                                    @foreach($studentachievement as $pkey => $docdata)
+                                                        <tr>
+                                                            <td>{{ $j }}</td>
+                                                            <td>{{ $docdata['title'] ?? $docdata['document_title'] ?? '-' }}</td>
+
+                                                            {{-- Document type: try multiple possible keys safely --}}
+                                                            <td>
+                                                                {{ $docdata['document_type'] ?? $docdata['document_type_id'] ?? $docdata['type_title'] ?? '-' }}
+                                                            </td>
+
+                                                            <td>{{ $docdata['description'] ?? '-' }}</td>
+
+                                                            {{-- Created on: try created_on then created_at --}}
+                                                            <td>{{ $docdata['created_on'] ?? $docdata['created_at'] ?? '-' }}</td>
+
+                                                            <td>
+                                                                @if(!empty($docdata['file_path']))
+                                                                    <a target="_blank" href="{{ asset('storage/student_document/' . $docdata['file_path']) }}">
+                                                                        {{ $docdata['file_path'] }}
+                                                                    </a>
+                                                                @else
+                                                                    &mdash;
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        @php $j++; @endphp
+                                                    @endforeach
+                                                @else
+                                                    <tr>
+                                                        <td colspan="6" class="text-center">No achievements found.</td>
+                                                    </tr>
+                                                @endif
                                             </tbody>
-                                        </table>
-                                    </div>                                
+                                             </table>
+                                    </div>
                                 </div>
                                 <!-- END STUDENT achivement -->
                                 
