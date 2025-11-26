@@ -1400,50 +1400,61 @@ br {
                                 <div class="tab-pane p-3" id="section-linemove-17" role="tabpanel">                                
                                 
                                 @php
-                                    if(isset($data['student_document'])){
-                                        $student_document = $data['student_document'];
+                                    if(isset($data['$studentachievement'])){
+                                        $studentachievement = $data['studentachievement'];
                                     }else{
-                                        $student_document = array();
+                                        $studentachievement = array();
                                     }
                                 @endphp                                
                                    
-                                    <form name="student_document_form" id="student_document_form"  enctype="multipart/form-data" action="{{ url('student/add_student/'.$student->id.'/edit') }}" method="get">
-                                    {{ method_field("GET") }}
-                                    @csrf
+                                    <form name="classwork_attachment_form" id="classwork_attachment_form" enctype="multipart/form-data" method="post">
+                                        {{ method_field("POST") }}
+                                        @csrf
+
                                         <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
-                                            <div id="past_document">
-                                            <div class="row">                                        
+
+                                        <div id="past_document">
+                                            <div class="row">
+
                                                 <div class="col-md-4 form-group">
-                                                    <label>Achievement Title</label>
+                                                    <label>Document Type</label>
+                                                    <input id='document_type_id' name="document_type_id" class="form-control" required>
+                                                </div>
+
+                                                <div class="col-md-4 form-group">
+                                                    <label>Document Title</label>
                                                     <input type="text" id='document_title' name="document_title" class="form-control" required>
-                                                </div>     
+                                                </div>
+
                                                 <div class="col-md-4 form-group">
-                                                     <label>Achievement Type</label>
-                                                       <input type="text" id='document_title' name="document_tutle" class="form-control" required>
-                                                </div>    
-                                                <div class="col-md-4 form-group">
-                                                    <label>Description </label>
-                                                    <input type="text" id='document_title' name="document_tutle" class="form-control" required>
-                                                </div>                                     
-                                                <div class="col-md-4 form-group">
-                                                    <label>File </label>
+                                                    <label>File</label>
                                                     <input type="file" id='file_name' name="file_name" class="form-control" required>
-                                                </div>  
-                                            </div>                                              
+                                                </div>
+
+                                                <!-- ⭐ New Description Field -->
+                                                <div class="col-md-4 form-group">
+                                                    <label>Description</label>
+                                                    <input type="text" id="description" name="description" class="form-control" required>
+                                                </div>
+
+                                            </div>
                                         </div>
-                                    @if(Session::get('user_profile_name') != 'Student')                                
-                                        <div class="col-md-12 form-group">
-                                            <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
-                                        </div>
-                                    @endif    
-                                    </form> 
+
+                                        @if(Session::get('user_profile_name') != 'Student')
+                                            <div class="col-md-12 form-group">
+                                                <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
+                                            </div>
+                                        @endif
+
+                                    </form>
+
                                     <div class="table-responsive">
                                         <table id="example" class="table table-striped">
                                             <thead>
                                                 <tr>
                                                     <th>Sr No.</th>                                                            
-                                                    <th>Document Title</th>
-                                                    <th>Document Type</th>
+                                                    <th> Type</th>
+                                                    <th> Title</th>
                                                     <th>Description</th>
                                                     <th>File Name</th>
                                                 </tr>
@@ -1453,13 +1464,13 @@ br {
                                             $j=1;
                                             @endphp
                                             @if(isset($data['data']))
-                                               @foreach($student_document as $pkey => $docdata)
+                                               @foreach($studentachievement as $pkey => $docdata)
                                                 <tr>
                                                     <td>{{$j}}</td>                                                            
-                                                    <td>{{$docdata['document_type']}}</td>
-                                                    <td>{{$docdata['document_title']}}</td>
+                                                    <td>{{$docdata['title']}}</td>
+                                                    <td>{{$docdata['description']}}</td>
                                                     <td>{{$docdata['created_on']}}</td>
-                                                    <td><a target="_blank" href="../../../../storage/student_document/{{$docdata['file_name']}}">{{$docdata['file_name']}}</a></td>
+                                                    <td><a target="_blank" href="../../../../storage/student_document/{{$docdata['file_path']}}">{{$docdata['file_path']}}</a></td>
                                                 </tr>
                                             @php
                                             $j++;
@@ -1778,6 +1789,31 @@ br {
         $('#student_document_form').submit(function(e) {
             e.preventDefault();           
             var URL = "{{route('student_document.store')}}";            
+            var formData = new FormData(this);
+            $('#overlay').show();            
+            $.ajax({
+                url: URL,
+                type: 'POST',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {                                        
+                    $('#overlay').hide();
+                    //alert("Document Uploaded Successfully");
+                    location.reload();
+                    //$('#section-linemove-10').addClass('active');
+                    $("a[data-id='document']").trigger("click");
+                },
+                error: function(response){
+                    alert("Document Failed.");
+                }                
+            });       
+        });
+
+        $('#classwork_attachment_form').submit(function(e) {
+            e.preventDefault();           
+            var URL = "{{route('classwork_attachment.store')}}";            
             var formData = new FormData(this);
             $('#overlay').show();            
             $.ajax({

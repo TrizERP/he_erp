@@ -6,14 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class studentAchievementModel extends Model
 {
-    protected $table = 'student_document_type';
+    protected $table = 'classwork_attachment';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'title',
-        'discription',
+        'id',
         'type',
-        'file path'
+        'description',
+        'title',
+        'file_path',
+        'sub_institute_id',
+        'created_by'
     ];
 }

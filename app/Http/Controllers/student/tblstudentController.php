@@ -630,9 +630,11 @@ class tblstudentController extends Controller
 			->get()
 			->toArray();
 
-
-
-           
+        $studentachievement = studentAchievementModel::select('classwork_attachment.*')
+            ->where(['sub_institute_id' => $sub_institute_id])
+            ->get()
+            ->toArray();
+    
 
 
 		$studentfeesdetails = tblstudentFeesDetailModel::where(['sub_institute_id' => $sub_institute_id, 'student_id' => $id])->get()->toArray();
@@ -811,6 +813,9 @@ die; */
 		if (count($studentdocument) > 0) {
 			$res['student_document'] = $studentdocument;
 		}
+        if (count($studentachievement) > 0) {
+			$res['studentachievement'] = $studentachievement;
+		}
 		if (count($studentfeesdetails) > 0) {
 			$res['studentfeesdetails'] = $studentfeesdetails[0];
 		}
@@ -917,49 +922,6 @@ die; */
      * @param  int  $id
      * @return RedirectResponse|Response
      */
-
-
-public function achievementStore(Request $request)
-{
-    $request->validate([
-        'student_id' => 'required',
-        'title' => 'required',
-        'description' => 'required',
-        'type' => 'required',
-        'file_path' => 'nullable|file',
-    ]);
-
-    $achievement = new studentAchievementModel();
-    $achievement->student_id = $request->student_id;
-    $achievement->title = $request->title;
-    $achievement->description = $request->description;
-    $achievement->type = $request->type;
-
-    if ($request->hasFile('file_path')) {
-        $achievement->file_path = $request->file('file_path')->store('student_achievement');
-    }
-
-    $achievement->save();
-
-    return redirect()->back()->with('success', 'Achievement added successfully');
-}
-
-
-
-
-public function achievementList($student_id)
-{
-    // fetch student details
-    $student_data = \DB::table('students')->where('id', $student_id)->first();
-
-    // fetch achievements
-    $achievement = \DB::table('achievements')
-        ->where('student_id', $student_id)
-        ->get();
-
-    return view('student.achievement', compact('achievement', 'student_id', 'student_data'));
-
-}
 
 
 	public function update(Request $request, $id)
