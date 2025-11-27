@@ -1397,53 +1397,55 @@ br {
                                 <!-- END LEAVE APPLICATION --> 
 
                                   <!-- START STUDENT Achivement -->                                
-                                <div class="tab-pane p-3" id="section-linemove-17" role="tabpanel">                                
-                                
-                                    @if(isset($data['studentachievement']))
-                                        @php $studentachievement = $data['studentachievement']; @endphp
-                                    @else
-                                        @php $studentachievement = []; @endphp
-                                    @endif               
-                                                        
-                                    <form name="classwork_attachment_form" id="classwork_attachment_form" enctype="multipart/form-data" method="post"  action="{{ route('student.achievements.store', ['id' => $student_data['id']]) }}">
-                                        {{ method_field("POST") }}
-                                        @csrf
+                                    <div class="tab-pane p-3" id="section-linemove-17" role="tabpanel">                                
+                                    
+                                        @if(isset($data['studentachievement']))
+                                            @php $studentachievement = $data['studentachievement']; @endphp
+                                        @else
+                                            @php $studentachievement = []; @endphp
+                                        @endif               
+                                                            
+                                        <form name="classwork_attachment_form" id="classwork_attachment_form" enctype="multipart/form-data" method="post">
+    {{ method_field("POST") }}
+    @csrf
 
-                                     <input type="hidden" name="student_id" value="{{ $student_data['id'] }}">
-                                        <div id="past_document">
-                                            <div class="row">
+    <input type="hidden" name="student_id" id="student_id" value="{{$student_data['id']}}">
 
-                                             <div class="col-md-4 form-group">
-                                                    <label>Document Title</label>
-                                                    <input type="text" id='document_title' name="document_title" class="form-control" required>
-                                                </div>
+    <div id="past_document">
+        <div class="row">
 
-                                                <div class="col-md-4 form-group">
-                                                    <label>Document Type</label>
-                                                    <input id='document_type_id' name="document_type_id" class="form-control" required>
-                                                </div>
-                                                
-                                                <div class="col-md-4 form-group">
-                                                    <label>File</label>
-                                                    <input type="file" id='file_name' name="file_name" class="form-control" required>
-                                                </div>
+            <div class="col-md-4 form-group">
+                <label>Document Title</label>
+                <input type="text" id='document_title' name="document_title" class="form-control" required>
+            </div>
+        
+        <div class="col-md-4 form-group">
+                <label>Document Type</label>
+                <input type="text"id='document_type' name="document_type" class="form-control" required>
+            </div>
 
-                                                <!-- ⭐ New Description Field -->
-                                                <div class="col-md-4 form-group">
-                                                    <label>Description</label>
-                                                    <input type="text" id="description" name="description" class="form-control" required>
-                                                </div>
+            <div class="col-md-4 form-group">
+                <label>File</label>
+                <input type="file" id='file_name' name="file_name" class="form-control" required>
+            </div>
 
-                                            </div>
-                                        </div>
+            <!-- ⭐ New Description Field -->
+            <div class="col-md-4 form-group">
+                <label>Description</label>
+                <input type="text" id="description" name="description" class="form-control" required>
+            </div>
 
-                                        @if(Session::get('user_profile_name') != 'Student')
-                                            <div class="col-md-12 form-group">
-                                                <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
-                                            </div>
-                                        @endif
+        </div>
+    </div>
 
-                                    </form>
+    @if(Session::get('user_profile_name') != 'Student')
+        <div class="col-md-12 form-group">
+            <input type="submit" name="submit" value="Save" class="btn btn-success triz-btn">
+            
+        </div>
+    @endif
+
+</form>
 
                                   <div class="table-responsive">
                                         <table id="example" class="table table-striped">
@@ -1467,14 +1469,19 @@ br {
                                                             <td>{{ $docdata['title'] ?? $docdata['document_title'] ?? '-' }}</td>
 
                                                             {{-- Document type: try multiple possible keys safely --}}
-                                                            <td>
-                                                                {{ $docdata['document_type'] ?? $docdata['document_type_id'] ?? $docdata['type_title'] ?? '-' }}
-                                                            </td>
+                                                           
+                                                        <td>{{ $docdata['document_type'] ?? $docdata['type'] ?? '-' }}</td>
+
 
                                                             <td>{{ $docdata['description'] ?? '-' }}</td>
 
                                                             {{-- Created on: try created_on then created_at --}}
-                                                            <td>{{ $docdata['created_on'] ?? $docdata['created_at'] ?? '-' }}</td>
+                                                            <td>
+                                                                {{ $docdata['created_on'] 
+                                                                    ?? $docdata['created_at'] 
+                                                                    ?? now()->format('Y-m-d H:i:s') }}
+                                                            </td>
+
 
                                                             <td>
                                                                 @if(!empty($docdata['file_path']))
