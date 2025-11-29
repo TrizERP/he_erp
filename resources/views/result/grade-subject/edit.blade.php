@@ -1,67 +1,72 @@
 @include('../includes.headcss')
 @include('../includes.header')
 @include('../includes.sideNavigation')
+
 <div id="page-wrapper">
     <div class="container-fluid">
+
         <div class="row bg-title">
             <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">Create Exam</h4>
-            </div>            
-        </div>      
-        <div class="card">
-            @if ($message = Session::get('success'))
-            <div class="alert alert-success alert-block">
-                <button type="button" class="close" data-dismiss="alert">×</button>
-                <strong>{{ $message }}</strong>
+                <h4 class="page-title">Edit Grade Subject</h4>
             </div>
-            @endif
+        </div>
+
+        <div class="card">
+
             <div class="col-lg-12 col-sm-12 col-xs-12">
-                <form action="{{ route('grade_subject_wise_master.store') }}" enctype="multipart/form-data" method="post">
-                    {{ method_field("POST") }}
-                    {{csrf_field()}}
+
+                <form action="{{ route('grade-subject.update', $item->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    {{-- REQUIRED HIDDEN FIELDS --}}
+                    <input type="hidden" name="syear" value="{{ session('syear') }}">
+                    <input type="hidden" name="sub_institute_id" value="{{ session('sub_institute_id') }}">
+                    <input type="hidden" name="term_id" id="term_id" value="{{ $item->term_id }}">
+
                     <div class="row">
-                        <!-- Term dropdown -->
-                        {{ App\Helpers\TermDD() }}
 
-                        <input type="hidden" name="medium" value="Institute"> 
+                        {{-- TERM DROPDOWN --}}
+                        {{ App\Helpers\TermDD($item->term_id) }}
 
-                        <!-- Grade/Std/Division dropdown -->
-                        {{ App\Helpers\SearchChain('4','single','grade,std') }} 
+                        {{-- GRADE / STANDARD DROPDOWN --}}
+                        {{ App\Helpers\SearchChain('4','single','grade,std',$item->grade_id,$item->standard_id) }}
 
+                        {{-- SUBJECT --}}
                         <div class="col-md-4 form-group">
-                            <label for="subject">Select Subject:</label>
+                            <label>Select Subject:</label>
                             <select name="subject" id="subject" class="form-control" required>
                                 <option value="">Select</option>
+
+                                {{-- Prefill subject --}}
+                                <option value="{{ $item->subject }}" selected>{{ $item->subject_name  }}</option>
                             </select>
                         </div>
 
-
+                        {{-- TABLE --}}
                         <div class="col-md-12 form-group">
                             <div class="table-responsive">
-                                <table id="examTable" class="table table-striped table-bordered order-list">
+                                <table class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Marks</th>
+                                            <th>Title</th>
+                                            <th>Breakoff</th>
                                             <th>Sort Order</th>
-                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                           
                                             <td>
-                                                <input type="text" name="title[]" class="form-control" />
+                                                <input type="text" name="title[]" class="form-control"
+                                                    value="{{ $item->title }}">
                                             </td>
                                             <td>
-                                                <input type="text" name="points[]" class="form-control" />
+                                                <input type="text" name="breakoff[]" class="form-control"
+                                                    value="{{ $item->breakoff }}">
                                             </td>
                                             <td>
-                                                <input type="text" name="sort_order[]" class="form-control" />
-                                            </td>
-                                            
-                                            <td class="text-center">
-                                                <button type="button" class="btn btn-success btn-sm addRow">+</button>
+                                                <input type="text" name="sort_order[]" class="form-control"
+                                                    value="{{ $item->sort_order }}">
                                             </td>
                                         </tr>
                                     </tbody>
@@ -69,37 +74,39 @@
                             </div>
                         </div>
 
-                        <input type="hidden" name="con_point" value="0">
-                        <input type="hidden" name="app_disp_status" value="Y">
-                        <input type="hidden" name="marks_type[]" value="MARKS">
-                        <input type="hidden" name="report_card_status[]" value="Y">
-
-                        <div class="col-md-12 form-group">
+                        <div class="col-md-12">
                             <center>
-                                <input type="submit" name="submit" value="Save" class="btn btn-success">
+                                <button type="submit" class="btn btn-success">Update</button>
                             </center>
                         </div>
+
                     </div>
+
                 </form>
+
             </div>
-            @if (count($errors) > 0)
-            <div class="alert alert-danger">
-                <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Whoops!</strong> Fix the following errors:
+                    <ul>
+                        @foreach($errors->all() as $e)
+                            <li>{{ $e }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
-        </div>       
+
+        </div>
+
     </div>
 </div>
 
 @include('includes.footerJs')
+@include('includes.footer')
 
 <script>
-    const requiredFields = ["#grade", "#standard", "#division", "#subject", "#term", "#exam"];
+   const requiredFields = ["#grade", "#standard", "#division", "#subject", "#term", "#exam"];
     requiredFields.forEach(field => $(field).prop('required', true));
 
     $('#term').change(function () {
@@ -107,7 +114,9 @@
             $(field).val("").empty().append('<option value="">Select</option>');
         });
     });
-
+    $('#term').change(function () {
+        $("#term_id").val($(this).val());
+    });
     $('#grade').change(function () {
         ["#subject", "#exam"].forEach(field => {
             $(field).empty().append('<option value="">Select</option>');
@@ -191,5 +200,3 @@
         $(this).closest("tr").remove();
     });
 </script>
-
-@include('includes.footer')
