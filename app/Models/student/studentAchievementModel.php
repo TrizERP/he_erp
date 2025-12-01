@@ -10,6 +10,7 @@ class studentAchievementModel extends Model
 
     public $timestamps = false;
 
-   protected $fillable = ['student_id','title','document_type','description','file_path'];
+   protected $fillable = ['student_id','title','document_type','description','file_path', 'sub_institute_id',
+        'created_by'];
 
 }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\student\studentAchievementModel;
 use Illuminate\Support\Facades\File;
 
+
 class classworkAttachementController extends Controller
 {
     /**
@@ -47,6 +48,7 @@ public function index($id = null)
         'document_title'   => 'required',
         'description'      => 'required',
         'file_name'        => 'required|file',
+        'sub_institute_id' => 'nullable|integer'
     ]);
 
     try {
@@ -66,6 +68,7 @@ public function index($id = null)
             'title'            => $request->document_title,
             'description'      => $request->description,
             'file_path'        => $fileName,
+            'created_on'       => date('Y-m-d H:i:s'),
             'sub_institute_id' => session()->get('sub_institute_id'),
             'created_by'       => session()->get('user_id'),
         ]);

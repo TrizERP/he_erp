@@ -1496,9 +1496,7 @@ br {
                                                         @php $j++; @endphp
                                                     @endforeach
                                                 @else
-                                                    <tr>
-                                                        <td colspan="6" class="text-center">No achievements found.</td>
-                                                    </tr>
+                                                    
                                                 @endif
                                             </tbody>
                                              </table>
