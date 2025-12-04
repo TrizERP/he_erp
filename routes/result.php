@@ -49,6 +49,7 @@ use App\Http\Controllers\Import\ExcelDownloadController;
 use App\Http\Controllers\result\new_result\templateController;
 use App\Http\Controllers\result\new_result\studentResultController;
 use App\Http\Controllers\result\approve_mobile_result\approve_mobile_result_controller;
+use App\Http\Controllers\result\SubjectWiseGradeMaster\SubjectWiseGradeController;
 
 Route::group(['prefix' => 'result', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
     Route::resource('exam_type_master', ExamTypeMasterController::class);
