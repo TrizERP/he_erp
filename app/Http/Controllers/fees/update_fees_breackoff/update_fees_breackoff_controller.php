@@ -61,6 +61,7 @@ class update_fees_breackoff_controller extends Controller
         // Filter months to only include those with non-empty headers in fees_month_header
         $existing_months = DB::table('fees_month_header')
             ->where('sub_institute_id', session()->get('sub_institute_id'))
+            ->where('syear', session()->get('syear'))
             ->whereNotNull('header')
             ->where('header', '!=', '')
             ->pluck('month_id')
@@ -92,6 +93,8 @@ class update_fees_breackoff_controller extends Controller
      */
     public function store(Request $request)
     {
+
+        $selected_admission_year = $request->input('admission_year');
         //dd($request->all());
         if ($request->has('action') && $request->input('action') == 'insert'){
             
@@ -118,15 +121,16 @@ class update_fees_breackoff_controller extends Controller
                 foreach ($all_data as $quota_id => $arr) {
                     foreach ($arr as $title_id => $amount) {
     //                                foreach ($req['month_id'] as $month_id => $on) {
+//RAJESH
+/*                        
                         DB::table('fees_breackoff')->where(
                             array(
                                 'syear' => session()->get('syear'),
-                                'admission_year' => session()->get('syear'),
+                                'admission_year' => $selected_admission_year,
                                 'fee_type_id' => $title_id,
                                 'quota' => $quota_id,
                                 'grade_id' => $req['grade'],
                                 'standard_id' => $req['standard'],
-                                // 'section_id' => $req['division'],
                                 'month_id' => $req['month'],
                                 'sub_institute_id' => session()->get('sub_institute_id')
                             )
@@ -134,27 +138,48 @@ class update_fees_breackoff_controller extends Controller
                         if ($amount != 0 && $amount != '') {
                             DB::table('fees_breackoff')->insert([
                                 'syear' => session()->get('syear'),
-                                'admission_year' => session()->get('syear'),
+                                'admission_year' => $selected_admission_year,
                                 'fee_type_id' => $title_id,
                                 'quota' => $quota_id,
                                 'grade_id' => $req['grade'],
                                 'standard_id' => $req['standard'],
-                                // 'section_id' => $req['division'],
                                 'month_id' => $req['month'],
                                 'amount' => $amount,
                                 'sub_institute_id' => session()->get('sub_institute_id'),
                                 'created_at' => date('Y-m-d H:i:s')
                             ]);
                         }
-    //                                }
+*/
+                        $data = [
+                            'syear'            => session('syear'),
+                            'admission_year'   => $selected_admission_year,
+                            'fee_type_id'      => $title_id,
+                            'quota'            => $quota_id,
+                            'grade_id'         => $req['grade'],
+                            'standard_id'      => $req['standard'],
+                            'month_id'         => $req['month'],
+                            'sub_institute_id' => session('sub_institute_id'),
+                        ];
+
+                        // Only proceed if amount is provided
+                        if (!empty($amount) && $amount != 0) {
+                            DB::table('fees_breackoff')->updateOrInsert(
+                                $data, // match these fields
+                                [
+                                    'amount'     => $amount,
+                                    'updated_at' => now(),
+                                    'created_at' => now(),
+                                ]
+                            );
+                        } else {
+                            // Amount is blank or zero → delete the record
+                            DB::table('fees_breackoff')->where($data)->delete();
+                        }
                     }
                 }
             }
-//                    }
-//                }
-//            }
-
-           
+//HIDE BY RAJESH for 4 quota have not display proper value
+/*           
             if ($request->has('OldValues')) {
                 $old_all_data = $request->input('OldValues');
                 foreach ($old_all_data as $id => $arr) {
@@ -208,15 +233,11 @@ class update_fees_breackoff_controller extends Controller
                                     'created_at' => date('Y-m-d H:i:s')
                                 ]);
                             }
-    //                        }
-    //                                }
-    //                            }
-    //                        }
                         }
                     }
                 }
             }
-
+*/
 
             $res = array(
                 "status_code" => 1,
@@ -229,18 +250,21 @@ class update_fees_breackoff_controller extends Controller
         } else {
             $result = DB::table('fees_breackoff')
                 ->where('sub_institute_id', session()->get('sub_institute_id'))
+                ->where('syear', session()->get('syear'))
                 ->where('grade_id', $_REQUEST['grade'])
                 ->where('standard_id', $_REQUEST['standard'])
+                ->where('admission_year', $selected_admission_year)
                 ->where('month_id', $_REQUEST['month_id'])->get()->toArray();
 
 
             $bk_arr = array();
             foreach ($result as $id => $arr) {
-                if ($arr->admission_year == session()->get('syear')) {
+                //HIDE BY RAJESH for 4 quota have not display proper value
+                //if ($arr->admission_year == session()->get('syear')) {
                     $bk_arr['new'][$arr->quota][$arr->fee_type_id] = $arr->amount;
-                } else {
-                    $bk_arr['old'][$arr->quota][$arr->fee_type_id] = $arr->amount;
-                }
+                //} else {
+                //    $bk_arr['old'][$arr->quota][$arr->fee_type_id] = $arr->amount;
+                //}
             }
 
             $where_arr = array(
@@ -293,6 +317,7 @@ class update_fees_breackoff_controller extends Controller
                 })->selectRaw('se.student_quota,s.admission_year')
                 ->where('f.sub_institute_id', $sub_institute_id)
                 ->where('f.syear', $syear)
+                ->where('s.admission_year', $selected_admission_year)
                 ->where('f.term_id', $_REQUEST['month_id'])
                 ->where('se.grade_id', $_REQUEST['grade'])
                 ->where('se.standard_id', $_REQUEST['standard'])
@@ -301,11 +326,12 @@ class update_fees_breackoff_controller extends Controller
             $paid_arr = array();
 
             foreach ($paid_result as $p_id => $p_arr) {
-                if ($p_arr->admission_year == session()->get('syear')) {
+                //HIDE BY RAJESH for 4 quota have not display proper value
+                //if ($p_arr->admission_year == session()->get('syear')) {
                     $paid_arr['new'][$p_arr->student_quota] = 'Y';
-                } else {
-                    $paid_arr['old'][$p_arr->student_quota] = 'Y';
-                }
+                //} else {
+                //    $paid_arr['old'][$p_arr->student_quota] = 'Y';
+                //}
             }
 
             $grade_name = DB::table('academic_section')
@@ -323,7 +349,7 @@ class update_fees_breackoff_controller extends Controller
             $school_data['grade']= $grade_name[0]->title;
             $school_data['standard']=$std_name[0]->name;
             $school_data['month']=$month_display;
-            $school_data['selected_admission_year'] = $request->input('admission_year');
+            $school_data['selected_admission_year'] = $selected_admission_year;
             //END If fees collected breakoff cant be edited
 
             return is_mobile($type, "fees/update_fees_breackoff/edit", $school_data, "view");

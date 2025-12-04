@@ -88,7 +88,7 @@
                 <div class="col-md-3 form-group">
                     <label>Fees Status:</label>
                     <select class="form-control" name="fees_status">
-                        <option value="">All</option>
+                        <option value="">-Select-</option>
                         <option value="paid"
                             {{ isset($data['fees_status']) && $data['fees_status'] == 'paid' ? 'selected' : '' }}>Paid
                         </option>
@@ -159,7 +159,7 @@
                                 <th>Mother Mobile</th>
                                 <th>Total Amount Payable</th>
                                 <th>Paid Amount</th>
-                                <th>Status</th>
+                                <!--<th>Status</th>-->
                             </tr>
                         </thead>
 
@@ -195,13 +195,7 @@
                                     <td>{{($value['total_payable']) }}</td>
                                     <td>{{ ($value['total_paid']) }}</td>
 
-                                    <td>
-                                        @if(($value['student_status'] ?? 'Active') == 'Active')
-                                            <span class="label label-success">Active</span>
-                                        @else
-                                            <span class="label label-danger">In Active</span>
-                                        @endif
-                                    </td>
+                                    <!--<td><span class="label label-success">PAID</span></td>-->
                                 </tr>
                             @endforeach
                         </tbody>
@@ -232,7 +226,7 @@
                                     <th>{{ $data['fees_heads'][$dv] }}</th>
                                 @endforeach
 
-                                <th>Previous Due</th>
+                                <th>Previous Fees</th>
                                 <th>Amount</th>
                             </tr>
                         </thead>
@@ -283,7 +277,7 @@
                                                 <td>{{ $data['fees_details'][$value['id']][$data['fees_heads'][$dv]] }}
                                                 </td>
                                             @else
-                                                <td>00</td>
+                                                <td>0</td>
                                             @endif
                                         @endforeach
 
@@ -387,7 +381,7 @@
                     'pageLength'
                 ],
                 order: [
-                    [1, 'asc']
+                    [0, 'asc']
                 ],
 
                 // === FOOTER TOTAL LOGIC ===
@@ -407,7 +401,7 @@
                         .trim().toLowerCase());
 
                     // 3) Indexes we care about
-                    const prevIdx = headers.indexOf('previous due');
+                    const prevIdx = headers.indexOf('previous fees');
                     const amtIdx = headers.indexOf('amount');
 
                     // 4) Helper to parse numbers like "16,000.00"

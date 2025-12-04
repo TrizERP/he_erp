@@ -18,20 +18,13 @@
                 <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
                     <h4 class="page-title">Fees Cancel</h4> </div>
             </div>
-        <div class="row bg-title">
+        <!--<div class="row bg-title">
             <div class="col-md-3 d-flex">
                 <input type="checkbox" id="toggle_cancel_refund" name="toggle_cancel_refund" checked
                        data-toggle="toggle" data-on="Fees Cancel" data-off="Fees Refund" data-onstyle="warning"
                        data-offstyle="danger" onchange="show_fees_cancel_refund();">
-            <!-- <h4 class="page-title">
-                    <a href="{{ route("fees_cancel.index") }}" class="btn btn-info add-new">Fees Cancel</a>
-                </h4>
-
-                <h4 class="page-title ml-2">
-                    <a href="{{ route("add_requisition.create") }}" class="btn btn-info add-new">Fees Refund</a>
-                </h4> -->
             </div>
-        </div>
+        </div>-->
         @php
             $grade_id = $standard_id = $division_id = $enrollment_no = $receipt_no = $from_date = $to_date = '';
 
