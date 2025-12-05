@@ -1475,6 +1475,7 @@ if (!function_exists('getStudents')) {
             $student_data[$value->id]['student_mobile'] = $value->student_mobile;
             $student_data[$value->id]['dob'] = $value->dob;
             $student_data[$value->id]['email'] = $value->email;
+            $student_data[$value->id]['alternate_email'] = $value->alternate_email;
             $student_data[$value->id]['bloodgroup'] = $value->bloodgroup;
             $student_data[$value->id]['admission_year'] = $value->admission_year;
             $student_data[$value->id]['address'] = $value->address;
