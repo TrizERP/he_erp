@@ -6,7 +6,7 @@
 
         <div class="row bg-title">
             <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">All Subject Semesterwise Report</h4>
+                <h4 class="page-title">Overall Attendance Report</h4>
             </div>
         </div>
     </div>
@@ -29,9 +29,9 @@
         <form action="{{ route('semwise_report_v1.create') }}">
             @csrf
             <div class="row">
-                {{ App\Helpers\SearchChain('2', 'single', 'grade,std,div', $grade_id, $standard_id, $division_id) }}
+                {{ App\Helpers\SearchChain('4', 'single', 'grade,std,div', $grade_id, $standard_id, $division_id) }}
 
-                <div class="form-group col-md-2">
+                <div class="form-group col-md-3">
                     <label>Report Type</label>
                     <select class="form-control" name="report_type" required>
                         <option value="">Select</option>
@@ -43,19 +43,19 @@
                     </select>
                 </div>
 
-                <div class="form-group col-md-2">
+                <div class="form-group col-md-3">
                     <label>Below Percent(%)</label>
                     <input type="number" class="form-control" name="below_percent"
                         value="{{ $data['below_percent'] ?? '' }}" autocomplete="off">
                 </div>
 
-                <div class="form-group col-md-2">
+                <div class="form-group col-md-3">
                     <label>From Date</label>
                     <input type="text" id="from_date" name="from_date" value="{{ $from_date }}"
                         class="form-control mydatepicker" autocomplete="off" required>
                 </div>
 
-                <div class="form-group col-md-2">
+                <div class="form-group col-md-3">
                     <label>To Date</label>
                     <input type="text" id="to_date" name="to_date" value="{{ $to_date }}"
                         class="form-control mydatepicker" autocomplete="off" required>
@@ -90,7 +90,7 @@
                     </h4>
 
                     <h1 style="text-align: center; font-size: 20px; margin-top: 5px; font-family: Arial, Helvetica, sans-serif; font-weight: 700;">
-                        All Subject Semesterwise Report
+                        Overall Attendance Report
                     </h1>
 
                     <style>
@@ -181,7 +181,7 @@
 <table id="example" class="table table-striped">
     <thead>
         <tr>
-            <th rowspan="2">SR No <input type="checkbox" name="checkAll" id="checkAll"> </th>
+            <th rowspan="2">SR No</th>
             <th rowspan="2">{{ App\Helpers\get_string('grno', 'request') }}</th>
             <th rowspan="2">{{ App\Helpers\get_string('studentname', 'request') }}</th>
             @php $totL = 0; $totP = 0; $totT = 0; $i = 1; @endphp
@@ -209,7 +209,8 @@
     <tbody>
         @foreach ($data['details'] ?? [] as $val)
             <tr>
-                <td>{{ $i++ }} <input type="checkbox" name="student[{{ $val['student_id'] }}]" id="singleCheck"></td>
+                <td>{{ $i++ }}
+                </td>
                 <td>{{ $val['enrollment_no'] }}</td>
                 <td>{{ $val['student_name'] }}</td>
                 @foreach ($data['subjects'] as $subjId => $subj)
@@ -249,12 +250,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="col-md-12">
-                    <center>
-                        <input type="submit" value="Send SMS" class="btn btn-success">
-                    </center>
-                </div>
             </div>
         </form>
     </div>
@@ -285,7 +280,7 @@ $(document).ready(function() {
             { 
                 extend: 'csv', 
                 text: 'CSV', 
-                title: 'All Subject Semesterwise Report' 
+                title: 'Overall Attendance Report' 
             },
             { 
                 extend: 'print',
@@ -302,7 +297,7 @@ $(document).ready(function() {
                             Academic Year: {{ $syear }} - {{ $nextYear }}
                         </h4>
                         <h1 style="text-align:center;font-size:20px;margin-top:5px;font-weight:700;font-family:Arial,Helvetica,sans-serif;color:black;">
-                            All Subject Semesterwise Report
+                            Overall Attendance Report
                         </h1>
                     `);
 
@@ -448,8 +443,6 @@ $(document).ready(function() {
                                 </div>
                             </div>
                         </div>
-
-                       
                     `);
                 }
             }

@@ -34,24 +34,6 @@
                     <strong>{{ $message }}</strong>
                 </div>
         @endif
-        <!-- <div class="row">
-                <div class="col-lg-2 col-sm-4 col-xs-12">
-                    <a href="{{ route('.create') }}"><button class="btn btn-block btn-info btn-rounded">User Information</button></a>
-                </div>
-                <div class="col-lg-2 col-sm-4 col-xs-12">
-                    <a href="{{ route('add_user_past_education.index') }}"><button class="btn btn-block btn-default btn-rounded">Past Education</button></a>
-                </div>
-                <div class="col-lg-2 col-sm-4 col-xs-12">
-                    <button class="btn btn-block btn-default btn-rounded">Primary</button>
-                </div>
-                <div class="col-lg-2 col-sm-4 col-xs-12">
-                    <button class="btn btn-block btn-default btn-rounded">Success</button>
-                </div>
-                <div class="col-lg-2 col-sm-4 col-xs-12">
-                    <button class="btn btn-block btn-default btn-rounded">Danger</button>
-                </div>
-            </div>
-            <br> -->
             <form action="{{ route('add_user.store') }}" enctype="multipart/form-data" method="post">
                 {{ method_field("POST") }}
                 @csrf
