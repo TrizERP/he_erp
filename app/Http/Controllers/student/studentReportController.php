@@ -98,16 +98,13 @@ class studentReportController extends Controller
         $tblcustom_fields['adharnumber'] = 'Adhar Number';
         $tblcustom_fields['anuualincome'] = get_string('anuualincome','request');
         $tblcustom_fields['image'] = 'Image';
-        $tblcustom_fields['house'] = get_string('house','request');
-        $tblcustom_fields['amount'] = 'Amount';
-        $tblcustom_fields['van'] = 'Van(Shift Wise)';
-        $tblcustom_fields['distance'] = 'Distance';
-        $tblcustom_fields['optional_subjects'] = 'Optional Subjects';        
+        //$tblcustom_fields['house'] = get_string('house','request');
+        //$tblcustom_fields['amount'] = 'Amount';
+        //$tblcustom_fields['van'] = 'Van(Shift Wise)';
+        //$tblcustom_fields['distance'] = 'Distance';
+        //$tblcustom_fields['optional_subjects'] = 'Optional Subjects';        
         $tblcustom_fields['nationality'] = get_string('nationality','request');
         $tblcustom_fields['place_of_birth'] = get_string('birthplace','request');
-        $tblcustom_fields['total_working_days'] = 'Total Working Days';
-        $tblcustom_fields['present_working_days'] = 'Present Working Days';
-        $tblcustom_fields['student_percentage'] = 'Student Percentage';
 
         $tblcustoms = DB::table("tblcustom_fields")
             ->where(["status" => "1", "table_name" => "tblstudent"])
@@ -193,12 +190,6 @@ class studentReportController extends Controller
                     $array[] = $value;
                 }
                 
-                // Add attendance-related calculations
-                if ($value == "total_working_days" || $value == "present_working_days" || $value == "student_percentage") {
-                    // These will be calculated using subqueries
-                    continue;
-                }
-                
                 $value1 = str_replace($searchArr1, $replaceArr1, $value);
                 $value2 = str_replace($searchArr, $replaceArr, $value1);
 
@@ -220,53 +211,6 @@ class studentReportController extends Controller
 
         // Add attendance-related calculations if requested
         $dynamicFields = $request->input('dynamicFields') ?? [];
-        if (in_array('total_working_days', $dynamicFields) || in_array('present_working_days', $dynamicFields) || in_array('student_percentage', $dynamicFields)) {
-            $array[] = '(
-                SELECT COUNT(DISTINCT attendance_date)
-                FROM student_attendance
-                WHERE student_id = tblstudent.id
-                AND sub_institute_id = '.$sub_institute_id.'
-                AND syear = '.$syear.'
-            ) as total_working_days';
-            
-            $array[] = '(
-                SELECT COUNT(DISTINCT attendance_date)
-                FROM student_attendance
-                WHERE student_id = tblstudent.id
-                AND sub_institute_id = '.$sub_institute_id.'
-                AND syear = '.$syear.'
-                AND attendance_status = "Present"
-            ) as present_working_days';
-            
-            $array[] = '(
-                CASE
-                    WHEN (
-                        SELECT COUNT(DISTINCT attendance_date)
-                        FROM student_attendance
-                        WHERE student_id = tblstudent.id
-                        AND sub_institute_id = '.$sub_institute_id.'
-                        AND syear = '.$syear.'
-                    ) > 0
-                    THEN ROUND(
-                        (
-                            SELECT COUNT(DISTINCT attendance_date)
-                            FROM student_attendance
-                            WHERE student_id = tblstudent.id
-                            AND sub_institute_id = '.$sub_institute_id.'
-                            AND syear = '.$syear.'
-                            AND attendance_status = "Present"
-                        ) * 100.0 / (
-                            SELECT COUNT(DISTINCT attendance_date)
-                            FROM student_attendance
-                            WHERE student_id = tblstudent.id
-                            AND sub_institute_id = '.$sub_institute_id.'
-                            AND syear = '.$syear.'
-                        ), 2
-                    )
-                    ELSE 0
-                END
-            ) as student_percentage';
-        }
 
         $student_data = DB::table('tblstudent')
             ->select(DB::raw(implode(',', $array)))
@@ -440,38 +384,38 @@ class studentReportController extends Controller
         // get start date att
        
         // echo "<pre>";print_r($otherFeesDetails);exit;
-        $enrollNo = $rollNo = $studentImg = 'N/A'; 
+        $enrollNo = $rollNo = $studentImg = '-'; 
 
         $personalDatas = $parentData = $academicData = [];
 
         if(isset($personalData[$student_id])){
             $pData  = $personalData[$student_id];
-            $studentImg =isset($pData['image']) ? $pData['image'] : 'N/A';
-            $enrollNo = isset($pData['enrollment_no']) ? $pData['enrollment_no'] : 'N/A';
-            $rollNo = isset($pData['roll_no']) ? $pData['roll_no'] : 'N/A';
+            $studentImg =isset($pData['image']) ? $pData['image'] : '-';
+            $enrollNo = isset($pData['enrollment_no']) ? $pData['enrollment_no'] : '-';
+            $rollNo = isset($pData['roll_no']) ? $pData['roll_no'] : '-';
             //personal data
             $personalDatas = [
-                'Name' => isset($pData['student_full_name']) ? $pData['student_full_name'] : 'N/A',
-                'Gender' => isset($pData['gender']) ? $pData['gender'] : 'N/A',
-                'Religion' => isset($pData['religion_name']) ? $pData['religion_name'] : 'N/A',
-                'Caste' => isset($pData['caste_name']) ? $pData['caste_name'] : 'N/A',
-                'Sub Caste' => isset($pData['subcast']) ? $pData['subcast'] : 'N/A',
-                'Birth Date' => isset($pData['dob']) ? $pData['dob'] : 'N/A',
-                'Email' => isset($pData['email']) ? $pData['email'] : 'N/A',
-                'Alternativ Email' => 'N/A',
-                'Address' => isset($pData['address']) ? $pData['address'] : 'N/A',
-                'Land Line' => 'N/A',
-                'Home/Hostel Phone' => 'N/A',
-                'Mobile Number' => isset($pData['mobile']) ? $pData['student_mobile'] : 'N/A',
-                'Blood Group' => isset($bloodGroup[$pData['bloodgroup']]) ? $bloodGroup[$pData['bloodgroup']] : 'N/A',
-                'Reserve Category' => isset($pData['reserve_categorey']) ? $pData['reserve_categorey'] : 'NO',
-                'Is Physically Handicapped' => isset($pData['disability_if_any']) ? $pData['disability_if_any'] : 'NO',
-                'Economy Backward' => isset($pData['economy_backward']) ? $pData['economy_backward'] : 'NO',
+                'Name' => isset($pData['student_full_name']) ? $pData['student_full_name'] : '-',
+                'Gender' => isset($pData['gender']) ? $pData['gender'] : '-',
+                'Religion' => isset($pData['religion_name']) ? $pData['religion_name'] : '-',
+                'Caste' => isset($pData['caste_name']) ? $pData['caste_name'] : '-',
+                'Sub Caste' => isset($pData['subcast']) ? $pData['subcast'] : '-',
+                'Birth Date' => isset($pData['dob']) ? $pData['dob'] : '-',
+                'Email' => isset($pData['email']) ? $pData['email'] : '-',
+                'Alternate Email' => isset($pData['alternate_email']) ? $pData['alternate_email'] : '-',
+                'Address' => isset($pData['address']) ? $pData['address'] : '-',
+                //'Land Line' => '-',
+                //'Home/Hostel Phone' => '-',
+                'Student Mobile' => isset($pData['mobile']) ? $pData['student_mobile'] : '-',
+                'Blood Group' => isset($bloodGroup[$pData['bloodgroup']]) ? $bloodGroup[$pData['bloodgroup']] : '-',
+                'Reserve Category' => isset($pData['reserve_categorey']) ? $pData['reserve_categorey'] : '-',
+                'Is Physically Handicapped' => isset($pData['disability_if_any']) ? $pData['disability_if_any'] : '-',
+                'Economy Backward' => isset($pData['economy_backward']) ? $pData['economy_backward'] : '-',
             ];
             // parent data 
             $parentData = [
-                'Father Name :'=> isset($pData['father_name']) ? $pData['father_name']: 'N/A',
-                'Father Mobile :'=> isset($pData['father_mobile']) ? $pData['father_mobile']: 'N/A',
+                'Father Name :'=> isset($pData['father_name']) ? $pData['father_name']: '-',
+                'Father Mobile :'=> isset($pData['father_mobile']) ? $pData['father_mobile']: '-',
                 ];
             if(isset($pData['mother_name'])){
                 $parentData['Mother Name :'] = $pData['mother_name'];
@@ -481,11 +425,11 @@ class studentReportController extends Controller
             }
             // current academic data 
             $academicData = [
-                'academic_section'=> isset($pData['academic_section']) ? $pData['academic_section'] : 'N/A',
-                'branch'=>isset($pData['standard_name'])  ? $pData['standard_name']  : 'N/A',
-                'division'=> isset($pData['division_name']) ?$pData['division_name']  : 'N/A',
-                'student_quota'=> isset($pData['student_quota']) ?$pData['student_quota'] : 'N/A',
-                'admission_year'=> isset($pData['admission_year']) ? $pData['admission_year'] : 'N/A',
+                'academic_section'=> isset($pData['academic_section']) ? $pData['academic_section'] : '-',
+                'branch'=>isset($pData['standard_name'])  ? $pData['standard_name']  : '-',
+                'division'=> isset($pData['division_name']) ?$pData['division_name']  : '-',
+                'student_quota'=> isset($pData['student_quota']) ?$pData['student_quota'] : '-',
+                'admission_year'=> isset($pData['admission_year']) ? $pData['admission_year'] : '-',
                 ];
         }
         // echo "<pre>";print_r($feesCollect);exit;

@@ -369,6 +369,9 @@ class ImportController extends Controller
                         $grade_id = DB::table('academic_section')->select('id')->where([['title', $prepareData['grade_id']], ['sub_institute_id', session()->get('sub_institute_id')]])->first();
                         if ($grade_id) $student_enroll_data['grade_id'] = $grade_id->id;
                     }
+                    if (isset($prepareData['roll_no'])) {
+                       $student_enroll_data['roll_no'] =  $prepareData['roll_no'];
+                    }
                     if (isset($prepareData['standard_id'])) {
                         $standard_id = DB::table('standard')->select('id')->where([['name', $prepareData['standard_id']], ['sub_institute_id', session()->get('sub_institute_id')]])->first();
                         if ($standard_id) $student_enroll_data['standard_id'] = $standard_id->id;
@@ -389,7 +392,7 @@ class ImportController extends Controller
                     $student_enroll_data['start_date'] = $prepareData['start_date'] ?? date('Y-m-d');
                     $student_enroll_data['adhar'] = $prepareData['adhar'] ?? 0;
 
-                    unset($prepareData['student_id'], $prepareData['grade_id'], $prepareData['standard_id'], $prepareData['section_id'], $prepareData['student_quota'], $prepareData['house_id'], $prepareData['syear'], $prepareData['start_date'], $prepareData['term_id'], $prepareData['adhar']);
+                    unset($prepareData['student_id'], $prepareData['grade_id'], $prepareData['standard_id'], $prepareData['section_id'], $prepareData['student_quota'], $prepareData['house_id'], $prepareData['syear'], $prepareData['start_date'], $prepareData['term_id'], $prepareData['adhar'], $prepareData['roll_no']);
                     $student_enroll_data['sub_institute_id'] = $prepareData['sub_institute_id'] = session()->get('sub_institute_id');
 
                     $found = false;
