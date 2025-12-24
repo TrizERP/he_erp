@@ -215,15 +215,14 @@
                                             $i = 1;
                                         @endphp
                                         @foreach ($data['subjects'] as $subj)
-                                            <th colspan="3">{{ $subj['name'] }}</th>
+                                            <th colspan="3" style="text-align: center;">{{ $subj['name'] }}</th>
                                             @php
                                                 $totL += $subj['Lecture'] ?? 0;
                                                 $totP += $subj['Lab'] ?? 0;
                                                 $totT += $subj['Tutorial'] ?? 0;
                                             @endphp
                                         @endforeach
-                                        <th colspan="3">Total({{ $totL }} {{ $totP }}
-                                            {{ $totT }})</th>
+                                        <th colspan="3" style="text-align: center;">Total</th>{{-- $totL $totP $totT --}}
                                         {{-- ✅ Show % column only for nw --}}
                                         @if (isset($data['report_type']) && $data['report_type'] != 'pw')
                                             <th rowspan="2" class="text-left">%</th>
