@@ -929,6 +929,21 @@ private function groupConsecutivePeriods($periods)
         $marking_period_id = session()->get('term_id');
         //ADDED BY RAJESH 12-06-2025
         $termId = session()->get('term_id');
+        $syear = session()->get('syear');
+        $sub_institute_id = session()->get('sub_institute_id');
+
+$standard = DB::table('standard as s')
+    ->join('tblstudent_enrollment as t', function ($join) {
+        $join->on('t.standard_id', '=', 's.id')
+             ->on('t.sub_institute_id', '=', 's.sub_institute_id');
+    })
+    ->where('s.marking_period_id', $marking_period_id)
+    ->where('t.syear', $syear)
+    ->where('s.sub_institute_id', $sub_institute_id)
+    ->where('t.student_id', $student_id)
+    ->select('s.id as standard_id')
+    ->first();
+    $std = $standard->standard_id;
 
         $last_marking_period_id = ($termId == 1) ? 2 : (($termId == 2) ? 1 : $termId);
         //END
@@ -943,12 +958,17 @@ private function groupConsecutivePeriods($periods)
             "0" => $student_id,
         );
 
-        $year_arr2 = FeeMonthId($last_syear); //for current year
+$search_ids = $months;
+$year_arr2 = FeeMonthId($last_syear) ?? [];
+$year_arr  = FeeMonthId($syear) ?? [];
 
-        $currunt_month = date('m');
-        $last_y_month_id = $currunt_month . (session()->get('syear') - 1);
-        $search_ids2 = [];
-        foreach ($year_arr2 as $id => $arr) {
+$merged_years = $year_arr2 + $year_arr;
+
+$currunt_month   = date('m');
+$last_y_month_id = $currunt_month . (session()->get('syear') - 1);
+//$search_ids2 = array_keys($merged_years);
+$search_ids2 = [];
+        foreach ($merged_years as $id => $arr) {
             if ($id == $last_y_month_id) {
                 $search_ids2[] = $id;
                 // break;
@@ -956,25 +976,93 @@ private function groupConsecutivePeriods($periods)
                 $search_ids2[] = $id;
             }
         }
+// optional exclusion
+$search_ids2 = array_diff($search_ids2, $search_ids);
 
-        $search_ids = $months;
-        $reg_bk_off = FeeBreackoff($stu_arr); // for current year
+        $reg_bk_off = FeeBreackoff($stu_arr, $std,$syear,$marking_period_id); // for current year
         $other_bk_off = OtherBreackOff($stu_arr, $search_ids); // for current year
         $other_bk_off_month_wise = OtherBreackOfMonth($stu_arr); // for current year
         $year_arr = FeeMonthId(); // for current year
-        $head_wise_fees = FeeBreakoffHeadWise($stu_arr); //for current year
+        $head_wise_fees = FeeBreakoffHeadWise($stu_arr,'','','','','',$marking_period_id); //for current year
         //   if($student_id==95642){
         //             echo "<pre>";print_r($head_wise_fees);exit;
         //         }
         //echo $last_syear."#".$last_marking_period_id;die();
         $other_bk_off_month_wise2 = $reg_bk_off2 = $other_bk_off2 = $head_wise_fees2 = array();
-        if (session()->get('sub_institute_id') != 48 && session()->get('sub_institute_id') != 61) {
-            $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr, $last_syear); //for previous year
-            $reg_bk_off2 = FeeBreackoff($stu_arr, '', $last_syear, $last_marking_period_id); //for previous year
-            $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2, '', '', '', $last_syear); //for previous year
-            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr, '', '', '', $last_syear, '', $last_marking_period_id); //for previous year
-        }
 
+        $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr, $last_syear); //for previous year
+        $reg_bk_off2 = FeeBreackoff($stu_arr, '', $last_syear, $last_marking_period_id); //for previous year
+        $other_bk_off2 = OtherBreackOff($stu_arr, $search_ids2, '', '', '', $last_syear); //for previous year
+
+        // get fees breakoff according to fees titile from helper.php
+    $data = DB::table('tblstudent_enrollment as a')
+    ->select('a.syear', 'a.standard_id', 's.marking_period_id')
+    ->join('standard as s', 's.id', '=', 'a.standard_id')
+    ->whereNull('a.end_date')
+    ->where('a.sub_institute_id', $sub_institute_id)
+    ->where('a.student_id', $student_id)
+    ->where('a.standard_id', '<', $std)
+    ->get()->toArray();    
+
+    $previous_standard = [];
+
+    foreach ($data as $row) {
+        $previous_standard[] = [
+            'last_syear'             => $row->syear,
+            'last_std'               => $row->standard_id,
+            'last_marking_period_id' => $row->marking_period_id,
+        ];
+    }
+    $head_wise_fees2 = [];
+
+        foreach ($previous_standard as $item) {
+        
+            $merged_head_results = FeeBreakoffHeadWise(
+                $stu_arr,
+                '',
+                '',
+                '',
+                $item['last_syear'],
+                '',
+                $item['last_marking_period_id']
+            );
+        
+            if (!empty($merged_head_results)) {
+        
+                foreach ($merged_head_results as $row) {
+        
+                    $id = $row['id'];
+        
+                    // If first record for this ID → set full data
+                    if (!isset($head_wise_fees2[$id])) {
+                        $head_wise_fees2[$id] = $row;
+                    } else {
+        
+                        // ────────────────
+                        // MERGE ONLY BREAKOFF
+                        // ────────────────
+                        if (!empty($row['breakoff'])) {
+        
+                            // Initialize breakoff if missing
+                            if (!isset($head_wise_fees2[$id]['breakoff'])) {
+                                $head_wise_fees2[$id]['breakoff'] = [];
+                            }
+        
+                            // Flat merge → newer breakoff replaces older breakoff
+                            $head_wise_fees2[$id]['breakoff'] =
+                                array_replace(
+                                    $head_wise_fees2[$id]['breakoff'],
+                                    $row['breakoff']
+                                );
+                        }
+                    }
+                }
+            }
+        }
+        
+        //$head_wise_fees2 = FeeBreakoffHeadWise($stu_arr, '', '', '', $last_syear, '', $last_marking_period_id); //for previous year
+
+        //get till now month ids
         $till_now_breckoff = $till_now_breckoff2 = array();
         foreach ($search_ids as $id => $val) {
             foreach ($head_wise_fees as $temp_id => $arr) {
@@ -1035,10 +1123,7 @@ private function groupConsecutivePeriods($periods)
             }
         }
 
-        // echo "<pre>";print_r($other_bk_off);exit;
-
         $full_bk = array_merge($reg_bk_month_wise, $other_bk_off);
-
         $full_bk2 = array_merge($reg_bk_month_wise2, $other_bk_off2);
 
         $feeTitles = array_keys($full_bk);
@@ -1057,12 +1142,12 @@ private function groupConsecutivePeriods($periods)
 
         $previous = array_sum($full_bk2);
 
-        if ($previous > 0 && !in_array(session()->get('sub_institute_id'), [133])) {
+        if ($previous > 0) {
             // if ($previous > 0) {            
             $full_bk['Previous Fees'] = $previous;
             $final_bk_name["Previous Fees"] = "previous_fees";
         }
-        // echo "<pre>";print_r($full_bk);exit;
+        //echo "<pre>";print_r($full_bk);exit;
         foreach ($full_bk as $id => $val) {
             $total = $total + $val;
         }

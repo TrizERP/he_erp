@@ -387,7 +387,7 @@ class fees_collect_controller extends Controller
             $stu_arr[0] = $request->student_id;
         }
         // get all month name with month_id
-        $month_arr = FeeMonthId($syear,$sub_institute_id);
+        $month_arr = FeeMonthId($syear,$sub_institute_id,$marking_period_id);
         $currunt_month = date('m');
         $currunt_year = date('Y');
         $currunt_month_id = $currunt_month . $currunt_year;
@@ -451,6 +451,7 @@ class fees_collect_controller extends Controller
         }
 
         $reg_insert_arr = [];
+
         foreach ($reg_fee_bk as $month => $bk_off) {
             if (in_array($month, $reg_months_pay)) {
                 foreach ($bk_off as $title => $arr) {
@@ -468,6 +469,7 @@ class fees_collect_controller extends Controller
                 }
             }
         }
+
         $last_syear = (session()->get('syear')-1);
         // last year fees start
         if (isset($_REQUEST['fees_data']['previous_fees']) && $_REQUEST['fees_data']['previous_fees'] != 0) {
@@ -475,7 +477,87 @@ class fees_collect_controller extends Controller
             $other_bk_off_month_wise2 = OtherBreackOfMonth($stu_arr,$last_syear,$sub_institute_id);   // for previous year
             $other_bk_off_month_head_wise2 = OtherBreackOfMonthHead($stu_arr, $search_ids,$last_syear,$sub_institute_id); // for previous year
             $year_arr2 = FeeMonthId($last_syear,$sub_institute_id) ?? []; // for previous year
-            $head_wise_fees2 = FeeBreakoffHeadWise($stu_arr,'','','',$last_syear,$last_marking_period_id); // for previous year
+
+   $standard = DB::table('standard as s')
+    ->join('tblstudent_enrollment as t', function ($join) {
+        $join->on('t.standard_id', '=', 's.id')
+             ->on('t.sub_institute_id', '=', 's.sub_institute_id');
+    })
+    ->where('s.marking_period_id', $marking_period_id)
+    ->where('t.syear', $syear)
+    ->where('s.sub_institute_id', $sub_institute_id)
+    ->where('t.student_id', $stu_arr[0])
+    ->select('s.id as standard_id')
+    ->first();
+    $std = $standard->standard_id;            
+            
+            
+        // get fees breakoff according to fees titile from helper.php
+    $data = DB::table('tblstudent_enrollment as a')
+    ->select('a.syear', 'a.standard_id', 's.marking_period_id')
+    ->join('standard as s', 's.id', '=', 'a.standard_id')
+    ->whereNull('a.end_date')
+    ->where('a.sub_institute_id', $sub_institute_id)
+    ->where('a.student_id', $stu_arr[0])
+    ->where('a.standard_id', '<', $std)
+    ->orderBy('s.sort_order', 'desc')
+    ->get()->toArray();            
+            
+    $previous_standard = [];
+
+    foreach ($data as $row) {
+        $previous_standard[] = [
+            'last_syear'             => $row->syear,
+            'last_std'               => $row->standard_id,
+            'last_marking_period_id' => $row->marking_period_id,
+        ];
+    }
+    $head_wise_fees2 = [];
+
+        foreach ($previous_standard as $item) {
+        
+            $merged_head_results = FeeBreakoffHeadWise(
+                $stu_arr,
+                '',
+                '',
+                '',
+                $item['last_syear'],
+                '',
+                $item['last_marking_period_id']
+            );
+        
+            if (!empty($merged_head_results)) {
+        
+                foreach ($merged_head_results as $row) {
+        
+                    $id = $row['id'];
+        
+                    // If first record for this ID → set full data
+                    if (!isset($head_wise_fees2[$id])) {
+                        $head_wise_fees2[$id] = $row;
+                    } else {
+        
+                        // ────────────────
+                        // MERGE ONLY BREAKOFF
+                        // ────────────────
+                        if (!empty($row['breakoff'])) {
+        
+                            // Initialize breakoff if missing
+                            if (!isset($head_wise_fees2[$id]['breakoff'])) {
+                                $head_wise_fees2[$id]['breakoff'] = [];
+                            }
+        
+                            // Flat merge → newer breakoff replaces older breakoff
+                            $head_wise_fees2[$id]['breakoff'] =
+                                array_replace(
+                                    $head_wise_fees2[$id]['breakoff'],
+                                    $row['breakoff']
+                                );
+                        }
+                    }
+                }
+            }
+        }            
             // return $head_wise_fees2;exit;
             $reg_fee_heads2 = [];
             $reg_fee_bk2 = [];
@@ -490,11 +572,13 @@ class fees_collect_controller extends Controller
                     }
                 }
             }
-
+        
+$year_arr  = FeeMonthId($syear) ?? [];
+$merged_years = $year_arr2 + $year_arr;
         //getting reg fee month_id that we need to pay
             $last_y_month_id = $currunt_month . ($syear - 1);
             $reg_months_pay2 = [];
-            foreach ($year_arr2 as $id => $arr) {
+            foreach ($merged_years as $id => $arr) {
                 if ($id == $last_y_month_id) {
                     $reg_months_pay2[] = $id;
                 } else {
@@ -502,27 +586,36 @@ class fees_collect_controller extends Controller
                 }
             }
 
+$reg_months_pay2 = array_diff($reg_months_pay2, $search_ids);            
+
             foreach ($reg_fee_bk2 as $month => $bk_off) {
-                if (in_array($month, $reg_months_pay2)) {
-                    foreach ($bk_off as $title => $arr) {
-                        if (array_key_exists($title, $_REQUEST['fees_data'])) {
-                            $insert_amount = 0;
-                            if ($_REQUEST['fees_data'][$title] < $arr['amount']) {
-                                $_REQUEST['fees_data'][$title] = $_REQUEST['fees_data'][$title] - $arr['amount'];
-                                $insert_amount = $arr['amount'];
-                            } else {
-                                $insert_amount = $_REQUEST['fees_data'][$title];
-                                $_REQUEST['fees_data'][$title] = 0;
-                            }
-                            if ($insert_amount != 0 && $insert_amount !='') {
-                                $reg_insert_arr[$month][$title] = $insert_amount;
-                            }
+
+                if (!in_array($month, $reg_months_pay2)) {
+                    continue;
+                }
+
+                foreach ($bk_off as $title => $arr) {
+
+                    $insert_amount = $arr['amount']; // ✅ ALWAYS START WITH FULL AMOUNT
+
+                    // If payment exists in request, adjust it
+                    if (isset($_REQUEST['fees_data'][$title]) && $_REQUEST['fees_data'][$title] > 0) {
+
+                        if ($_REQUEST['fees_data'][$title] >= $arr['amount']) {
+                            $_REQUEST['fees_data'][$title] -= $arr['amount'];
+                        } else {
+                            $insert_amount = $_REQUEST['fees_data'][$title];
+                            $_REQUEST['fees_data'][$title] = 0;
                         }
+                    }
+
+                    if ($insert_amount > 0) {
+                        $reg_insert_arr[$month][$title] = $insert_amount;
                     }
                 }
             }
-            $reg_insert_arr2 = [];
         }
+
         //get last generated receipt number fees_heads
         $receipt_number = $this->gunrate_receipt_number($sub_institute_id,$syear);
         // getting all heads with id
@@ -547,6 +640,7 @@ class fees_collect_controller extends Controller
                 }
             }
         }
+//echo "<pre>";print_r($new_insert_arr);exit;
         // sort other breakoff month date
        // Custom sorting function
 uksort($other_bk_off_month_head_wise, function($a, $b) {
@@ -607,15 +701,16 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         $new_insert_other_arr = $this->add_fine($new_insert_other_arr);
 
         $standard_ids = $syears = [];
+
         foreach ($new_insert_arr as $key => $val) {
             if (array_key_exists($key, $month_arr)) {
                 $standard_ids[$key] = $_REQUEST['standard_id'];
                 $syears[$key] = $syear;
             }
-            if (isset($year_arr2) && array_key_exists($key, $year_arr2)) {
+            if (isset($reg_months_pay2) && in_array($key, $reg_months_pay2)) {
                 // $standard_ids
-                $standard_ids[$key] = ($_REQUEST['standard_id'] - 1);
-                $syears[$key] = ($syear - 1);
+                $standard_ids[$key] = $previous_standard[0]['last_std'];
+                $syears[$key] = $previous_standard[0]['last_syear'];
             }
         }
         // insert into fees_collect

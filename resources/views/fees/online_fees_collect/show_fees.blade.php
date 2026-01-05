@@ -161,13 +161,6 @@
                                 </div>
                                 <div class="table-responsive col-md-12">
                                     <table class="table table-stripped" border="0" width="100%">
-<!--                                        <tr>
-                                            <th colspan="2" style="width: 40%">Particular</th>
-                                            <th style="width: 20%">Amount</th>
-                                            <th style="width: 20%">Collection Amount</th>
-                                            <th style="width: 20%">Discount</th>
-                                        </tr>-->
-                                        <!--<span id="fees_head">-->
                                         <tr>
                                             <td colspan="5">
                                                 <table width="100%" border="0" id="fees_head">
@@ -175,9 +168,6 @@
                                                         <!--<th colspan="2" align="center" style="width: 40%;align-content: center;">Particular</th>-->
                                                         <th  align="center" style="width: 30%;padding-left: 15px;">Particular</th>
                                                         <th style="width: 10%;padding-left: 15px;">Amount</th>
-                                                        <!-- <th style="width: 20%;padding-left: 15px;">Collection Amount</th> -->
-                                                        <!-- <th style="width: 20%;padding-left: 15px;">Discount</th>
-                                                        <th style="width: 20%;padding-left: 15px;">Fine</th> -->
                                                     </tr>
                                                     <?php foreach ($data['final_fee'] as $id => $val) { ?>
                                                         <tr>
@@ -187,14 +177,9 @@
 
                                                             <?php
                                                             if ($id != 'Total') {
-                                                                // echo "<td style='width: 20%'><input type='number'  min=0 max=$val value=" . $val . " name='fees_data[" . $data['final_fee_name'][$id] . "]' class='form-control allField1'></td>";
-                                                                // echo "<td style='width: 20%'><input type='number'  min=0 max=$val value=0 name='discount_data[" . $data['final_fee_name'][$id] . "]' class='form-control allDisField' style='min-width:150px;'></td>";
-                                                                // echo "<td style='width: 20%'><input type='number'  min=0 value=0 name='fine_data[" . $data['final_fee_name'][$id] . "]' class='form-control allFinField' style='min-width:150px;'></td>";
+
                                                             } else {
                                                                 echo "<input type='hidden' id='totalVal' name='total' value=" . $val . " class='form-control'>";
-                                                                // echo "<td style='width: 25%'><input id='totalVal' type='text' name='total' value=" . $val . " class='form-control'></td>";
-                                                                // echo "<td style='width: 25%'><input id='totalDis' type='text' name='totalDis' value=0 class='form-control'></td>";
-                                                                // echo "<td style='width: 25%'><input id='totalFin' type='text' name='totalFin' value=0 class='form-control'></td>";
                                                             }
                                                             ?>
                                                             <!--<td style="width: 25%"><input type="text" class="form-control"></td>-->

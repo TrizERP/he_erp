@@ -845,7 +845,7 @@ if (!function_exists('SearchStudent')) {
 }
 if (!function_exists('FeeMonthId')) {
 
-    function FeeMonthId($syear = '',$sub_institute_id='')
+    function FeeMonthId($syear = '',$sub_institute_id='',$term_id='')
     {
         if($sub_institute_id==''){
             $sub_institute_id=session()->get('sub_institute_id');
@@ -885,13 +885,20 @@ if (!function_exists('FeeMonthId')) {
         }
         */
 
-$monthHeader = DB::table('fees_month_header')
-        ->where('sub_institute_id', $sub_institute_id)
-        ->where('syear', $syear)
-        ->whereNotNull('header')
-        ->where('header', '!=', '')
-        //->orderBy('month_id')
-        ->get();
+$monthHeader = DB::table('fees_month_header as f')
+    ->join('academic_year as a', function ($join) {
+        $join->on('a.title', '=', 'f.header')
+             ->on('a.syear', '=', 'f.syear');
+    })
+    ->where('f.sub_institute_id', $sub_institute_id)
+    ->where('f.syear', $syear)
+    ->whereNotNull('f.header')
+    ->where('f.header', '!=', '')
+    ->when(!empty($term_id), function ($query) use ($term_id) {
+        $query->where('a.term_id', $term_id);
+    })
+    ->select('f.*')
+    ->get();
 
     $months_arr = [];
 
