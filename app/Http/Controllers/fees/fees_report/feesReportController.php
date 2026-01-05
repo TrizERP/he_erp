@@ -162,7 +162,8 @@ class feesReportController extends Controller
                 ->leftJoin('academic_section as g', 'g.id', '=', 'te.grade_id')
                 // ->Join('standard as s', 's.id', '=', 'te.standard_id')
                 ->Join('standard as s',function($q) use($marking_period_id) {
-                    $q->on('s.id', '=', 'te.standard_id')->where('s.marking_period_id',$marking_period_id);
+                    $q->on('s.id', '=', 'te.standard_id');
+                    //->where('s.marking_period_id',$marking_period_id);
                 })
                 ->leftJoin('division as d', 'd.id', '=', 'te.section_id')
                 ->leftJoin('student_quota as sq', 'sq.id', '=', 'te.student_quota')
