@@ -480,6 +480,7 @@ class studentAttendanceController extends Controller
         $sem = DB::table('division_capacity_master')
             ->where('standard_id', $standard_id)
             ->where('sub_institute_id', $sub_institute_id)
+            ->where('syear', $syear)
             ->where('division_id', $division_id)
             ->select('sem_start_date', 'sem_end_date')
             ->first();
