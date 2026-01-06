@@ -1452,6 +1452,8 @@ if (!function_exists('getStudents')) {
                 $join->whereRaw('td.id = tv.driver AND td.sub_institute_id = tms.sub_institute_id');
             })->leftJoin('transport_kilometer_rate as tkr', function ($join) {
                 $join->whereRaw('tkr.id = s.distance_from_school AND tkr.sub_institute_id = s.sub_institute_id');
+            })->leftJoin('division_capacity_master as dcm', function ($join) {
+                $join->whereRaw('dcm.standard_id = se.standard_id AND dcm.division_id = se.section_id AND dcm.syear = se.syear AND dcm.sub_institute_id = se.sub_institute_id');
             })
             ->selectRaw("tc.*,s.*,se.roll_no,se.syear,se.student_id,se.grade_id,se.standard_id,se.section_id,se.student_quota,
                 se.start_date,se.end_date,se.enrollment_code,se.drop_code,se.drop_remarks,se.drop_remarks,se.term_id,
@@ -1461,7 +1463,10 @@ if (!function_exists('getStudents')) {
                 r.religion_name,c.caste_name,s.subcast,s.affiliation_no,s.school_code,s.admission_date,td.first_name AS driver_name,
                 td.mobile AS driver_mobile,td.icard_icon,s.mother_mobile,CONCAT_WS(' ',s.first_name,CONCAT(SUBSTRING(s.father_name,1,1),'.'),
                 s.last_name) as short_student_name,tv.vehicle_type,tkr.id as distance_from_school_id,tkr.distance_from_school,
-                tkr.from_distance,IF(tv.vehicle_type = 'Van',tkr.van_new,tkr.rick_new) AS distance_rate,g.title as grade_name,st.medium as branch_name,st.school_stream,st.sem_start_date,st.sem_end_date,s.pass_year,s.cgpa,se.tution_fees,sq.title as student_quota")
+                tkr.from_distance,IF(tv.vehicle_type = 'Van',tkr.van_new,tkr.rick_new) AS distance_rate,g.title as grade_name,st.medium as branch_name,st.school_stream,s.pass_year,s.cgpa,se.tution_fees,sq.title as student_quota,
+                DATE_FORMAT(dcm.sem_start_date, '%d-%m-%Y') as sem_start_date,
+                DATE_FORMAT(dcm.sem_end_date, '%d-%m-%Y') as sem_end_date
+                ")
             ->where('s.sub_institute_id', $sub_institute_id)
             ->where('se.syear', $syear)
             ->when($std!='',function($q) use($std){ // added on 25-02-2025 by uma
