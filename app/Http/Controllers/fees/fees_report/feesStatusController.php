@@ -324,10 +324,11 @@ class feesStatusController extends Controller
     }
 
             // 2) Additional fees (current year)
-            $other1 = OtherBreackOff([$sid], [], '', null, null, $syear, $sub_institute_id);
-
-    /**
-     * Remove the specified resource from storage.
+                $other1 = OtherBreackOff([$sid], [], '', null, null, $syear, $sub_institute_id);
+        }
+        }
+        /**
+         * Remove the specified resource from storage.
      *
      * @param Request $request
      * @return void
