@@ -140,11 +140,19 @@ if (!function_exists('SearchChain')) {
 
         $teacher_id = session()->get('user_id');
         $sub_institute_id = session()->get('sub_institute_id');
+        $marking_period_id = session()->get('term_id');
         $syear = session()->get('syear');
 
         $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
 
-        if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
+$allocatedStandards = [];
+if (!empty($getUserData) && !empty($getUserData->allocated_standards)) {
+    $allocatedStandards = explode(',', $getUserData->allocated_standards);
+}
+
+
+        if((!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!='') || session()->get('profile_parent_id') == 2){
+/*                
                 $getAllocatedStandard = DB::table('standard as s')
                     ->join('academic_section as a', function ($join) {
                         $join->on('a.id', '=', 's.grade_id')
@@ -184,6 +192,46 @@ if (!function_exists('SearchChain')) {
                 ->where('t.sub_institute_id', $sub_institute_id)
                 ->groupByRaw('s.id,t.standard_id,t.academic_section_id')
                 ->orderBy('s.subject_name')->get()->toArray();
+*/
+        $subject_teacher = DB::table('subject as s')
+            ->join('timetable as t', function ($join) {
+                $join->on('t.subject_id', '=', 's.id')
+                     ->on('t.sub_institute_id', '=', 's.sub_institute_id');
+            })
+            ->join('standard as st', function ($join) use ($marking_period_id){
+                $join->on('st.id', '=', 't.standard_id')
+                     ->on('st.sub_institute_id', '=', 't.sub_institute_id')
+                     ->where('st.marking_period_id', $marking_period_id);
+            })
+            ->select(
+                's.id as subject_id',
+                's.subject_name',
+                't.academic_section_id',
+                't.standard_id',
+                't.division_id'
+            )
+            ->where('t.syear', $syear)
+            ->where('t.sub_institute_id', $sub_institute_id)
+            ->where(function ($q) use ($teacher_id, $allocatedStandards) {
+
+                // Case 1: Subject teacher
+                if (session()->get('profile_parent_id') == 2) {
+                    $q->where('t.teacher_id', $teacher_id);
+                }
+
+                // Case 2: Allocated standards
+                if (!empty($allocatedStandards)) {
+                    $q->orWhereIn('st.id', $allocatedStandards);
+                }
+            })
+            ->groupBy(
+                's.id',
+                't.standard_id',
+                't.academic_section_id',
+                't.division_id'
+            )
+            ->orderBy('s.subject_name')
+            ->get()->toArray();
 
             $subjectTeacherGrdArr = $subjectTeacherStdArr = $subjectTeacherDivArr = array();
             if (count($subject_teacher) > 0) {

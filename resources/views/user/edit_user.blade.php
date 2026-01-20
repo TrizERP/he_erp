@@ -145,7 +145,6 @@
                                         <input type="text"
                                                value="@if(isset($data['user_name'])){{ $data['user_name'] }}@endif"
                                                id='user_name' required name="user_name" class="form-control" {{$readonly}}>
-                                               id='user_name' required name="user_name" class="form-control" {{$readonly}}>
                                     </div>
                                     <div class="col-md-4 form-group">
                                         <label>Email</label>

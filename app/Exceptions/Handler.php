@@ -90,7 +90,7 @@ class Handler extends ExceptionHandler
             if ($exception->getStatusCode() == 404) {
                 return response()->view('errors.'.'404', [], 404);
             }
-        }
+        }/*
         else if ($this->isHttpException($exception) && ($exception->getStatusCode() == 302 || $exception->getStatusCode() == 500)){
              $type='';
              $res['status_error']=0;
@@ -105,7 +105,7 @@ class Handler extends ExceptionHandler
             $res['message_error']="Error Occured :".$exception->getMessage()." on line number ".$exception->getLine(); //$exception->getFile(),
             // return redirect('/dashboard')->with(['data' => $res]);
             return redirect('/dashboard?err=1&err_msg='.$res['message_error']);
-        }
+        }*/
         return parent::render($request, $exception);
     }
 }
