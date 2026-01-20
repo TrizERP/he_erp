@@ -136,10 +136,10 @@ class timetableReportsController extends Controller
             'subject.subject_name', 'subject.short_name', 'batch.title as batch_name', 'period.title as period_name',
             'standard.name as standard_name', 'division.name as division_name','rm.room_name')
             ->join('standard',function($join) use($marking_priod_id){
-                $join->on('standard.id', "=", 'timetable.standard_id');
-                // ->when($marking_priod_id,function($query) use($marking_priod_id){
-                //     $query->where('standard.marking_period_id',$marking_priod_id);
-                // });
+                $join->on('standard.id', "=", 'timetable.standard_id')
+                 ->when($marking_priod_id,function($query) use($marking_priod_id){
+                     $query->where('standard.marking_period_id',$marking_priod_id);
+                 });
             })
             ->join('subject', 'subject.id', "=", 'timetable.subject_id')
             ->leftjoin('division', 'division.id', "=", 'timetable.division_id')
@@ -161,6 +161,7 @@ class timetableReportsController extends Controller
             $res['timetable_data'][$p['week_day']][$p['period_id']]['STANDARD'][] = $p['standard_name'].' '.$p['division_name'];
             $res['timetable_data'][$p['week_day']][$p['period_id']]['TYPE'][] = $p['type'];
             $res['timetable_data'][$p['week_day']][$p['period_id']]['ROOM'][] = $p['room_name'];
+            $res['timetable_data'][$p['week_day']][$p['period_id']]['EXTEND_LAB'][] = $p['extend_lab'];
 
             if (isset($p['batch_name'])) {
                 $res['timetable_data'][$p['week_day']][$p['period_id']]['BATCH'][] = $p['batch_name'];

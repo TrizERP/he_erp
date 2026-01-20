@@ -364,7 +364,7 @@ class AJAXController extends Controller
                 ->orderBy('sub_std_map.sort_order')
                 ->pluck('sub_std_map.display_name', 'subject.id');
         } else {
-            if (session()->get('user_profile_name') == 'Lecturer') {
+            if (session()->get('user_profile_name') != 'Admin') {
                 # Get subjects by teacher, standard and division
                 $std_sub_map = DB::table('subject as sub')
                     ->whereIn('sub.id', function ($sub_query) use ($request) {
@@ -433,7 +433,7 @@ class AJAXController extends Controller
         $std_sub_mapArr = DB::table('subject as sub')
             ->join('timetable as t', 't.subject_id', '=', 'sub.id')
             ->join('period as p', 'p.id', '=', 't.period_id')
-            ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
+            ->when(session()->get('user_profile_name') != 'Admin', function ($query) {
                 $query->where('t.teacher_id', session()->get('user_id'));
             })
             ->where('t.standard_id', $request->standard_id)
@@ -655,7 +655,7 @@ private function groupConsecutivePeriods($periods)
 
             $batch = DB::table('batch as b')
                 ->join('timetable as t', 't.batch_id', '=', 'b.id')
-                ->when(session()->get('user_profile_name') == 'Lecturer', function ($query) {
+                ->when(session()->get('user_profile_name') != 'Admin', function ($query) {
                     $query->where('t.teacher_id', session()->get('user_id'));
                 })
                 ->where('t.standard_id', $request->standard_id)
@@ -2508,7 +2508,7 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
             ->where('tt.week_day', $week_day[$entered_day]);
         // echo $entered_day;exit;
 
-        if (session()->get('user_profile_name') == "Lecturer") {
+        if (session()->get('user_profile_name') != "Admin") {
             $timetable->where('tt.teacher_id', session()->get('user_id'));
         }
 
@@ -2549,11 +2549,13 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
             ->where('tbluser.status', 1)
             ->where('tbluser.department_id', $department_id)
             // Exclude employees who have existing proxy assignments to prevent conflicts
+            /*
             ->whereNotIn('tbluser.id', function ($subquery) use ($sub_institute_id) {
                 $subquery->select('proxy_teacher_id')
                     ->from('proxy_master')
                     ->where('sub_institute_id', '=', $sub_institute_id);
             })
+            */
             /*->when(!empty($SubCordinates), function ($q) use ($SubCordinates) {
                 $q->whereIn('tbluser.id', $SubCordinates);
             })

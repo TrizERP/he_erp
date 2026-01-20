@@ -1002,15 +1002,15 @@ die; */
         $studentEnrollment['updated_on'] = date('Y-m-d H:i:s');
         $studentEnrollment['roll_no'] = $request->roll_no;
 		// dd($studentEnrollment); // added 'standard_id'=>$request->standard for stdwise by uma on 25-02-2025
-		tblstudentEnrollmentModel::where(['student_id' => $student_id, 'syear' => $syear,'standard_id'=>$request->standard])->update($studentEnrollment);
+		tblstudentEnrollmentModel::where(['student_id' => $student_id, 'syear' => $syear,'term_id'=>$term_id])->update($studentEnrollment);
 
 		$res['status_code'] = 1;
 		$res['message'] = "Student updated successfully.";
         $res['data'] = $data;
     }
-		// return is_mobile($type, "search_student.index", $res);
+		return is_mobile($type, "search_student.index", $res);
 		// return redirect()->route('add_student.show', $res);
-		return redirect()->back();
+		// return redirect()->back();
 	}
 
     /**

@@ -338,7 +338,8 @@
                     ['100', '500', '1000', 'Show All']
                 ],
                 dom: 'Bfrtip',
-                buttons: [{
+                buttons: [
+                    /*{
                         extend: 'pdfHtml5',
                         title: 'Fees Status Report',
                         orientation: 'landscape',
@@ -347,7 +348,7 @@
                             columns: ':visible',
                             footer: true
                         }
-                    },
+                    },*/
                     {
                         extend: 'csv',
                         text: ' CSV',
