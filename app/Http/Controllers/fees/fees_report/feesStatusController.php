@@ -366,8 +366,6 @@ class feesStatusController extends Controller
         return ($payable - $paid) <= 0;
     });
 }
-
-
         $res['status_code'] = 1;
         $res['message'] = 'Success';
         $res['fees_data'] = $finalFeesData;
