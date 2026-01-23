@@ -164,8 +164,8 @@ class AJAXController extends Controller
 
     public function getStandardList(Request $request)
     {
-        $path = $_SERVER['HTTP_REFERER'];
-
+        $path = request()->headers->get('referer');
+        $module_name = '';
         if ($path) {
             $parsedUrl = parse_url($path);
 
@@ -247,8 +247,8 @@ class AJAXController extends Controller
 
     public function getDivisionList(Request $request)
     {
-        $path = $_SERVER['HTTP_REFERER'];
-
+        $path = request()->headers->get('referer');
+        $module_name = '';
         if ($path) {
             $parsedUrl = parse_url($path);
 

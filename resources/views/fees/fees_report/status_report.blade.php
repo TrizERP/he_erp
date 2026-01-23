@@ -478,5 +478,48 @@
         });
     })();
 </script>
+<script>
+    console.log('Script loaded');
 
+    // Handle check all
+    $('#fees_check_all').on('change', function() {
+        $('.remain_fees').prop('checked', $(this).prop('checked'));
+    });
+
+    // Handle SMS send
+    $('#remain_fees_sms').on('click', function() {
+        console.log('SMS button clicked');
+        var studentsData = [];
+        $('.remain_fees:checked').each(function() {
+            var $this = $(this);
+            studentsData.push({
+                student_id: $this.data('id'),
+                student_name: $this.data('name'),
+                student_mobile: $this.data('mobile'),
+                student_remain_fees: $this.data('remain_fees')
+            });
+        });
+        console.log('Selected students:', studentsData);
+        if (studentsData.length === 0) {
+            alert('Please select at least one student.');
+            return;
+        }
+        $.ajax({
+            url: '{{ route("remainFeesNotification") }}',
+            type: 'POST',
+            data: {
+                studentsData: studentsData,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                console.log('AJAX success:', response);
+                alert('Sent SMS.');
+            },
+            error: function(xhr, status, error) {
+                console.log('AJAX error:', xhr, status, error);
+                alert('Error sending SMS.');
+            }
+        });
+    });
+</script>
 @include('includes.footer')

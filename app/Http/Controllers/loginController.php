@@ -98,12 +98,12 @@ class loginController extends Controller
         //           ->get();
 
         $a = loginModel::select(DB::raw('id,user_name,password,name_suffix,first_name,middle_name,last_name,email,mobile,gender,
-		birthdate,address,city,state,pincode,user_profile_id,join_year,image,plain_password,sub_institute_id,client_id,is_admin,status,created_on as last_login,expire_date'))
+		birthdate,address,city,state,pincode,user_profile_id,join_year,image,plain_password,sub_institute_id,client_id,is_admin,status,created_on as last_login,expire_date,allocated_standards'))
             ->where(['email' => $email, 'password' => $password, 'status' => "1"]);
 
         $data = tblstudentModel::select(DB::raw('id,username as user_name,password,"" as name_suffix,first_name,middle_name,last_name,email,
             mobile, gender,dob as birthdate,address,city,state,pincode,user_profile_id,admission_year as join_year,image,"student" as plain_password,
-            sub_institute_id,"" as client_id,"" as is_admin,status,created_on as last_login,expire_date'))
+            sub_institute_id,"" as client_id,"" as is_admin,status,created_on as last_login,expire_date,"" as allocated_standards'))
             ->where(['email' => $email, 'password' => md5($password), 'status' => "1"])
             ->union($a)
             ->get();
@@ -290,32 +290,6 @@ class loginController extends Controller
                             $res['message'] = "Academic Term Date Expired";
                             return is_mobile($type, "login", $res, "view");
                         }
-                        //START set class teacher standard , grade , division
-                        DB::table('tbluserprofilemaster')->where('NAME', 'Lecturer')
-                            ->where('sub_institute_id', $user['sub_institute_id'])->get()->toArray();
-                        $user_group_id = DB::table('tbluserprofilemaster')->where('NAME', 'Lecturer')
-                            ->where('sub_institute_id', $user['sub_institute_id'])->get()->toArray();
-                        $user_group_id = $user_group_id[0]->id ?? '';
-                        
-                        if ($user_group_id==session()->get('user_profile_id')) {
-
-                            $class_teacher = DB::table('class_teacher')->where('teacher_id', $user['id'])
-                                ->where('sub_institute_id', $user['sub_institute_id'])
-                                ->where('syear', $getTermId[0]['syear'])->get()->toArray();
-                            $classTeacherGrdArr = $classTeacherStdArr = $classTeacherDivArr = array();
-                            if (count($class_teacher) > 0) {
-                                foreach ($class_teacher as $k => $v) {
-                                    $classTeacherGrdArr[] = $v->grade_id;
-                                    $classTeacherStdArr[] = $v->standard_id;
-                                    $classTeacherDivArr[] = $v->division_id;
-                                }
-                            }
-                            $request->session()->put('classTeacherGrdArr', $classTeacherGrdArr);
-                            $request->session()->put('classTeacherStdArr', $classTeacherStdArr);
-                            $request->session()->put('classTeacherDivArr', $classTeacherDivArr);
-                        }
-                        //END set class teacher standard , grade , division
-
 
                         $hrms_rights = DB::table('school_setup as s')->join('tblclient as c', function ($join) {
                             $join->whereRaw('c.id = s.client_id');
@@ -362,6 +336,44 @@ class loginController extends Controller
                         }
 
                         $request->session()->put('erpTour', $inTour);
+                        //START set class teacher standard , grade , division : ADDED BY RAJESH 20-01-2026
+                        if (isset($user['allocated_standards'])) {
+
+$allocatedStandards = explode(',', $user['allocated_standards']);
+
+$result = DB::table('standard as s')
+    ->select(
+        's.grade_id',
+        's.id as standard_id',
+        'd.id as division_id'
+    )
+    ->join('std_div_map as t', function ($join) {
+        $join->on('s.id', '=', 't.standard_id')
+             ->on('s.sub_institute_id', '=', 't.sub_institute_id')
+             ->where('s.marking_period_id', session()->get('term_id'));
+    })
+    ->join('division as d', 'd.id', '=', 't.division_id')
+    ->where('t.sub_institute_id', $user['sub_institute_id'])
+    ->whereIn('s.id', $allocatedStandards)
+    ->get()->toArray();
+
+                            $classTeacherGrdArr = $classTeacherStdArr = $classTeacherDivArr = array();
+                            if (count($result) > 0) {
+                                foreach ($result as $k => $v) {
+                                    $classTeacherGrdArr[] = $v->grade_id;
+                                    $classTeacherStdArr[] = $v->standard_id;
+                                    $classTeacherDivArr[] = $v->division_id;
+                                }
+                                // make arrays unique & reindex
+                                $classTeacherGrdArr = array_values(array_unique($classTeacherGrdArr));
+                                $classTeacherStdArr = array_values(array_unique($classTeacherStdArr));
+                                $classTeacherDivArr = array_values(array_unique($classTeacherDivArr));
+                            }
+                            $request->session()->put('classTeacherGrdArr', $classTeacherGrdArr);
+                            $request->session()->put('classTeacherStdArr', $classTeacherStdArr);
+                            $request->session()->put('classTeacherDivArr', $classTeacherDivArr);
+                        }
+                        //END set class teacher standard , grade , division
                     }
 
                     $request->session()->put('user_id', $user['id']);
