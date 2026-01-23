@@ -71,6 +71,7 @@
         @php
         if(isset($data['data'])){
         $student_data = $data['data'];
+        $batch = $data['studentbatch'];
         }
         @endphp
         <div class="card">
@@ -80,7 +81,7 @@
                     <div class="col-md-4 form-group">
                         <label>Optional Subjects</label>
                         <select class="form-control" name="subjects[]" required="required" multiple>
-                            <option value="">Select Subjects</option>
+                            <!-- <option value="">Select Subjects</option> -->
                             @if(isset($data['optional_subject_data']))
                                 @foreach ($data['optional_subject_data'] as $subjects)
                                     <option value="{{ $subjects['subject_id'] }}">{{ $subjects['subject_name'] }}</option>
@@ -94,14 +95,15 @@
                                 <thead>
                                 <tr>
                                     <th><input id="checkall" onchange="checkAll(this);" type="checkbox"></th>
-                                    <th>{{App\Helpers\get_string('studentname','request')}}</th>
                                     <th>{{App\Helpers\get_string('grno','request')}}</th>
-                                    <th>{{App\Helpers\get_string('uniqueid','request')}}</th>
+                                    <th>{{App\Helpers\get_string('studentname','request')}}</th>
+                                    <!-- <th>{{App\Helpers\get_string('uniqueid','request')}}</th> -->
                                     <th>Academic Section</th>
                                     <th>{{App\Helpers\get_string('standard','request')}}</th>
                                     <th>{{App\Helpers\get_string('division','request')}}</th>
                                     <th>Gender</th>
                                     <th>Mobile</th>
+                                    <th>Batch</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -111,14 +113,27 @@
                                 @foreach($student_data as $key => $data)
                                     <tr>
                                         <td><input id="{{$data['stu_id']}}" value="{{$data['stu_id']}}" name="students[]" type="checkbox"></td>
-                                        <td>{{$data->first_name}} {{$data->middle_name}} {{$data->last_name}}</td>
                                         <td>{{$data->enrollment_no}}</td>
-                                        <td>{{$data->uniqueid}}</td>
+                                        <td>{{$data->first_name}} {{$data->middle_name}} {{$data->last_name}}</td>
+                                        <!-- <td>{{$data->uniqueid}}</td> -->
                                         <td>{{$data->grade}}</td>
                                         <td>{{$data->standard}}</td>
                                         <td>{{$data->division}}</td>
                                         <td>{{$data->gender}}</td>
                                         <td>{{$data->mobile}}</td>
+<td>
+    <select name="{{$data['stu_id']}}" id="batch" data-batch="{{$data->batch}}" class="form-control">
+        <option value="">--Select--</option>
+        @php
+        foreach ($batch as $id => $arr) {
+            $selected = "";
+            if ($id == $data->batch)
+                $selected = "selected=selected";
+            echo "<option $selected value='$id'>$arr</option>";
+        }
+        @endphp
+    </select>
+</td>
                                     </tr>
                                 @php
                                 $j++;

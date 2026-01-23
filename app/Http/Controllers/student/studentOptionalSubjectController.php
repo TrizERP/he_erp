@@ -5,6 +5,7 @@ namespace App\Http\Controllers\student;
 use App\Http\Controllers\Controller;
 use App\Models\student\tblstudentModel;
 use App\Models\school_setup\sub_std_mapModel;
+use App\Models\school_setup\batchModel;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -191,11 +192,18 @@ class studentOptionalSubjectController extends Controller
             'sub_std_map.elective_subject' => 'Yes',
         ])
         ->get()->toArray();
+
+        $tblbatch = batchModel::where(["sub_institute_id" => $sub_institute_id,
+        "syear" => $syear,
+        "standard_id" => $standard_id,
+        "division_id" => $division_id])
+            ->pluck("title", "id")->toArray();
         
         $res['status_code'] = 1;
         $res['message'] = "Student List";
         $res['data'] = $student_data;
         $res['optional_subject_data'] = $optional_subject_data;
+        $res['studentbatch'] = $tblbatch;
         $res['grade_id'] = $grade_id;
         $res['standard_id'] = $standard_id;
         $res['division_id'] = $division_id;
@@ -246,16 +254,8 @@ class studentOptionalSubjectController extends Controller
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
-        //$res['data'] = $data;
-       /*  $res['template'] = $template;
-        $res['str'] = $new_html;
-        $res['insert_ids'] = $insert_ids;
-        if ($certificate_reason != '') {
-            $res['certificate_reason'] = $certificate_reason;
-        } */
 
         return is_mobile($type, "student_optional_subject.index", $res);
-        //return is_mobile($type, "student/show_student_optional", $res, "view");
     }
 
     public function searchStudentName(Request $request)
