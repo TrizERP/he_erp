@@ -31,30 +31,18 @@
                     {{ App\Helpers\SearchChain('4','single','grade,std,div',$grade_id,$standard_id,$division_id) }}
                 </div>
                 <div class="row">
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">Last Name</label>
-                        <div class = "ui-widget">
-                            <input type="text" name="last_name" id="last_name" value="@if(isset($data['last_name'])) {{$data['last_name']}} @endif" class="form-control" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">First Name</label>
-                        <div class = "ui-widget">
-                            <input type="text" name="first_name" id="first_name" value="@if(isset($data['first_name'])) {{$data['first_name']}} @endif" class="form-control" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">Mobile</label>
-                        <input type="text" name="mobile" value="@if(isset($data['mobile'])) {{$data['mobile']}} @endif" class="form-control">
-                    </div>
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">{{App\Helpers\get_string('grno','request')}}</label>
-                        <input type="text" name="gr_no" value="@if(isset($data['gr_no'])) {{$data['gr_no']}} @endif" class="form-control">
-                    </div>
-                    <div class="col-md-4 form-group">
-                        <label class="box-title after-none mb-0">{{App\Helpers\get_string('uniqueid','request')}}</label>
-                        <input type="text" name="unique_id" value="@if(isset($data['unique_id'])) {{$data['unique_id']}} @endif"
-                               class="form-control">
+                    <div class="col-md-3 form-group">
+                        <label for="subject">Optional Subject:</label>
+                        <select name="subject" id="subject" class="form-control" required>
+                            <option value="">--Select--</option>
+                            @if(isset($data['optional_subject_data']))
+                                @foreach ($data['optional_subject_data'] as $subjects)
+                                    <option value="{{ $subjects['subject_id'] }}"
+                                    @if ($data['subject'] == $subjects['subject_id']) selected @endif
+                                    >{{ $subjects['subject_name'] }}</option>
+                                @endforeach
+                            @endif
+                        </select>
                     </div>
                 </div>
                 <div class="row">
@@ -71,37 +59,29 @@
         @php
         if(isset($data['data'])){
         $student_data = $data['data'];
+        $batch = $data['studentbatch'];
+        $subject = $data['subject'];
         }
         @endphp
         <div class="card">
             <form method="POST" action="{{ route('student_optional_subject.store') }}">
                 @csrf
                 <div class="row">
-                    <div class="col-md-4 form-group">
-                        <label>Optional Subjects</label>
-                        <select class="form-control" name="subjects[]" required="required" multiple>
-                            <option value="">Select Subjects</option>
-                            @if(isset($data['optional_subject_data']))
-                                @foreach ($data['optional_subject_data'] as $subjects)
-                                    <option value="{{ $subjects['subject_id'] }}">{{ $subjects['subject_name'] }}</option>
-                                @endforeach
-                            @endif                                                                
-                        </select>
-                    </div>
                     <div class="col-lg-12 col-sm-12 col-xs-12">
                         <div class="table-responsive">
                             <table id="example" class="table table-striped">
                                 <thead>
                                 <tr>
                                     <th><input id="checkall" onchange="checkAll(this);" type="checkbox"></th>
-                                    <th>{{App\Helpers\get_string('studentname','request')}}</th>
                                     <th>{{App\Helpers\get_string('grno','request')}}</th>
-                                    <th>{{App\Helpers\get_string('uniqueid','request')}}</th>
+                                    <th>{{App\Helpers\get_string('studentname','request')}}</th>
+                                    <!-- <th>{{App\Helpers\get_string('uniqueid','request')}}</th> -->
                                     <th>Academic Section</th>
                                     <th>{{App\Helpers\get_string('standard','request')}}</th>
                                     <th>{{App\Helpers\get_string('division','request')}}</th>
                                     <th>Gender</th>
                                     <th>Mobile</th>
+                                    <th>Batch</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -111,14 +91,27 @@
                                 @foreach($student_data as $key => $data)
                                     <tr>
                                         <td><input id="{{$data['stu_id']}}" value="{{$data['stu_id']}}" name="students[]" type="checkbox"></td>
-                                        <td>{{$data->first_name}} {{$data->middle_name}} {{$data->last_name}}</td>
                                         <td>{{$data->enrollment_no}}</td>
-                                        <td>{{$data->uniqueid}}</td>
+                                        <td>{{$data->first_name}} {{$data->middle_name}} {{$data->last_name}}</td>
+                                        <!-- <td>{{$data->uniqueid}}</td> -->
                                         <td>{{$data->grade}}</td>
                                         <td>{{$data->standard}}</td>
                                         <td>{{$data->division}}</td>
                                         <td>{{$data->gender}}</td>
                                         <td>{{$data->mobile}}</td>
+<td>
+    <select name="{{$data['stu_id']}}" id="batch_{{$data['stu_id']}}" data-batch="{{$data->batch_id}}" class="form-control">
+        <option value="">--Select--</option>
+        @php
+        foreach ($batch as $id => $arr) {
+            $selected = "";
+            if ($id == $data->batch_id)
+                $selected = "selected=selected";
+            echo "<option $selected value='$id'>$arr</option>";
+        }
+        @endphp
+    </select>
+</td>
                                     </tr>
                                 @php
                                 $j++;
@@ -133,6 +126,7 @@
                             <input type="hidden" name="grade_id" @if(isset($data['grade_id'])) value="{{$data['grade_id']}}" @endif">
                             <input type="hidden" name="standard_id" @if(isset($data['standard_id'])) value="{{$data['standard_id']}}" @endif
                             ">
+                            <input type="hidden" name="subject" value="{{$subject}}">
                             <input type="submit" name="submit" value="Submit" class="btn btn-success" onclick="check_validation()">
                         </center>
                     </div>
@@ -145,6 +139,35 @@
 
 @include('includes.footerJs')
 <script>
+// Fetch subjects based on division
+$('#division').on('change', function () {
+    fetchDropdownData('/api/get-subject-list', {
+        standard_id: $("#standard").val(),
+        division_id: $("#division").val(),
+        is_optional: 1
+    }, '#subject');
+});
+// Helper function to fetch dropdown data
+function fetchDropdownData(url, params, target) {
+    if (Object.values(params).every(val => val)) {
+        $.ajax({
+            type: "GET",
+            url: url + '?' + $.param(params),
+            success: function (res) {
+                if (res) {
+                    $(target).empty().append('<option value="">--Select--</option>');
+                    $.each(res, function (key, value) {
+                        $(target).append('<option value="' + key + '">' + value + '</option>');
+                    });
+                } else {
+                    $(target).empty().append('<option value="">--Select--</option>');
+                }
+            }
+        });
+    } else {
+        $(target).empty().append('<option value="">--Select--</option>');
+    }
+}
 $(document).ready(function () {
     $('#example').DataTable({
         paging: false,          // Enable pagination

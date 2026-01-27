@@ -356,6 +356,10 @@ class AJAXController extends Controller
                 "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
             );
         }
+        if($request->is_optional){
+            $where["sub_std_map.elective_subject"] = "Yes";
+        }
+
         if (count($explode) > 1) {
             $std_sub_map = DB::table('subject')
                 ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
