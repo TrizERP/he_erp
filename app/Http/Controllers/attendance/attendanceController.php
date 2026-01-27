@@ -9,6 +9,7 @@ use App\Http\Controllers\AJAXController;
 use App\Http\Controllers\student\studentAttendanceController;
 use function App\Helpers\getCountDays;
 use App\Models\student\tblstudentModel;
+use App\Models\school_setup\sub_std_mapModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Date;
 
@@ -73,6 +74,17 @@ class attendanceController extends Controller
         $standard = $request->standard;
         $division = $request->division;
 
+        $explode=explode('|||',$request->get('subject') ?? '');
+        $subject_id = $explode[0] ?? '';
+        $period_id = $explode[1] ?? '';
+
+        $isOptional = sub_std_mapModel::where([
+            'sub_institute_id' => $sub_institute_id,
+            'standard_id' => $standard,
+            'subject_id' => $subject_id,
+            'elective_subject' => 'Yes',
+            ])->exists();
+        
         $sundays = getCountDays($date, $date);
 
         $holidays = DB::table("calendar_events")
@@ -108,7 +120,7 @@ class attendanceController extends Controller
 
         $extraRaw = " 1 = 1 AND tblstudent_enrollment.end_date IS NULL ";
         // search by batch 
-        if ($request->has('batch') && $request->get('batch') != '') {
+        if ($request->has('batch') && $request->get('batch') != '' && $request->get('attendance_type') != 'Tutorial') {
             // echo "batch";exit;
             // $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'id'=>$request->batch])->get()->toArray();
             // $res['batchs']=$batchs;    
@@ -135,7 +147,7 @@ class attendanceController extends Controller
         }
         //END Check for class teacher assigned standards
 
-        $student_data = tblstudentModel::select(
+        $query = tblstudentModel::select(
             'tblstudent_enrollment.*',
             'tblstudent.*',
             'standard.name as standard',
@@ -160,9 +172,22 @@ class attendanceController extends Controller
             ->join("division", function ($join) {
                 $join->on("division.id", "=", "tblstudent_enrollment.section_id")
                     ->on("division.sub_institute_id", "=", "tblstudent_enrollment.sub_institute_id");
+            });
+
+        if ($isOptional) {
+            $query->join('student_optional_subject as s', function ($join) use ($subject_id, $request) {
+                $join->on('s.student_id', '=', 'tblstudent.id')
+                    ->on('s.syear', '=', 'tblstudent_enrollment.syear')
+                    ->on('s.sub_institute_id', '=', 'tblstudent_enrollment.sub_institute_id')
+                    ->where('s.batch_id', $request->get('batch'))
+                    ->where('s.subject_id', $subject_id);
             })
-            ->leftJoin('batch', 'batch.id', '=', 'tblstudent.studentbatch')
-            ->where($extraSearchArray)
+            ->leftJoin('batch', 'batch.id', '=', 's.batch_id');
+        } else {
+            $query->leftJoin('batch', 'batch.id', '=', 'tblstudent.studentbatch');
+        }
+
+        $student_data = $query->where($extraSearchArray)
             ->whereRaw($extraRaw)
             ->orderby('tblstudent.enrollment_no')
             ->get()->toArray();
@@ -222,10 +247,6 @@ class attendanceController extends Controller
         $res['all_lecture'] = $ajaxController->getLectureList($lect_req);
         // echo "<pre>";print_r($request->get('subject'));exit;
 */
-
-$explode=explode('|||',$request->get('subject') ?? '');
-$subject_id = $explode[0] ?? '';
-$period_id = $explode[1] ?? '';
 
         $res['exampleRadios'] = $request->get('exampleRadios');
         $res['attendance_type'] = $request->get('attendance_type');

@@ -90,10 +90,11 @@ class studentOptionalSubjectController extends Controller
      */
     public function searchStudentOptionalSubject(Request $request)
     {
-        // return $request;exit;
+        //echo "<pre>";print_r($request->all());exit;
         $grade_id = $request->input("grade");
         $standard_id = $request->input("standard");
         $division_id = $request->input("division");
+        $subject = $request->input("subject");
         $type = $request->input('type');
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
@@ -169,26 +170,34 @@ class studentOptionalSubjectController extends Controller
         }
 
         //END Check for class teacher assigned standards
-        // DB::enableQueryLog();		
+        //DB::enableQueryLog();
         $student_data = tblstudentModel::select('tblstudent.*', 'tblstudent_enrollment.*', 'standard.name as standard', 'tblstudent.id as stu_id',
-            'division.name as division',
-            'academic_section.title as grade', DB::raw($inactive_colour))
+            'division.name as division', 'academic_section.title as grade', DB::raw($inactive_colour), 
+            'student_optional_subject.batch_id', 'student_optional_subject.subject_id', 'subject.subject_name', 'subject.subject_code')
             ->join('tblstudent_enrollment', 'tblstudent.id', '=', 'tblstudent_enrollment.student_id')
             ->join('academic_section', 'academic_section.id', '=', 'tblstudent_enrollment.grade_id')
             ->join('standard', 'standard.id', '=', 'tblstudent_enrollment.standard_id')
             ->join('division', 'division.id', '=', 'tblstudent_enrollment.section_id')
+            ->leftJoin('student_optional_subject', function($join) use ($sub_institute_id, $syear,$subject) {
+                $join->on('student_optional_subject.student_id', '=', 'tblstudent.id')
+                     ->where('student_optional_subject.sub_institute_id', '=', $sub_institute_id)
+                     ->where('student_optional_subject.syear', '=', $syear)
+                     ->where('student_optional_subject.subject_id', '=', $subject);
+            })
+            ->leftJoin('subject', 'subject.id', '=', 'student_optional_subject.subject_id')
             ->where($extraSearchArray)
             ->whereRaw($extraRaw)
+            ->groupBy('tblstudent.id')
             ->orderByRaw("CAST(REGEXP_SUBSTR(tblstudent.enrollment_no, '[0-9]+') AS UNSIGNED)")
             ->get();
-            // dd(DB::getQueryLog($student_data));
+        //dd(DB::getQueryLog($student_data));
 
         $optional_subject_data = sub_std_mapModel::select('sub_std_map.*', 'subject.subject_name',
         'subject.subject_code')
         ->join('subject', 'subject.id', '=', 'sub_std_map.subject_id')
         ->where([
             'sub_std_map.sub_institute_id' => $sub_institute_id,
-            'sub_std_map.standard_id'      => $standard_id, 
+            'sub_std_map.standard_id'      => $standard_id,
             'sub_std_map.elective_subject' => 'Yes',
         ])
         ->get()->toArray();
@@ -207,6 +216,7 @@ class studentOptionalSubjectController extends Controller
         $res['grade_id'] = $grade_id;
         $res['standard_id'] = $standard_id;
         $res['division_id'] = $division_id;
+        $res['subject'] = $subject;
         $res['first_name'] = $first_name;
         $res['last_name'] = $last_name;
         $res['mobile'] = $mobile;
@@ -219,36 +229,52 @@ class studentOptionalSubjectController extends Controller
 
     public function store(Request $request)
     {
+        // echo "<pre>";print_r($request->all());exit;
         $type = $request->input('type');
-        $subjects = $request->input('subjects');
+        $subject = $request->input('subject');
         $student_ids = $request->input('students');
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $grade_id = $request->input('grade_id');
         $standard_id = $request->input('standard_id');
 
-        //$data = getStudents($student_ids);
-        
-        // Insert the data into the database
+       // Insert or update the optional subjects into the database
         foreach ($student_ids as $student_id) {
-            foreach ($subjects as $subject) {
+            $batch_id = $request->input($student_id);
+            if ($subject != '' && $student_id != '') {
                 // Check if the combination of subject_id and student_id already exists
-                $data = DB::table('student_optional_subject')
+                $existing = DB::table('student_optional_subject')
                     ->where('subject_id', $subject)
                     ->where('student_id', $student_id)
                     ->where('sub_institute_id', $sub_institute_id)
                     ->where('syear', $syear)
                     ->first();
-    
-                // If the record does not exist, insert it
-                if (!$data) {
+
+                if ($existing) {
+                    // Update the batch_id if exists
+                    DB::table('student_optional_subject')
+                        ->where('id', $existing->id)
+                        ->update(['batch_id' => $batch_id]);
+                } else {
+                    // Insert if not exists
                     DB::table('student_optional_subject')->insert([
                         'subject_id' => $subject,
                         'student_id' => $student_id,
+                        'batch_id' => $batch_id,
                         'sub_institute_id' => $sub_institute_id,
                         'syear' => $syear,
                     ]);
                 }
+            }else {
+                $res['status_code'] = 0;
+                $res['message'] = "Please select Subject and Batch for all selected students";
+                return is_mobile($type, "student_optional_subject.index", $res);
+            }
+
+            if (!empty($student_ids)) {
+                $res['message'] = "Optional Subject Assigned Successfully"; 
+            } else {
+                $res['message'] = "No Students Selected";
             }
         }
 
