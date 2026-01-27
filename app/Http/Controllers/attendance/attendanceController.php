@@ -84,7 +84,7 @@ class attendanceController extends Controller
             'subject_id' => $subject_id,
             'elective_subject' => 'Yes',
             ])->exists();
-        
+        echo $isOptional;exit();
         $sundays = getCountDays($date, $date);
 
         $holidays = DB::table("calendar_events")
@@ -120,11 +120,7 @@ class attendanceController extends Controller
 
         $extraRaw = " 1 = 1 AND tblstudent_enrollment.end_date IS NULL ";
         // search by batch 
-        if ($request->has('batch') && $request->get('batch') != '' && $request->get('attendance_type') != 'Tutorial') {
-            // echo "batch";exit;
-            // $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'id'=>$request->batch])->get()->toArray();
-            // $res['batchs']=$batchs;    
-
+        if ($request->has('batch') && $request->get('batch') != '' && $isOptional) {
             $extraRaw .= " AND batch.id='" . $request->batch . "'";
         }
         //     $res['batch_id'] = $request->get('batch') ?? '-';    
