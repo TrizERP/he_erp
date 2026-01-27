@@ -84,7 +84,7 @@ class attendanceController extends Controller
             'subject_id' => $subject_id,
             'elective_subject' => 'Yes',
             ])->exists();
-        echo $isOptional;exit();
+
         $sundays = getCountDays($date, $date);
 
         $holidays = DB::table("calendar_events")
