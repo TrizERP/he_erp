@@ -120,7 +120,7 @@ class attendanceController extends Controller
 
         $extraRaw = " 1 = 1 AND tblstudent_enrollment.end_date IS NULL ";
         // search by batch 
-        if ($request->has('batch') && $request->get('batch') != '' && $isOptional) {
+        if ($request->has('batch') && $request->get('batch') != '' && !$isOptional) {
             $extraRaw .= " AND batch.id='" . $request->batch . "'";
         }
         //     $res['batch_id'] = $request->get('batch') ?? '-';    
@@ -129,9 +129,9 @@ class attendanceController extends Controller
         $classTeacherStdArr = session()->get('classTeacherStdArr');
         if (isset($classTeacherStdArr)) {
             if (count($classTeacherStdArr) > 0) {
-                $extraRaw = "standard.id IN (" . implode(",", $classTeacherStdArr) . ")";
+                $extraRaw .= "AND standard.id IN (" . implode(",", $classTeacherStdArr) . ")";
             } else {
-                $extraRaw = "standard.id IN (' ')";
+                $extraRaw .= "AND standard.id IN (' ')";
             }
         }
 

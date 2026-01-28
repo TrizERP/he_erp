@@ -359,7 +359,7 @@ class AJAXController extends Controller
         if($request->is_optional){
             $where["sub_std_map.elective_subject"] = "Yes";
         }
-
+        $classTeacherStdArr = session()->get('classTeacherStdArr');
         if (count($explode) > 1) {
             $std_sub_map = DB::table('subject')
                 ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
@@ -368,7 +368,8 @@ class AJAXController extends Controller
                 ->orderBy('sub_std_map.sort_order')
                 ->pluck('sub_std_map.display_name', 'subject.id');
         } else {
-            if (session()->get('user_profile_name') != 'Admin') {
+            //if (session()->get('user_profile_name') != 'Admin') {
+            if (!isset($classTeacherStdArr) && session()->get('user_profile_name') != 'Admin') {
                 # Get subjects by teacher, standard and division
                 $std_sub_map = DB::table('subject as sub')
                     ->whereIn('sub.id', function ($sub_query) use ($request) {
