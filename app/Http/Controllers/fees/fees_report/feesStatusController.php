@@ -138,7 +138,7 @@ class feesStatusController extends Controller
 
             foreach ($heads as $head => $row) {
                 $title = $row['title'] ?? '';
-                $amt = ($row['amount'] ?? 0) - ($row['paid_amount'] ?? 0);
+                $amt = ($row['amount'] ?? 0);// - ($row['paid_amount'] ?? 0) [remove from rajesh 29-01-2026 amount = already DUE]
 
                 $whereRaw .= " AND student_id IN (" . implode(",", $onlyStudentIds) . ")";
 
