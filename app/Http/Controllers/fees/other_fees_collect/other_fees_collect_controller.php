@@ -170,7 +170,7 @@ class other_fees_collect_controller extends Controller
         $payment_mode = $request->get('payment_mode');
         $remarks = $request->get('remarks');
         $bank_name = $request->get('bank_name');
-        $bank_branch = $request->get('bank_branch');
+        $bank_branch = $request->get('bank_branch') ?? '';
         $cheque_no = $request->get('cheque_no');
         $cheque_date = $request->input('cheque_date');
         $amount_of_deduction = $request->input('amount_of_deduction');
@@ -296,7 +296,7 @@ class other_fees_collect_controller extends Controller
                     $join->whereRaw('st.id = se.standard_id AND st.sub_institute_id = se.sub_institute_id');
                 })->join('division as d', function ($join) {
                     $join->whereRaw('d.id = se.section_id AND d.sub_institute_id = se.sub_institute_id');
-                })->selectRaw("s.id,CONCAT_WS(' ',s.first_name,s.last_name) AS stu_name,st.name as standard,d.name as division,
+                })->selectRaw("s.id,CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS stu_name,st.name as standard,st.medium as full_std_name,st.short_name as std_short_name,d.name as division,
                     CONCAT_WS('/',st.name,d.name) AS std_name,s.enrollment_no,se.roll_no,s.mobile")
                 ->where('s.id', $student_id)
                 ->where('se.syear', $syear)
@@ -488,7 +488,7 @@ class other_fees_collect_controller extends Controller
             }else if ($payMethod == 'Cash') {
                 $payment_mode = $payMethod;
             } else {
-                $payment_mode = $payMethod . ' ' . strtoupper($_REQUEST['bank_name']) . ' - ' . strtoupper($_REQUEST['bank_branch']) . ' - ' . strtoupper($_REQUEST['cheque_date']) . ' - ' . $_REQUEST['cheque_no'];
+                $payment_mode = $payMethod . ' ' . strtoupper($_REQUEST['bank_name']) . ' - ' . strtoupper($_REQUEST['bank_branch'] ?? '') . ' - ' . strtoupper($_REQUEST['cheque_date']) . ' - ' . $_REQUEST['cheque_no'];
             }
 
             if (isset($_REQUEST['remarks']) && $_REQUEST['remarks'] != '' && $_REQUEST['remarks'] != '-') {
@@ -566,10 +566,10 @@ class other_fees_collect_controller extends Controller
 
             $html_content = str_replace(htmlspecialchars("<<student_enrollment_value>>"), $stu_data[0]->enrollment_no, $html_content);
             $html_content = str_replace(htmlspecialchars("<<student_roll_value>>"), $stu_data[0]->roll_no, $html_content);
-            $html_content = str_replace(htmlspecialchars("<<student_standard_value>>"),$stu_data[0]->std_name,$html_content);
+            $html_content = str_replace(htmlspecialchars("<<student_standard_value>>"),$stu_data[0]->standard,$html_content);
             $html_content = str_replace(htmlspecialchars("<<student_mobile_value>>"),$stu_data[0]->mobile,$html_content);
-            $html_content = str_replace(htmlspecialchars("<<standard_medium>>"),$stu_data[0]->standard,$html_content);
-            $html_content = str_replace(htmlspecialchars("<<standard_short_name>>"),$stu_data[0]->division,$html_content);
+            $html_content = str_replace(htmlspecialchars("<<standard_medium>>"),$stu_data[0]->full_std_name,$html_content);
+            $html_content = str_replace(htmlspecialchars("<<standard_short_name>>"),$stu_data[0]->std_short_name,$html_content);
            
             $html_content = str_replace(htmlspecialchars("<<fees_head_content>>"), $fees_head_content, $html_content);
             $html_content = str_replace(htmlspecialchars("<<grand_total>>"), $recTotal, $html_content);
@@ -599,7 +599,7 @@ class other_fees_collect_controller extends Controller
                 'deduction_amount' => $amount_of_deduction[$std_studId],
                 'payment_mode' => $payment_mode,
                 'bank_name' => $bank_name,
-                'bank_branch' => $bank_branch,
+                'bank_branch' => $bank_branch ?? '',
                 'cheque_dd_no' => $cheque_no,
                 'cheque_dd_date' => $cheque_date,
                 'paid_fees_html' => $style . $html_content,
