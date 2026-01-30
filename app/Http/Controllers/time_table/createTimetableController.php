@@ -392,12 +392,14 @@ class createTimetableController extends Controller
                         'type' => $types,
                         'room' => $room_id,
                         'extend_lab' => $extend_lab,
-                        'merge' => isset($request->standard_arr[$period_id]) && isset($request->division_arr[$period_id]) ? 1 : null
+                        //'merge' => isset($request->standard_arr[$period_id]) && isset($request->division_arr[$period_id]) ? 1 : null
+                        //'merge' => $extend_lab == 'Y' ? 1 : null,
                     ];
 
                     if ($batch_id) {
                         $query['batch_id'] = $batch_id;
                         //$data['batch_id'] = $batch_id;
+                        $data['merge'] = 1;
                     }
 
                     $existing = timetableModel::where($query)->first();
@@ -475,6 +477,7 @@ class createTimetableController extends Controller
         }
 
         if (!timetableModel::where($query)->exists()) {
+            $query['merge'] = 1;
             timetableModel::create($query + ['created_at' => now()]);
         }
     }

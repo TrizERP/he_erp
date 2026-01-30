@@ -448,6 +448,7 @@ class AJAXController extends Controller
             ->select(
                 'sub.id',
                 'sub.subject_name as display_name',
+                't.merge',
                 't.extend_lab',
                 't.type',
                 't.id as timetable_id',
@@ -469,6 +470,7 @@ class AJAXController extends Controller
                 $merged[$key] = [
                     'entries' => [], // Store all original entries to maintain alignment
                     'display_name' => $value->display_name,
+                    'merge' => $value->merge,
                     'extend_lab' => $value->extend_lab,
                     'type' => $value->type,
                     'period_id' => $value->period_id,
@@ -492,11 +494,12 @@ class AJAXController extends Controller
             if($item['type'] == 'Lecture')
                 $subject_key = $item['display_name'] . "###" . $item['period_id'];
             else
-                $subject_key = $item['display_name'] . "###" . $item['extend_lab'];
+                $subject_key = $item['display_name'] . "###" . $item['merge'];
             
             if (!isset($grouped_by_subject[$subject_key])) {
                 $grouped_by_subject[$subject_key] = [
                     'display_name' => $item['display_name'],
+                    'merge' => $item['merge'],
                     'extend_lab' => $item['extend_lab'],
                     'type' => $item['type'],
                     'periods' => []
@@ -552,6 +555,7 @@ class AJAXController extends Controller
                     'period_id'  => implode('###', $period_ids),
                     'subject'    => $subject,
                     'timetable'  => implode('###', $timetable_ids),
+                    'merge' => $item['merge'],
                     'extend_lab' => $item['extend_lab'],
                     'type'       => $item['type']
                 ];
@@ -677,6 +681,7 @@ private function groupConsecutivePeriods($periods)
                     't.type',
                     't.period_id',
                 )
+                ->groupby('b.id')
                 ->get();
           
                 }
