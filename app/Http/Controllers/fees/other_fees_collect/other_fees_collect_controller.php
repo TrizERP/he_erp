@@ -167,7 +167,7 @@ class other_fees_collect_controller extends Controller
         $other_fees_title_name = $request->get('other_fees_title_name');
         $deduction_head_id = $request->get('other_fees_title');
         $deduction_date = $request->get('deduction_date');
-        $payment_mode = $request->get('payment_mode');
+        $payment_mode = $request->get('payment_mode') ?? '';
         $remarks = $request->get('remarks');
         $bank_name = $request->get('bank_name');
         $bank_branch = $request->get('bank_branch') ?? '';
@@ -300,6 +300,7 @@ class other_fees_collect_controller extends Controller
                     CONCAT_WS('/',st.name,d.name) AS std_name,s.enrollment_no,se.roll_no,s.mobile")
                 ->where('s.id', $student_id)
                 ->where('se.syear', $syear)
+                ->where('st.id',$standard_id)
                 ->whereNull('se.end_date')
                 ->where('s.sub_institute_id', $sub_institute_id)->get()->toArray();
 
@@ -565,6 +566,7 @@ class other_fees_collect_controller extends Controller
             $html_content = str_replace(htmlspecialchars("<<student_batch>>"), isset($_REQUEST['student_batch']) ? $_REQUEST['student_batch'] : '-', $html_content);
 
             $html_content = str_replace(htmlspecialchars("<<student_enrollment_value>>"), $stu_data[0]->enrollment_no, $html_content);
+            $html_content = str_replace(htmlspecialchars("<<bank_branch>>"), $request->get('bank_branch') ?? ' ', $html_content);
             $html_content = str_replace(htmlspecialchars("<<student_roll_value>>"), $stu_data[0]->roll_no, $html_content);
             $html_content = str_replace(htmlspecialchars("<<student_standard_value>>"),$stu_data[0]->standard,$html_content);
             $html_content = str_replace(htmlspecialchars("<<student_mobile_value>>"),$stu_data[0]->mobile,$html_content);
