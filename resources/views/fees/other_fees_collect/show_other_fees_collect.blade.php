@@ -151,7 +151,7 @@
                                     </td>
                                     <td>Bank Branch:</td>
                                     <td>
-                                        <input type="text" id="bank_branch" name="bank_branch" value="N/A" class="form-control">
+                                        <input type="text" id="bank_branch" name="bank_branch" value="" class="form-control">
                                     </td>
                                 </tr>
                                 <tr>
