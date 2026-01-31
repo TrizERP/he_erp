@@ -40,6 +40,7 @@ class other_fees_collect_controller extends Controller
      */
     public function create(Request $request)
     {
+        // return $request;
         $grade = $request->input('grade');
         $standard = $request->input('standard');
         $division = $request->input('division');
@@ -145,7 +146,7 @@ class other_fees_collect_controller extends Controller
         $res['get_name_of_head'] = $get_amount_of_head[0]['display_name'];
         $res['other_fees_title'] = $other_fees_title;
         $res['bank_data'] = bankmasterModel::get()->toArray();
-
+            // return $res['get_name_of_head'];
         return is_mobile($type, "fees/other_fees_collect/show_other_fees_collect", $res, "view");
     }
 
@@ -176,6 +177,7 @@ class other_fees_collect_controller extends Controller
         $amount_of_deduction = $request->input('amount_of_deduction');
         $created_by = session()->get('user_id');
         $created_ip = $_SERVER['REMOTE_ADDR'];
+        $marking_period_id=session()->get('term_id');
 
         $new_html = '';
 
@@ -300,7 +302,7 @@ class other_fees_collect_controller extends Controller
                     CONCAT_WS('/',st.name,d.name) AS std_name,s.enrollment_no,se.roll_no,s.mobile")
                 ->where('s.id', $student_id)
                 ->where('se.syear', $syear)
-                ->where('st.id',$standard_id)
+                ->where('st.marking_period_id',$marking_period_id)
                 ->whereNull('se.end_date')
                 ->where('s.sub_institute_id', $sub_institute_id)->get()->toArray();
 
