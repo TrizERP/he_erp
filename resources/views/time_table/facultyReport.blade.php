@@ -55,15 +55,16 @@
                             </div>
                         
   				<div class="col-md-12 form-group" id="printPage">
-                     <table id="example" class="table table-striped">
-                             <thead>
-                            <tr>
-                            <th class="text-center" ><span class="label label-info">Days/Lectures</span></th>
-                              @foreach($data['period_data'] as $key => $value)
-                              <th class="text-center" ><span class="label label-info">{{$value['title']}}</span></th>
-                              @endforeach
-                            </tr>
-                            </thead>
+  				               @php $periodWidth = 100 / (count($data['period_data']) + 0.8); @endphp
+  				               <table id="example" class="table table-striped" style="table-layout: fixed;">
+  				                       <thead>
+  				                      <tr>
+  				                      <th class="text-center" ><span class="label label-info">Days/Lectures</span></th>
+  				                        @foreach($data['period_data'] as $key => $value)
+  				                        <th class="text-center" style="width: {{ $periodWidth }}%;"><span class="label label-info">{{$value['title']}}</span></th>
+  				                        @endforeach
+  				                      </tr>
+  				                      </thead>
 
                             <tbody id="get_data">
                    @if (!empty($data['timetable_data']) && count($data['timetable_data']) > 0)
@@ -73,9 +74,14 @@
             @php
                 $prevSubject = null;
                 $prevStd = null;
+                $skip = 0;
             @endphp
 
             @foreach ($data['period_data'] as $pkey => $pval)
+                @if ($skip > 0)
+                    @php $skip--; @endphp
+                    @continue
+                @endif
                 @php
                     $value = null;
                     $colspan = 1;
@@ -110,6 +116,7 @@
                         <td align='center' style='font-size:10px;color: black;' colspan="{{ $colspan }}">
                             {!! $value !!}
                         </td>
+                        @php $skip = $colspan - 1; @endphp
                     @else
                         <td align='center' style='font-size:10px;color: black;'>{!! $value !!}</td>
                     @endif
