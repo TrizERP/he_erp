@@ -66,6 +66,7 @@ class subjectDetailAttendanceController extends Controller
                 ->whereNull('se.end_date')
                 ->where('se.standard_id',$standard)
                 ->where('se.section_id',$division)
+                ->orderBy('s.enrollment_no')
                 ->get()
                 ->groupBy(['student_id','yearweek']);
 
