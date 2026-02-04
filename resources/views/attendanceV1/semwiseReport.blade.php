@@ -6,7 +6,7 @@
 
         <div class="row bg-title">
             <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                <h4 class="page-title">All Subject Semesterwise Report</h4>
+                <h4 class="page-title">Overall Attendance Report</h4>
             </div>
         </div>
     </div>
@@ -90,7 +90,7 @@
                     </h4>
 
                     <h1 style="text-align: center; font-size: 20px; margin-top: 5px; font-family: Arial, Helvetica, sans-serif; font-weight: 700;">
-                        All Subject Semesterwise Report
+                        Overall Attendance Report
                     </h1>
 
                     <style>
@@ -218,14 +218,14 @@
                         <td>{{ $val["COURSE_" . $subjId]['P'] }}</td>
                         <td>{{ $val["COURSE_" . $subjId]['T'] }}</td>
                     @else
-                        <td>{{ $val[$subjId]['L'] ? $val[$subjId]['L'] : '-' }}</td>
-                        <td>{{ $val[$subjId]['P'] ? $val[$subjId]['P'] : '-' }}</td>
-                        <td>{{ $val[$subjId]['T'] ? $val[$subjId]['T'] : '-' }}</td>
+                        <td>{{ $val[$subjId]['L'] ?? '-' }}</td>
+                        <td>{{ $val[$subjId]['P'] ?? '-' }}</td>
+                        <td>{{ $val[$subjId]['T'] ?? '-' }}</td>
                     @endif
                 @endforeach
-                <td>{{ $val['total']['L'] ? $val['total']['L'] : '-' }}</td>
-                <td>{{ $val['total']['P'] ? $val['total']['P'] : '-' }}</td>
-                <td>{{ $val['total']['T'] ? $val['total']['T'] : '-' }}</td>
+                <td>{{ $val['total']['L'] ?? '-' }}</td>
+                <td>{{ $val['total']['P'] ?? '-' }}</td>
+                <td>{{ $val['total']['T'] ?? '-' }}</td>
                 {{-- ✅ Show % column only for nw --}}
                 @if(isset($data['report_type']) && $data['report_type'] != 'pw')
                     <td>{{ $val['TOTAL_PERCENTAGE'] ? number_format($val['TOTAL_PERCENTAGE'], 2) : '0' }}</td>
@@ -285,7 +285,7 @@ $(document).ready(function() {
             { 
                 extend: 'csv', 
                 text: 'CSV', 
-                title: 'All Subject Semesterwise Report' 
+                title: 'Overall Attendance Report' 
             },
             { 
                 extend: 'print',
@@ -302,7 +302,7 @@ $(document).ready(function() {
                             Academic Year: {{ $syear }} - {{ $nextYear }}
                         </h4>
                         <h1 style="text-align:center;font-size:20px;margin-top:5px;font-weight:700;font-family:Arial,Helvetica,sans-serif;color:black;">
-                            All Subject Semesterwise Report
+                            Overall Attendance Report
                         </h1>
                     `);
 

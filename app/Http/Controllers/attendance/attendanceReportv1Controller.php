@@ -95,7 +95,8 @@ class attendanceReportv1Controller extends Controller
             ->where('se.syear', $syear)->whereNull('se.end_date')->where('se.standard_id', $standard)
             ->where('se.section_id', $division);
 
-        $students_details = $get_students->groupBy(['s.id', 'group_column'])->get()->toArray();
+        $students_details = $get_students->groupBy(['s.id', 'group_column'])
+        ->orderBy('s.enrollment_no')->get()->toArray();
         // dd(db::getQueryLog($students_details));
         $students_details = json_decode(json_encode($students_details), true);
 

@@ -3280,10 +3280,14 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
             $join->on('se.student_id', '=', 's.id')->where('se.syear',$syear);
         })
         ->Join('standard as std', 'std.id', '=', 'se.standard_id')
+            ->when($marking_period_id, function ($query) use ($marking_period_id) {
+                $query->where('std.marking_period_id', $marking_period_id);
+            })
         ->Join('division as d', 'd.id', '=', 'se.section_id')
         ->join('fees_collect as fee',function($q) use($sub_institute_id,$syear,$stud_id){
             $q->on('fee.receipt_no','=','fc.reciept_id')->where(['fee.sub_institute_id'=>$sub_institute_id,'fee.syear'=>$syear])
-            ->where('fee.student_id',$stud_id);
+            ->where('fee.student_id',$stud_id)
+            ->whereColumn('fee.standard_id', 'std.id');
         })
         ->leftJoin('tbluser as u','u.id','=','fc.cancelled_by')
         ->selectRaw('fc.*,CONCAT_WS(" ",COALESCE(s.first_name),COALESCE(s.middle_name),COALESCE(s.last_name)) as student_name,s.enrollment_no,IFNULL(s.uniqueid,"-") as uniqueid,std.name as std,d.name as divi,fee.payment_mode,GROUP_CONCAT(fee.term_id) AS month_ids,fee.cheque_bank_name, fee.bank_branch, fee.cheque_no,CONCAT_WS(" ",COALESCE(u.first_name),COALESCE(u.middle_name),COALESCE(u.last_name)) as cancelled_by,SUM(IFNULL(fee.amount, 0)) AS actual_amountpaid')

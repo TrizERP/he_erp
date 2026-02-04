@@ -210,7 +210,6 @@
                                 <!--<th>Sr No</th>-->
                                 <th>Subject</th>
                                 <th>Lecture</th>
-                                <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
                                 <th>Roll No</th>
                                 <th>{{ App\Helpers\get_string('studentname', 'request') }}</th>
                                 <th>Middle Name</th>
@@ -218,6 +217,7 @@
                                 @if (isset($data['batch_id']) && !empty($data['batchs']))
                                     <th>Batch</th>
                                 @endif
+                                <th>{{ App\Helpers\get_string('grno', 'request') }}</th>
                                 <th>Present 
                                 <input id="checkall" name="attendance" onchange="checkAll(this,'Present');" type="radio"></th>
                                 <th>Absent
@@ -231,7 +231,6 @@
                                     <!--<td> {{ $j++ }} </td>-->
                                     <td> {{ $data['subject_name'] }} </td>
                                     <td> {{ $data['lecture_name'] }} </td>
-                                    <td> {{ $value['enrollment_no'] }} </td>
                                     <td> {{ $value['roll_no'] }} </td>
                                     <td> {{ $value['first_name'] }} </td>
                                     <td> {{ $value['middle_name'] }} </td>
@@ -239,6 +238,7 @@
                                     @if (isset($data['batch_id']) && !empty($data['batchs']))
                                         <td>{{ $value['batch_title'] }}</td>
                                     @endif
+                                    <td> {{ $value['enrollment_no'] }} </td>
                                     <td> <input type="radio" value="P"
                                             @if (!isset($data['attendance_data'][$value['id']]) || $data['attendance_data'][$value['id']] == 'P') checked @endif class="Present"
                                             name="student[{{ $value['id'] }}]"> </td>

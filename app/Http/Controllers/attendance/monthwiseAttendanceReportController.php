@@ -69,6 +69,7 @@ class monthwiseAttendanceReportController extends Controller
                 ->where('se.standard_id',$standard)
                 ->where('se.section_id',$division)
                 ->where('ats.subject_id',$subject)
+                ->orderBy('s.enrollment_no')
                 ->get()
                 ->groupBy(['student_id','month_num']);
 
