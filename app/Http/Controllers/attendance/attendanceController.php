@@ -25,30 +25,49 @@ class attendanceController extends Controller
         $todayDate = Date::now();
         $formattedDate = $todayDate->format('Y-m-d');
 
-        $res['show'] = $this->get_proxy($request);
+        $res['show_proxy'] = $this->get_proxy('proxy');
+        $res['show_extra'] = $this->get_proxy('extra');
         // echo "<pre>";print_r($res);exit;
 
-        // return is_mobile($type, 'attendance/show', $res, 'view');
         return is_mobile($type, 'attendance/takeAttendance', $res, 'view');
     }
 
-    public function get_proxy($request)
+    public function get_proxy($button_type)
     {
         $syear = session()->get('syear');
         $sub_institute_id = session()->get('sub_institute_id');
         $user_id = session()->get('user_id');
-        $todayDate = Date::now();
-        $formattedDate = $todayDate->format('Y-m-d');
-        if (session()->get('user_profile_name') == "Lecturer" || session()->get('user_profile_name') == "LMS Teacher") {
-            $get_proxy = DB::table('proxy_master')->where(['syear' => $syear, 'sub_institute_id' => $sub_institute_id])->where('teacher_id', $user_id)->whereRaw('proxy_date = "' . $formattedDate . '"')->get()->toArray();
 
-            if (!empty($get_proxy)) {
-                return "1";
-            }
-        } elseif (session()->get('user_profile_name') == "Admin" || session()->get('user_profile_name') == "Super Admin") {
-            return  "1";
+        $toDate = now()->format('Y-m-d');
+        $fromDate = now()->subDays(90)->format('Y-m-d');
+
+        // 🔹 PROXY CASE
+        if ($button_type === 'proxy') {
+            $data = DB::table('proxy_master')
+                ->where([
+                    'syear' => $syear,
+                    'sub_institute_id' => $sub_institute_id,
+                    'proxy_teacher_id' => $user_id,
+                ])
+                ->whereBetween('proxy_date', [$fromDate, $toDate])
+                ->exists();
         }
+
+        // 🔹 EXTRA CASE
+        elseif ($button_type === 'extra') {
+            $data = DB::table('assign_extra_lecture')
+                ->where([
+                    'syear' => $syear,
+                    'sub_institute_id' => $sub_institute_id,
+                    'teacher_id' => $user_id,
+                ])
+                ->whereBetween('extra_date', [$fromDate, $toDate])
+                ->exists();
+        }
+
+        return !empty($data) ? "1" : "0";
     }
+
     public function create(Request $request)
     {
         //echo "<pre>";print_r($request->all());exit;
@@ -59,7 +78,9 @@ class attendanceController extends Controller
         $type = $request->input('type');
         $date = $request->input('from_date');
         $marking_period_id = session()->get('term_id');
-        $res['show'] = $this->get_proxy($request);
+        
+        $res['show_proxy'] = $this->get_proxy('proxy');
+        $res['show_extra'] = $this->get_proxy('extra');
 
         if ($type == "API") {
             $term_id = $request->input('term_id');
@@ -179,7 +200,7 @@ class attendanceController extends Controller
             ->whereRaw($extraRaw)
             ->orderby('tblstudent.enrollment_no')
             ->get()->toArray();
-        // echo "<pre>";print_r($student_data);exit;
+        //echo "<pre>";print_r($student_data);exit;
 
         $single_standard = DB::table('standard')->where('id', $standard)->first();
         $single_division = DB::table('division')->where('id', $division)->first();
@@ -208,7 +229,15 @@ class attendanceController extends Controller
         $ajaxController = new AJAXController;
 
         // get subjects 
-        $sub_req = new Request(['standard_id' => $standard, 'division_id' => $division, 'sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'date' => $request->get('from_date')]);
+        $sub_req = new Request([
+            'attendance_type' => $request->get('exampleRadios'),
+            'attendance_for' => $request->get('attendance_type'),
+            'standard_id' => $standard,
+            'division_id' => $division, 
+            'sub_institute_id' => $sub_institute_id, 
+            'syear' => $syear, 
+            'date' => $request->get('from_date')
+            ]);
         $res['all_subject'] = json_decode(json_encode($ajaxController->getSubjectListTimetable($sub_req)), true);
         if ($request->has('batch') && $request->get('batch') != '') {
             // echo "batch";exit;
@@ -235,6 +264,10 @@ class attendanceController extends Controller
         $res['all_lecture'] = $ajaxController->getLectureList($lect_req);
         // echo "<pre>";print_r($request->get('subject'));exit;
 */
+        $subjectName = $request->subject_name;
+        $lecture_no = (is_string($subjectName) && is_numeric($subjectName[0]))
+            ? (int) explode('-', $subjectName)[0]
+            : null;
 
         $res['exampleRadios'] = $request->get('exampleRadios');
         $res['attendance_type'] = $request->get('attendance_type');
@@ -249,6 +282,7 @@ class attendanceController extends Controller
         $res['timetable_id'] = $request->get('timetable_id');
         $res['period_id'] = $period_id;//$request->get('period_id');
         $res['batch_name'] = $request->get('batch_name');
+        $res['lecture_no'] = $lecture_no;
 
 
         $attendanceArray = [
@@ -260,7 +294,7 @@ class attendanceController extends Controller
             'subject_id'        => $subject_id,//$request->get('subject'),
             'attendance_type'   => $request->get('exampleRadios'),
             'attendance_for'    => $request->get('attendance_type'),
-            'timetable_id'      => $request->get('timetable_id'),
+            'lecture_no'        => $lecture_no,
         ];
 
         $data = DB::table("attendance_student")->where($attendanceArray)->get()->toArray();
@@ -278,14 +312,13 @@ class attendanceController extends Controller
         if ($err == 1) {
             return is_mobile($type, "students_attendance.index", $res);
         } else {
-            // return is_mobile($type, 'attendance/show', $res, 'view');
             return is_mobile($type, 'attendance/takeAttendance', $res, 'view');
         }
     }
 
     public function store(Request $request)
     {
-        // echo "<pre>";print_r($request->all());die;
+        //echo "<pre>";print_r($request->all());die;
 
         $type = $request->input('type');
 
@@ -332,12 +365,37 @@ class attendanceController extends Controller
         $timetables_id = $request->input('timetables_id');
         $att_type = $request->input('att_type');
         $att_for = $request->input('att_for');
+        $lecture_no = $request->input('lecture_no') ?? null;
 
         if ($request->att_type == "Extra") {
             $res['status_code'] = 1;
             $res['message'] = "Attendance Taken Successfully.";
+            foreach ($students as $student_id => $attendance) {
+                DB::table('attendance_student')->insert([
+                    'syear' => $syear,
+                    'student_id' => $student_id, // Fixed: Changed from $students array to single $student_id
+                    'term_id' => $term_id,
+                    'attendance_date' => $date,
+                    'attendance_code' => $attendance,
+                    'teacher_id' => $user_id,
+                    'user_group_id' => $user_profile_id,
+                    'created_on' => now(),
+                    'created_by' => $user_id,
+                    'standard_id' => $standard,
+                    'section_id' => $division,
+                    'sub_institute_id' => $sub_institute_id,
+                    'period_id' => $request->input('periods_id'),
+                    'subject_id' => $subjects_id,
+                    'timetable_id' => $timetables_id,
+                    'attendance_type' => $att_type,
+                    'lecture_no' => $lecture_no,
+                    'attendance_teacher_code' => 0,
+                    'attendance_for' => $att_for,
+                    'created_at' => now(),
+                ]);
+            }
             // DB::enableQueryLog();
-            $i = 0;
+            /*$i = 0;
             $getExtraLecture = DB::table('assign_extra_lecture')->where(['syear' => $syear, 'sub_institute_id' => $sub_institute_id, 'standard_id' => $standard, 'section_id' => $division, 'teacher_id' => $user_id, 'extra_date' => $date])->whereNull('deleted_at')->get()->toArray();
 
             foreach ($getExtraLecture as $key => $val) {
@@ -388,6 +446,7 @@ class attendanceController extends Controller
                 $res['status_code'] = 0;
                 $res['message'] = "No Extra Lecture Found.";
             }
+            */
 
             return is_mobile($type, "students_attendance.index", $res);
         }

@@ -28,6 +28,9 @@
             if (isset($data['from_date'])) {
                 $from_date = $data['from_date'];
             }
+            if (isset($data['lecture_no'])) {
+                $lecture_no = $data['lecture_no'];
+            }
 
         @endphp
 
@@ -81,12 +84,14 @@
                                 value="Regular" {{ $checked }}>
                             <label class="form-check-label" for="exampleRadios1">Regular</label>
                         </div>
-                        @if (isset($data['show']) && $data['show'] == 1)
+                        @if (isset($data['show_proxy']) && $data['show_proxy'] == 1)
                             <div class="form-check ml-2">
                                 <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios2"
                                     value="Proxy" {{ $proxy }}>
                                 <label class="form-check-label" for="exampleRadios2">Proxy</label>
                             </div>
+                        @endif
+                        @if (isset($data['show_extra']) && $data['show_extra'] == 1)
                             <div class="form-check ml-2">
                                 <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios3"
                                     value="Extra" {{ $extra }}>
@@ -256,6 +261,7 @@
                                     @if (isset($from_date)) value="{{ $from_date }}" @endif">
                                 <input type="hidden" name="standard_division"
                                     @if (isset($standard_id) && isset($division_id)) value="{{ $standard_id }}||{{ $division_id }}" @endif">
+                                <input type="hidden" name="lecture_no" value="{{ $data['lecture_no'] ?? null }}">
                                 <input type="submit" name="submit" value="Submit" class="btn btn-success">
                             </center>
                         </div>
@@ -298,13 +304,13 @@ $(document).ready(function () {
 
         // Column specific settings
         columnDefs: [
-            { targets: 3, orderable: true },  // Enable sorting on 1st column
+            { targets: 6, orderable: true },  // Enable sorting on 1st column
         //    { targets: [1, 2], searchable: true }, // Search enabled for columns
         //    { targets: -1, orderable: false } // Last column no sorting
         ],
 
         // Default sorting
-        order: [[3, "asc"]], // Sort by 1st column ascending
+        order: [[6, "asc"]], // Sort by 1st column ascending
 
         // State saving (keeps paging, sorting, etc. on reload)
         stateSave: true,
@@ -319,216 +325,482 @@ $(document).ready(function () {
 });
 </script>
 
-    <script type="text/javascript">
-        $(document).ready(function() {
-           
-            var type = '{{ $type }}';
-            // var all_subject = @json($data['all_subject'] ?? []); 
-            // if (all_subject && all_subject.length > 0) {
-            //         $('#batch_div').show();
-            //     }
-            $('#attendanceTypeSelect').hide();
-            if (type !== "Regular") {
-                $('#attendanceTypeSelect').show();
+
+    <script>
+        // ========================================
+        // Attendance Management - Improved JavaScript
+        // ========================================
+        
+        (function($) {
+            'use strict';
+
+            // Configuration object to avoid hard-coded values
+            const CONFIG = {
+                selectors: {
+                    exampleRadios: 'input[name="exampleRadios"]',
+                    attendanceTypeSelect: '#attendanceTypeSelect',
+                    batchDiv: '#batch_div',
+                    subjectSelect: '#subject',
+                    divisionSelect: '#division',
+                    standardSelect: '#standard',
+                    fromDate: '#from_date',
+                    batchSelect: '#batch',
+                    lectureSelect: '#lecture',
+                    subjectName: '#subject_name',
+                    lectureName: '#lecture_name',
+                    batchName: '#batch_name',
+                    batchId: '#batch_id',
+                    timetableId: '#timetable_id',
+                    periodId: '#period_id',
+                    attendanceTypeSelectEl: '#attendance_type_select',
+                },
+                api: {
+                    subjectList: '/api/get-subject-list-timetable',
+                    batchList: '/api/get-batch-list-timetable',
+                },
+                messages: {
+                    selectOption: 'Select',
+                    noSubjects: 'No subjects available',
+                    errorLoading: 'Error loading data',
+                }
+            };
+
+            // ========================================
+            // Utility Functions
+            // ========================================
+            
+            /**
+             * Debounce function for performance optimization
+             * @param {Function} func - Function to debounce
+             * @param {number} wait - Delay in milliseconds
+             * @returns {Function} - Debounced function
+             */
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func.apply(this, args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
             }
-            // $('#lecture_div').hide();
-            $('#batch_div').hide();
-            @if(isset($data['subject']) && isset($data['lecture_name']) && $data['lecture_name']!='Lecture')
-                $('#batch_div').show();
-            @endif
-            //chek for type
-            $('input[name="exampleRadios"]').on('change', function() {
-                if ($(this).val() !== "Regular") {
-                    $('#attendanceTypeSelect').show();
-                } else {
-                    $('#attendanceTypeSelect').hide();
-                }
-            });
 
-            $('#attendance_type_select').on('change', function() {
-                var selectedType = $(this).val();
-                var lectureType = $('input[name="exampleRadios"]:checked').val(); // <-- fixed
-
-                if (selectedType !== "Lecture" && lectureType === "Proxy") {
-                    $('#batch_div').show();
-                } else {
-                    $('#batch_div').hide();
-                }
-            });
-
-
-            // get subject lists 
-            $('#division').on('change', function() {
-                $("#subject").empty();
-                var selectedStandard = $('#standard').val();
-                var from_date = $('#from_date').val();
-                var selectedDivision = $(this).val();
-
-                if (selectedStandard) {
+            /**
+             * Safe AJAX call with error handling
+             * @param {Object} options - AJAX configuration
+             * @returns {Promise} - AJAX promise
+             */
+            function safeAjax(options) {
+                return new Promise((resolve, reject) => {
                     $.ajax({
-                        type: "GET",
-                        url: "/api/get-subject-list-timetable?standard_id=" + selectedStandard +
-                            '&division_id=' + selectedDivision + '&date=' + from_date,
-                        success: function(res) {
-                            if (res) {
-                                $("#subject").empty();
-                                $("#subject").append('<option value="">Select</option>');
-                                $.each(res, function(key, value) {
-                                    $("#subject").append('<option value="' + value
-                                        .subject_id + '|||' + value.period_id +
-                                        '" data-type="' + value.type +
-                                        '" data-periodid="' + value.period_id +
-                                        '" data-timetableid="' + value.timetable +
-                                        '">' + value.subject + '</option>');
-                                });
-
-                            } else {
-                                $("#subject").empty();
-                            }
-                        }
-                    });
-                } else {
-                    $("#subject").empty();
-                }
-
-            });
-
-            // get lectures 
-            $('#subject').on('change', function() {
-                // $('#lecture_div').show();
-                $('#lecture').empty();
-                $('#subject_name').empty();
-
-                var selectedSubject = $(this).val();
-                var selectedOption = $('#subject option:selected');
-                var type = selectedOption.data('type');
-                var period_id = selectedOption.data('periodid');
-                var timetable_id = selectedOption.data('timetableid');
-                // alert(timetable_id);
-
-                $('#timetable_id').val(timetable_id);
-                // console.log(type+'==='+period_id);
-                var selectedOption = $('#subject option:selected');
-                var name = selectedOption.text();
-                $('#subject_name').val(name);
-
-                var selectedStandard = $('#standard').val();
-                var selectedDivision = $('#division').val();
-                var selectedDate = $('#from_date').val();
-                $('#lecture_name').val(type);
-
-                if (type === 'Lecture') {
-                    $('#batch_div').hide();
-                } else {
-                    $('#batch_div').show();
-                }
-                // alert(selectedDate);
-                if (selectedSubject) {
-                    $.ajax({
-                        type: "GET",
-                        url: "/api/get-batch-list-timetable",
-                        data: {
-                            subject_id: selectedSubject,
-                            standard_id: selectedStandard,
-                            division_id: selectedDivision,
-                            date: selectedDate,
-                            type: type,
-                            period_id: period_id
+                        ...options,
+                        success: (response) => {
+                            console.log('AJAX Success:', options.url, response);
+                            resolve(response);
                         },
-                        success: function(res) {
-                            // console.log(res);
-
-                            if (res.length > 0) {
-                                // $("#lecture").empty();
-                                $("#batch").empty();
-                                // $("#lecture").append('<option value="">Select</option>');
-                                $("#batch").append('<option value="">Select</option>');
-
-                                $.each(res, function(key, value) {
-                                    if (value.batch != null) {
-                                        $("#batch").append('<option value="' +
-                                            value.id + '">' + value.batch +
-                                            '</option>');
-
-                                        // $("#lecture").append('<option value="' + value
-                                        //     .period_id + '" data-id="' + value
-                                        //     .timetable_id + '" data-batchid="' +
-                                        //     value.bid + '">' + value.period_name +
-                                        //     '</option>');
-
-                                        // Create $batch options based on batch_ids and batch_name
-                                        // var batch = $('#batch');
-                                        // var batchIds = value.batch_ids.split(',');
-                                        // var batchNames = value.batch_name.split(',');
-                                        // for (var i = 0; i < batchIds.length; i++) {
-                                        //     batch.append('<option value="' + batchIds[
-                                        //         i] + '">' + batchNames[i] +
-                                        //         '</option>');
-                                        // }
-                                    }
-
-
-                                });
-
-                            } else {
-                                $("#batch").empty();
-                            }
+                        error: (xhr, status, error) => {
+                            console.error('AJAX Error:', options.url, error);
+                            reject({ xhr, status, error });
                         }
                     });
+                });
+            }
+
+            // ========================================
+            // DOM Caching Helper
+            // ========================================
+            
+            /**
+             * Cache DOM elements for better performance
+             * @returns {Object} - Cached DOM elements
+             */
+            function cacheElements() {
+                return {
+                    $exampleRadios: $(CONFIG.selectors.exampleRadios),
+                    $attendanceTypeSelect: $(CONFIG.selectors.attendanceTypeSelect),
+                    $batchDiv: $(CONFIG.selectors.batchDiv),
+                    $subjectSelect: $(CONFIG.selectors.subjectSelect),
+                    $divisionSelect: $(CONFIG.selectors.divisionSelect),
+                    $standardSelect: $(CONFIG.selectors.standardSelect),
+                    $fromDate: $(CONFIG.selectors.fromDate),
+                    $batchSelect: $(CONFIG.selectors.batchSelect),
+                    $lectureSelect: $(CONFIG.selectors.lectureSelect),
+                    $subjectName: $(CONFIG.selectors.subjectName),
+                    $lectureName: $(CONFIG.selectors.lectureName),
+                    $batchName: $(CONFIG.selectors.batchName),
+                    $batchId: $(CONFIG.selectors.batchId),
+                    $timetableId: $(CONFIG.selectors.timetableId),
+                    $periodId: $(CONFIG.selectors.periodId),
+                    $attendanceTypeSelectEl: $(CONFIG.selectors.attendanceTypeSelectEl),
+                };
+            }
+
+            // ========================================
+            // Attendance Type Handlers
+            // ========================================
+            
+            /**
+             * Handle lecture type radio button change
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function handleLectureTypeChange($elements) {
+                const selectedType = $(this).val();
+                const isNonRegular = selectedType !== 'Regular';
+                
+                $elements.$attendanceTypeSelect.toggle(isNonRegular);
+                updateBatchVisibility($elements);
+            }
+
+            /**
+             * Handle attendance type select change
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function handleAttendanceTypeChange($elements) {
+                updateBatchVisibility($elements);
+            }
+
+            /**
+             * Update batch div visibility based on conditions
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function updateBatchVisibility($elements) {
+                const selectedAttendanceType = $elements.$attendanceTypeSelectEl.val();
+                const selectedLectureType = $elements.$exampleRadios.filter(':checked').val();
+                
+                // Show batch div when: non-Lecture type with Proxy lecture type
+                const shouldShowBatch = 
+                    selectedAttendanceType !== 'Lecture' && 
+                    selectedLectureType === 'Proxy';
+                
+                $elements.$batchDiv.toggle(shouldShowBatch);
+            }
+
+            // ========================================
+            // Subject and Division Handlers
+            // ========================================
+            
+            /**
+             * Load subjects based on selected division
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            async function loadSubjects($elements) {
+                const standardId = $elements.$standardSelect.val();
+                const divisionId = $elements.$divisionSelect.val();
+                const fromDate = $elements.$fromDate.val();
+                const lectureType = $elements.$exampleRadios.filter(':checked').val();
+                const attendanceType = $elements.$attendanceTypeSelectEl.val();
+
+                // Validate required fields
+                if (!standardId || !divisionId) {
+                    $elements.$subjectSelect.empty();
+                    return;
                 }
 
+                try {
+                    const subjects = await safeAjax({
+                        url: `${CONFIG.api.subjectList}`,
+                        method: 'GET',
+                        data: {
+                            attendance_type: lectureType,
+                            attendance_for: attendanceType,
+                            standard_id: standardId,
+                            division_id: divisionId,
+                            date: fromDate,
+                        }
+                    });
+
+                    populateSubjectDropdown($elements, subjects);
+                } catch (error) {
+                    console.error('Failed to load subjects:', error);
+                    showErrorMessage($elements.$subjectSelect, CONFIG.messages.errorLoading);
+                }
+            }
+
+            /**
+             * Populate subject dropdown with data
+             * @param {jQuery} $elements - Cached DOM elements
+             * @param {Array} subjects - Array of subject objects
+             */
+            function populateSubjectDropdown($elements, subjects) {
+                $elements.$subjectSelect.empty();
+                
+                if (!subjects || subjects.length === 0) {
+                    showErrorMessage($elements.$subjectSelect, CONFIG.messages.noSubjects);
+                    return;
+                }
+
+                const options = [{ value: '', text: CONFIG.messages.selectOption }];
+                
+                subjects.forEach(subject => {
+                    options.push({
+                        value: `${subject.subject_id}|||${subject.period_id}`,
+                        text: subject.subject,
+                        dataAttributes: {
+                            type: subject.type,
+                            periodid: subject.period_id,
+                            timetableid: subject.timetable,
+                        }
+                    });
+                });
+
+                options.forEach(opt => {
+                    const $option = $('<option>', {
+                        value: opt.value,
+                        text: opt.text,
+                    });
+                    
+                    if (opt.dataAttributes) {
+                        Object.entries(opt.dataAttributes).forEach(([key, val]) => {
+                            $option.data(key.replace(/([A-Z])/g, '-$1').toLowerCase(), val);
+                        });
+                    }
+                    
+                    $elements.$subjectSelect.append($option);
+                });
+            }
+
+            /**
+             * Show error message in dropdown
+             * @param {jQuery} $select - Select element
+             * @param {string} message - Error message
+             */
+            function showErrorMessage($select, message) {
+                $select.empty().append(
+                    $('<option>', { value: '', text: message })
+                );
+            }
+
+            // ========================================
+            // Subject Change Handler
+            // ========================================
+            
+            /**
+             * Handle subject selection change
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            async function handleSubjectChange($elements) {
+                const selectedValue = $elements.$subjectSelect.val();
+                const selectedOption = $elements.$subjectSelect.find('option:selected');
+                
+                if (!selectedValue) {
+                    resetBatchFields($elements);
+                    return;
+                }
+
+                const subjectType = selectedOption.data('type');
+                const periodId = selectedOption.data('periodid');
+                const timetableId = selectedOption.data('timetableid');
+                const subjectName = selectedOption.text();
+
+                // Update hidden fields
+                $elements.$subjectName.val(subjectName);
+                $elements.$lectureName.val(subjectType);
+                $elements.$timetableId.val(timetableId);
+                $elements.$periodId.val(periodId);
+
+                // Show/hide batch div based on subject type
+                const shouldShowBatch = subjectType !== 'Lecture';
+                $elements.$batchDiv.toggle(shouldShowBatch);
+
+                // Load batches if applicable
+                if (shouldShowBatch) {
+                    await loadBatches($elements);
+                } else {
+                    $elements.$batchSelect.empty();
+                }
+            }
+
+            /**
+             * Reset batch-related fields
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function resetBatchFields($elements) {
+                $elements.$batchSelect.empty();
+                $elements.$batchName.val('');
+                $elements.$batchId.val('');
+            }
+
+            // ========================================
+            // Batch Loading
+            // ========================================
+            
+            /**
+             * Load batches from API
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            async function loadBatches($elements) {
+                const subjectId = $elements.$subjectSelect.val();
+                const standardId = $elements.$standardSelect.val();
+                const divisionId = $elements.$divisionSelect.val();
+                const fromDate = $elements.$fromDate.val();
+                const subjectType = $elements.$lectureName.val();
+                const periodId = $elements.$periodId.val();
+
+                if (!subjectId || !standardId || !divisionId) {
+                    return;
+                }
+
+                try {
+                    const batches = await safeAjax({
+                        url: CONFIG.api.batchList,
+                        method: 'GET',
+                        data: {
+                            subject_id: subjectId,
+                            standard_id: standardId,
+                            division_id: divisionId,
+                            date: fromDate,
+                            type: subjectType,
+                            period_id: periodId,
+                        }
+                    });
+
+                    populateBatchDropdown($elements, batches);
+                } catch (error) {
+                    console.error('Failed to load batches:', error);
+                    showErrorMessage($elements.$batchSelect, CONFIG.messages.errorLoading);
+                }
+            }
+
+            /**
+             * Populate batch dropdown with data
+             * @param {jQuery} $elements - Cached DOM elements
+             * @param {Array} batches - Array of batch objects
+             */
+            function populateBatchDropdown($elements, batches) {
+                $elements.$batchSelect.empty();
+                
+                if (!batches || batches.length === 0) {
+                    $elements.$batchSelect.append(
+                        $('<option>', { value: '', text: CONFIG.messages.selectOption })
+                    );
+                    return;
+                }
+
+                $elements.$batchSelect.append(
+                    $('<option>', { value: '', text: CONFIG.messages.selectOption })
+                );
+
+                batches.forEach(batch => {
+                    if (batch.batch != null) {
+                        $elements.$batchSelect.append(
+                            $('<option>', {
+                                value: batch.id,
+                                text: batch.batch,
+                                data: { id: batch.timetable_id }
+                            })
+                        );
+                    }
+                });
+            }
+
+            // ========================================
+            // Batch Selection Handler
+            // ========================================
+            
+            /**
+             * Handle batch selection change
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function handleBatchChange($elements) {
+                const selectedOption = $elements.$batchSelect.find('option:selected');
+                $elements.$batchName.val(selectedOption.text());
+                $elements.$timetableId.val(selectedOption.data('id'));
+            }
+
+            // ========================================
+            // Check All Function
+            // ========================================
+            
+            /**
+             * Check/uncheck all radio buttons of a specific class
+             * @param {HTMLInputElement} checkbox - Master checkbox
+             * @param {string} className - Class name to filter
+             */
+            window.checkAll = function(checkbox, className) {
+                const isChecked = checkbox.checked;
+                const checkboxes = document.getElementsByClassName(className);
+                
+                Array.from(checkboxes).forEach(el => {
+                    if (el.type === 'radio') {
+                        el.checked = isChecked;
+                    }
+                });
+            };
+
+            // ========================================
+            // Initialization
+            // ========================================
+            
+            /**
+             * Initialize all event handlers
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function initializeEventHandlers($elements) {
+                // Lecture type radio buttons
+                $elements.$exampleRadios.on('change', function() {
+                    handleLectureTypeChange.call(this, $elements);
+                });
+
+                // Attendance type select
+                $elements.$attendanceTypeSelectEl.on('change', function() {
+                    handleAttendanceTypeChange.call(this, $elements);
+                });
+
+                // Division change with debounce
+                $elements.$divisionSelect.on('change', debounce(() => {
+                    loadSubjects($elements);
+                }, 300));
+
+                // Subject change
+                $elements.$subjectSelect.on('change', function() {
+                    handleSubjectChange.call(this, $elements);
+                });
+
+                // Batch change
+                $elements.$batchSelect.on('change', function() {
+                    handleBatchChange.call(this, $elements);
+                });
+            }
+
+            /**
+             * Initialize UI state on page load
+             * @param {jQuery} $elements - Cached DOM elements
+             */
+            function initializeUIState($elements) {
+                // Check if any non-Regular radio is already selected on page load
+                const checkedLectureType = $elements.$exampleRadios.filter(':checked').val();
+                const isNonRegular = checkedLectureType && checkedLectureType !== 'Regular';
+                
+                // Show attendanceTypeSelect if non-Regular type is selected, otherwise hide it
+                $elements.$attendanceTypeSelect.toggle(isNonRegular);
+                
+                // Check if batch div should be shown based on lecture_name hidden field
+                const lectureName = $elements.$lectureName.val();
+                const hasSubject = $elements.$subjectSelect.val();
+                
+                // Show batch div if lecture_name is not 'Lecture' and subject is selected
+                const shouldShowBatch = hasSubject && lectureName && lectureName !== 'Lecture';
+                $elements.$batchDiv.toggle(shouldShowBatch);
+            }
+
+            // ========================================
+            // Document Ready Handler
+            // ========================================
+            
+            $(document).ready(function() {
+                // Cache DOM elements for performance
+                const $elements = cacheElements();
+                
+                // Initialize UI state
+                initializeUIState($elements);
+                
+                // Set up event handlers
+                initializeEventHandlers($elements);
             });
 
-            // get batch 
-            $('#lecture').on('change', function() {
-                $('#lecture_name').empty();
-                $('#batch_id').empty();
-
-                var selectedOption = $(this).find('option:selected');
-                var timetable_id = selectedOption.data('id');
-                var batch_id = selectedOption.data('batchid');
-                var period_id = selectedOption.val();
-                var name = selectedOption.text();
-
-                $('#lecture_name').val(name);
-                $('#batch_id').val(batch_id);
-                $('#period_id').val(period_id);
-                $('#timetable_id').val(timetable_id);
-
-            })
-
-            $('#batch').on('change', function() {
-                $('#batch_name').empty();
-
-                var selectedOption = $(this).find('option:selected');
-                var name = selectedOption.text();
-                var timetable_id = selectedOption.data('id');
-                $('#batch_name').val(name);
-
-            })
-
-        });
+        })(jQuery);
     </script>   
-<script>
-    $(".mydatepicker").datepicker({  maxDate: '0'});
-
-    function checkAll(ele,name) {
-         var checkboxes = document.getElementsByClassName(name);
-         if (ele.checked) {
-             for (var i = 0; i < checkboxes.length; i++) {
-                 if (checkboxes[i].type == 'radio') {
-                     checkboxes[i].checked = true;
-                 }
-             }
-         } else {
-             for (var i = 0; i < checkboxes.length; i++) {
-                 console.log(i)
-                 if (checkboxes[i].type == 'radio') {
-                     checkboxes[i].checked = false;
-                 }
-             }
-         }
-    }
-</script>    
     @include('includes.footer')
 @endsection

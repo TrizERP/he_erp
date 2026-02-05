@@ -20,6 +20,7 @@ class assignExtraLectureController extends Controller
         $type = $request->type;
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
+        $marking_period_id = session()->get('term_id');
 
         $from_date = $request->from_date ?? now();
         $to_date = $request->to_date ?? now();
@@ -27,6 +28,12 @@ class assignExtraLectureController extends Controller
         $allData = DB::table('assign_extra_lecture')
             ->join('tbluser', 'assign_extra_lecture.teacher_id', '=', 'tbluser.id')
             ->join('hrms_departments', 'assign_extra_lecture.department_id', '=', 'hrms_departments.id')
+            ->join('standard as s', function ($join) use ($marking_period_id) {
+            $join->on('s.id', '=', 'assign_extra_lecture.standard_id')
+             ->when($marking_period_id,function($query) use($marking_period_id){
+                 $query->where('s.marking_period_id',$marking_period_id);
+             });
+            })
             ->selectRaw('assign_extra_lecture.*,CONCAT_WS(" ",COALESCE(tbluser.first_name,"-"),COALESCE(tbluser.middle_name,"-"),COALESCE(tbluser.last_name,"-")) as emp_name,hrms_departments.department as department_name')
             ->where(['assign_extra_lecture.sub_institute_id' => $sub_institute_id,'assign_extra_lecture.syear' => $syear])
             ->when($request->has('search') && $request->search=="Search", function ($query) use ($request) {
