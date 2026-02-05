@@ -244,27 +244,7 @@ class feesStatusController extends Controller
         $previousDues[$student_id] = $due;
     }
 
-        // ============ PREVIOUS YEAR DUE ============
-        $previousDues = array_fill_keys($onlyStudentIds, 0.0);
-
-        foreach ($student_ids as $sid) {
-            $student_id = $sid['student_id'];
-            // load previous year breakoff for exactly one student at a time
-            $prevBk = FeeBreakoffHeadWise([$student_id], '', '', '', $last_syear);
-
-            $due = 0;
-            if (!empty($prevBk[$student_id]['breakoff'])) {
-                foreach ($prevBk[$student_id]['breakoff'] as $m => $heads) {
-                    foreach ($heads as $row) {
-                        $amount = (float)($row['amount'] ?? 0);
-                        $paid   = (float)($row['paid_amount'] ?? 0);
-                        $due   += max($amount - $paid, 0);
-                    }
-                }
-            }
-            $previousDues[$student_id] = $due;
-        }
-
+    // ==========================================================
     foreach ($onlyStudentIds as $sid) {
        if (!isset($breakoffData[$sid])) continue;
 
@@ -355,17 +335,18 @@ class feesStatusController extends Controller
         return ($totalDue > 0) || (($payable - $paid) > 0);
     });
 
-} elseif ($fees_status === 'paid') {
+    } elseif ($fees_status === 'paid') {
 
-    $finalFeesData = array_filter($finalFeesData, function ($row) {
+        $finalFeesData = array_filter($finalFeesData, function ($row) {
 
-        $payable = (float)($row['total_payable'] ?? 0);
-        $paid    = (float)($row['total_paid'] ?? 0);
+            $payable = (float)($row['total_payable'] ?? 0);
+            $paid    = (float)($row['total_paid'] ?? 0);
 
-        // paid ONLY based on BK balance
-        return ($payable - $paid) <= 0;
-    });
-}
+            // paid ONLY based on BK balance
+            return ($payable - $paid) <= 0;
+        });
+    }
+    
         $res['status_code'] = 1;
         $res['message'] = 'Success';
         $res['fees_data'] = $finalFeesData;
