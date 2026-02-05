@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Http;
 use function App\Helpers\is_mobile;
 use function App\Helpers\getSubCordinates;
 use App\Traits\Helpers;
+use Carbon\Carbon;
 
 class AJAXController extends Controller
 {
@@ -427,7 +428,108 @@ class AJAXController extends Controller
             ->where($where)
             ->orderBy('sub_std_map.sort_order')
             ->pluck('sub_std_map.display_name', 'subject.id');
-    } else {
+    } else if($request->attendance_type == 'Extra'){
+        $date = Carbon::parse($request->date)->format('Y-m-d');
+        $rows = DB::table('assign_extra_lecture as a')
+            ->selectRaw("
+                t.subject_id,
+                t.period_id,
+                CONCAT_WS('-', a.lecture_no, s.display_name) AS subject,
+                t.id AS timetable,
+                t.merge,
+                '' AS extend_lab,
+                a.type,
+                a.lecture_no
+            ")
+            ->join('timetable as t', function ($join) {
+                $join->on('a.standard_id', '=', 't.standard_id')
+                    ->on('a.type', '=', 't.type')
+                    ->on('a.section_id', '=', 't.division_id')
+                    ->on('a.syear', '=', 't.syear')
+                    ->on('a.teacher_id', '=', 't.teacher_id');
+            })
+            ->join('sub_std_map as s', function ($join) {
+                $join->on('s.subject_id', '=', 't.subject_id')
+                    ->on('s.standard_id', '=', 't.standard_id');
+            })
+            ->where([
+                'a.sub_institute_id' => session()->get('sub_institute_id'),
+                'a.teacher_id'       => session()->get('user_id'),
+                'a.standard_id'      => $request->standard_id,
+                'a.section_id'       => $request->division_id,
+                'a.extra_date'       => $date,
+            ])
+            ->groupBy('t.subject_id', 'a.lecture_no')
+            ->get();
+            
+        $std_sub_map = [];
+
+        if ($rows->isNotEmpty()) {
+            foreach ($rows as $row) {
+                $std_sub_map[] = [
+                    'subject_id'      => $row->subject_id,
+                    'period_id'       => $row->period_id,
+                    'subject'         => $row->subject,
+                    'timetable'       => $row->timetable,
+                    'merge'           => $row->merge,
+                    'extend_lab'      => $row->extend_lab,
+                    'type'            => $row->type,
+                    'attendance_type' => 'Extra',
+                    'lecture_no'      => $row->lecture_no,
+                ];
+            }
+        }
+    } else if($request->attendance_type == 'Proxy'){
+        $date = Carbon::parse($request->date)->format('Y-m-d');
+        $rows = DB::table('proxy_master as p')
+            ->selectRaw("
+                p.subject_id,
+                p.period_id,
+                s.display_name AS subject,
+                '' AS timetable,
+                '' AS merge,
+                '' AS extend_lab,
+                CASE 
+                    WHEN p.batch_id IS NULL THEN 'Lecture'
+                    ELSE 'Lab'
+                END AS type
+            ")
+            ->join('timetable as t', function ($join) {
+                $join->on('p.proxy_teacher_id', '=', 't.teacher_id')
+                    ->on('p.standard_id', '=', 't.standard_id');
+            })
+            ->join('sub_std_map as s', function ($join) {
+                $join->on('s.subject_id', '=', 't.subject_id')
+                    ->on('s.standard_id', '=', 't.standard_id');
+            })
+            ->where([
+                'p.sub_institute_id'  => session()->get('sub_institute_id'),
+                'p.proxy_teacher_id' => session()->get('user_id'),
+                'p.standard_id'      => $request->standard_id,
+                'p.division_id'      => $request->division_id,
+                'p.proxy_date'       => $date,
+            ])
+            ->groupBy('t.subject_id')
+            ->get();
+
+            
+        $std_sub_map = [];
+
+        if ($rows->isNotEmpty()) {
+            foreach ($rows as $row) {
+                $std_sub_map[] = [
+                    'subject_id'      => $row->subject_id,
+                    'period_id'       => $row->period_id,
+                    'subject'         => $row->subject,
+                    'timetable'       => $row->timetable,
+                    'merge'           => $row->merge,
+                    'extend_lab'      => $row->extend_lab,
+                    'type'            => $row->type,
+                    'attendance_type'=> 'Proxy',
+                ];
+            }
+        }
+    } else if($request->attendance_type == 'Regular'){
         $todayDay = substr(date('l', strtotime($request->date)), 0, 1); // Get first letter of day
         if(strtolower($todayDay) == 't') { // Handle Tuesday/Thursday ambiguity
             $fullDay = strtolower(date('l', strtotime($request->date)));
@@ -555,9 +657,10 @@ class AJAXController extends Controller
                     'period_id'  => implode('###', $period_ids),
                     'subject'    => $subject,
                     'timetable'  => implode('###', $timetable_ids),
-                    'merge' => $item['merge'],
+                    'merge'      => $item['merge'],
                     'extend_lab' => $item['extend_lab'],
-                    'type'       => $item['type']
+                    'type'       => $item['type'],
+                    'attendance_type' => 'Regular',
                 ];
             }
         }
