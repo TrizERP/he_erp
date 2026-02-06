@@ -501,7 +501,7 @@ Route::get('get-batch', [AJAXController::class, 'get_batch']);
 
 Route::get('api/get-standard-list', [AJAXController::class, 'getStandardList']);
 Route::get('api/get-division-list', [AJAXController::class, 'getDivisionList']);
-Route::get('api/get-subject-list', [AJAXController::class, 'getSubjectList']);
+Route::get('api/get-subject-list', [AJAXController::class, 'getSubjectList'])->name('getSubjectList');
 Route::get('api/get-subject-list-timetable', [AJAXController::class, 'getSubjectListTimetable']);
 Route::get('api/get-batch-list-timetable', [AJAXController::class, 'getBatchTimetable'])->name('getBatchTimetable');
 /** get exam list */

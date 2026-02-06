@@ -285,22 +285,23 @@
         $('#standard').attr('required', true);
         $('#division').attr('required', true);
 
+        // ✅ Load subjects dynamically
         function loadSubjects(selectedStandard, selectedDivision, callback) {
-            var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
-            $('#subject').find('option').remove().end().append('<option value="">Select Subject</option>').val('');
-
+            var path = "{{ route('getSubjectList') }}";
+            $('#subject').html('<option value=\"\">Select Subject</option>');
             $.ajax({
                 url: path,
-                data: { std_id: selectedStandard },
-                success: function(result) {
-                    for (var i = 0; i < result.length; i++) {
+                data: { standard_id: selectedStandard, division_id: selectedDivision },
+                success: function (result) {
+                    Object.entries(result).forEach(function ([subject_id, display_name]) {
                         $("#subject").append(
                             $("<option></option>")
-                                .val(result[i]['subject_id'])
-                                .html(result[i]['display_name'])
+                                .val(subject_id)
+                                .html(display_name)
                         );
-                    }
-                    if (typeof callback === "function") callback();
+                    });
+
+                    if (callback) callback();
                 }
             });
         }
