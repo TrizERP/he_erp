@@ -326,15 +326,20 @@ $(document).ready(function() {
 
     // ✅ Load subjects dynamically
     function loadSubjects(selectedStandard, selectedDivision, callback) {
-        var path = "{{ route('ajax_LMS_StandardwiseSubject') }}";
+        var path = "{{ route('getSubjectList') }}";
         $('#subject').html('<option value=\"\">Select Subject</option>');
         $.ajax({
             url: path,
-            data: { std_id: selectedStandard },
-            success: function(result) {
-                result.forEach(function(r) {
-                    $("#subject").append($("<option></option>").val(r['subject_id']).html(r['display_name']));
+            data: { standard_id: selectedStandard, division_id: selectedDivision },
+            success: function (result) {
+                Object.entries(result).forEach(function ([subject_id, display_name]) {
+                    $("#subject").append(
+                        $("<option></option>")
+                            .val(subject_id)
+                            .html(display_name)
+                    );
                 });
+
                 if (callback) callback();
             }
         });
