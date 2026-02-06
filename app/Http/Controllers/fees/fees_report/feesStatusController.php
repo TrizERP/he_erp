@@ -104,7 +104,7 @@ class feesStatusController extends Controller
     // ============ BREAKOFF DATA ============
     $onlyStudentIds = array_column($student_ids, 'student_id');
     $breakoffData = FeeBreakoffHeadWise($onlyStudentIds);
-        
+//echo "<pre>";print_r($breakoffData);exit;
         if (count($studentData) === 0) {
             return is_mobile($type, "fees_status_report.index", [
                 'status_code' => 0,
@@ -120,9 +120,6 @@ class feesStatusController extends Controller
         ->keyBy('student_id')
         ->toArray();
     $uiHeadCols = array_values($fees_head);
-
-    // ============ BREAKOFF DATA ============
-    $breakoffData = FeeBreakoffHeadWise($onlyStudentIds);
 
     $displayBreakoff = [];
     $displayBreakoffByHead = [];
@@ -160,8 +157,6 @@ class feesStatusController extends Controller
 
     $student_id = $sid['student_id'];        // student_id
     $standard_id = $sid['standard_id'];       // standard_id (use in query)
-        // load previous year breakoff for exactly one student at a time
-        //$prevBk = FeeBreakoffHeadWise([$sid], '', '', '', $last_syear);
 
 //BY RAJESH ALL PREVIOUS        
     $data = DB::table('tblstudent_enrollment as a')
@@ -228,7 +223,7 @@ class feesStatusController extends Controller
                 }
             }
         }
-//echo "<pre>";print_r($prevBk);exit;
+//echo "<pre>";print_r($merged_head_results);exit;
 //END RAJESH        
 
         $due = 0;
@@ -237,7 +232,8 @@ class feesStatusController extends Controller
                 foreach ($heads as $row) {
                     $amount = (float)($row['amount'] ?? 0);
                     $paid   = (float)($row['paid_amount'] ?? 0);
-                    $due   += max($amount - $paid, 0);
+                  //$due   += max($amount - $paid, 0);
+                    $due   += $amount; // DUE = FULL AMOUNT FROM PREVIOUS YEARS;
                 }
             }
         }
@@ -484,14 +480,4 @@ class feesStatusController extends Controller
             'sub_institute_id' => $sub_institute_id,
         ]);
     }
-    /*
-    Changed on 23 April 2021
-
-    1) Commented feesPaid code on line no 181-184
-    2) Commented amountlogs condition on line no 192-195
-    3) Added new whereRaw condition form line no 133-137
-    4) Changed in helper.php (FeeBreakoffHeadWise) changed student condition on line no 753
-    5) Changed in helper.php (FeeBreakoffHeadWise) commented condition if ($value->amount != 0) on line no 758
-    6) Changed in helper.php (SearchStudent) commented condition from line no 502-505
-    */
 }
