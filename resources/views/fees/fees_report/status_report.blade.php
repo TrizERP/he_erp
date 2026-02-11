@@ -253,9 +253,9 @@
 
                                         <td>
                                             <input type='checkbox' name="stu_ids[]" class="remain_fees"
-                                                data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}"
-                                                data-remain_fees="{{ $amount }}"
-                                                data-mobile="{{ $sendNumber }}" />
+data-id="{{ $value['id'] }}" data-name="{{ $value['student_name'] }}"
+data-remain_fees="{{ $amount + ($data['previous_dues'][$value['id']] ?? 0) }}"
+data-mobile="{{ $sendNumber }}" />
                                         </td>
 
                                         <td>{{ $value['enrollment_no'] }}</td>

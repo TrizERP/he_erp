@@ -206,7 +206,12 @@ class bulkStudentBatchController extends Controller
             ->join('academic_section', 'academic_section.id', '=', 'tblstudent_enrollment.grade_id')
             ->join('standard', 'standard.id', '=', 'tblstudent_enrollment.standard_id')
             ->join('division', 'division.id', '=', 'tblstudent_enrollment.section_id')
-            ->leftjoin('batch', 'batch.id', '=', 'tblstudent.studentbatch')
+            ->leftJoin('batch', function ($join) {
+                $join->on('batch.id', '=', 'tblstudent.studentbatch')
+                     ->on('batch.syear', '=', 'tblstudent_enrollment.syear')
+                     ->on('batch.standard_id', '=', 'tblstudent_enrollment.standard_id')
+                     ->on('batch.division_id', '=', 'tblstudent_enrollment.section_id');
+            })
             ->where($extraSearchArray)
             ->whereRaw($extraRaw)
             ->orderByRaw("CAST(REGEXP_SUBSTR(tblstudent.enrollment_no, '[0-9]+') AS UNSIGNED)")
