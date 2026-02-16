@@ -457,25 +457,25 @@ class other_fees_collect_controller extends Controller
         
                 $recTotal = $amount_of_deduction[$std_studId];
 
-                $fees_head_content .= '<tr>';
-                $fees_head_content .= '   <td colspan="4" valign="top">';
-                $fees_head_content .= '       <table class="particulars" width="100%" border="0">';
-                $fees_head_content .= '       <tr>';
-                $fees_head_content .= '               <td colspan="3"><b>Description</b></td>';
-                $fees_head_content .= '               <td style="white-space:nowrap;"><b>Received (Rs.)</b></td>  ';
-                $fees_head_content .= '           </tr>';
+                //$fees_head_content .= '<tr>';
+                //$fees_head_content .= '   <td colspan="4" valign="top">';
+                //$fees_head_content .= '       <table class="particulars" width="100%" border="0">';
+                //$fees_head_content .= '       <tr>';
+                //$fees_head_content .= '               <td colspan="3"><b>Description</b></td>';
+                //$fees_head_content .= '               <td style="white-space:nowrap;"><b>Received (Rs.)</b></td>  ';
+                //$fees_head_content .= '           </tr>';
                 $fees_head_content .= '           <tr>';
                 $fees_head_content .= '               <td align="left" colspan="3">' . $other_fees_title_name . '</td>';
                 $fees_head_content .= '               <td align="right" >' . $amount_of_deduction[$std_studId] . '</td>';
                 $fees_head_content .= '           </tr>';
                 $fees_head_content .= '           <tr>';
-                $fees_head_content .= '               <td align="left" colspan="3"><b>Total</b></td>';
+                $fees_head_content .= '               <td align="right" colspan="3"><b>Total</b></td>';
                 $fees_head_content .= '               <td align="right" ><b>' . $recTotal . '</b></td>';
                 $fees_head_content .= '           </tr>';
-                $fees_head_content .= '       </table>';
-                $fees_head_content .= '   </td>';
-                $fees_head_content .= '</tr>
-                                        </tbody>
+                //$fees_head_content .= '       </table>';
+                //$fees_head_content .= '   </td>';
+                //$fees_head_content .= '</tr>
+                 $fees_head_content .= '</tbody>
                                         </table>';
 
             $total_amount_in_words = ucwords($this->convert_number_to_words($recTotal));
@@ -491,7 +491,8 @@ class other_fees_collect_controller extends Controller
             }else if ($payMethod == 'Cash') {
                 $payment_mode = $payMethod;
             } else {
-                $payment_mode = $payMethod . ' ' . strtoupper($_REQUEST['bank_name']) . ' - ' . strtoupper($_REQUEST['bank_branch'] ?? '') . ' - ' . strtoupper($_REQUEST['cheque_date']) . ' - ' . $_REQUEST['cheque_no'];
+                //$payment_mode = $payMethod . ' ' . strtoupper($_REQUEST['bank_name']) . ' - ' . strtoupper($_REQUEST['bank_branch'] ?? '') . ' - ' . strtoupper($_REQUEST['cheque_date']) . ' - ' . $_REQUEST['cheque_no'];
+                $payment_mode = $payMethod;
             }
 
             if (isset($_REQUEST['remarks']) && $_REQUEST['remarks'] != '' && $_REQUEST['remarks'] != '-') {

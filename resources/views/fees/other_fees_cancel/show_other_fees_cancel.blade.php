@@ -229,8 +229,9 @@
                                 <input type="hidden" name="action" id="action" value="other_fees_re_receipt">
                                 <input type="hidden" name="student_id" id="student_id" value="">
                                 <input type="hidden" name="receipt_id_html" id="receipt_id_html" value="">
-                                <input type="hidden" name="paper_size" id="paper_size" value="A5">
-                                <div id="reprint_receipt_html">
+                                <input type="hidden" name="paper_size" id="paper_size" value="A5DB">
+                                <input type="hidden" name="last_inserted_ids" id="last_inserted_ids" value="">
+                                <div id="reprint_receipt_html"> 
                                 </div>
                             </div>
                         </div>
@@ -244,7 +245,7 @@
                                 src="http://dev.triz.co.in/admin_dep/images/loader.gif"></center>
                     </div>
                     <center>
-                        <button id="ajax_PDF" type="button" class="btn btn-primary">Print Receipt</button>
+                        <button id="otherfees" type="button" class="btn btn-primary">Print Receipt</button>
                     </center>
                 </div>
             </div>
@@ -277,6 +278,7 @@
         $('#reprint_receipt_html').html(fees_content);
         $('#student_id').val(student_id);
         $('#receipt_id_html').val(receipt_no);
+        $('#last_inserted_ids').val(fees_collect_id);
         $('#ChapterModal').modal('show');
 
     }
@@ -342,5 +344,21 @@
             }
         }
     }
+    $(document).ready(function(){
+        $('#otherfees').on('click', function () 
+        {
+            $("#overlay").css("display","block");
+            var inserted_ids = $("#last_inserted_ids").val();
+            var action = $("#action").val();
+            var page_size = $("#paper_size").val();
+            $.ajax({
+                    url: '/ajax_PDF_Bulk_OtherFeesReceipt?action='+action+'&inserted_ids='+inserted_ids+'&page_size='+page_size,                
+                    success: function(result){ 
+                        window.open(result, '_blank');
+                        $("#overlay").css("display","none");
+                    }
+            });
+        });
+    });
 </script>
 @include('includes.footer')
