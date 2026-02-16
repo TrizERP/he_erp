@@ -6,6 +6,7 @@ use App\Http\Controllers\fees\fees_report\otherNewfeesReportController;
 use App\Models\tblmenumasterModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use PHPMailer\PHPMailer;
 use function App\Helpers\FeeBreackoff;
 use function App\Helpers\FeeBreakoffHeadWise;
@@ -2032,6 +2033,9 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
         $action = $request->input('action');
         $paper_size = $request->input('page_size');
 
+        $fees_css = $this->get_FeesCss($action);
+        $fees_receipt_css = "<style>" . $fees_css . "</style>";
+
         $inserted_ids_arr = explode(',', $last_inserted_ids);
 
         $html = '';
@@ -2041,15 +2045,16 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
             $student_id = $html_data['student_id'];
             $fees_receipt_html = $html_data['fees_receipt_html'];
             // dd($html_data);
-
+/*
             if ($fees_receipt_html != '') {
                 $dom = '<!DOCTYPE html>
                         <html>
                             <head>
                                <title></title>
                                <meta charset="UTF-8">
-                               <meta name="viewport" content="width=erpice-width, initial-scale=1.0">                           
-                            </head>
+                               <meta name="viewport" content="width=erpice-width, initial-scale=1.0">';
+                $dom .= $fees_receipt_css;                               
+                $dom .= '            </head>
                             <style>
                             .fees-receipt tbody tr{
                                  page-break-inside: avoid;
@@ -2093,6 +2098,117 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
 
                 $PDF_path_for_open = "https://" . $_SERVER['HTTP_HOST'] . '/storage/print_receipt_pdf/' . $pdf_filename;
             }
+*/
+            if (!empty($fees_receipt_html)) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | 1. Build Full HTML DOM
+                |--------------------------------------------------------------------------
+                */
+
+                $dom  = '<!DOCTYPE html>
+                        <html>
+                            <head>
+                                <title></title>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">';
+                $dom .= $fees_receipt_css;
+                $dom .= '   </head>
+                            <style>
+                                .fees-receipt tbody tr{
+                                    page-break-inside: avoid;
+                                }
+                            </style>
+                            <body>';
+
+                if (in_array($action, ['other_fees_re_receipt','other_fees_collect_receipt'])) {
+                    $dom .= $this->get_PageSetup($paper_size);
+                } else {
+                    $dom .= '<div style="page-break-inside: avoid">
+                                ##HTML_SEC##
+                            </div>';
+                }
+
+                $dom .= '   </body>
+                        </html>';
+
+                /*
+                |--------------------------------------------------------------------------
+                | 2. Prepare File Names
+                |--------------------------------------------------------------------------
+                */
+
+                $currentTime   = now()->format('YmdHis');
+                $html_filename = $student_id . '_' . $currentTime . '.html';
+                $pdf_filename  = $student_id . '_' . $currentTime . '.pdf';
+
+                $final_html = str_replace('##HTML_SEC##', $fees_receipt_html, $dom);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 3. Ensure Directory Exists (storage/app/public/print_receipt_pdf)
+                |--------------------------------------------------------------------------
+                */
+
+                $folder = 'print_receipt_pdf';
+
+                Storage::disk('public')->makeDirectory($folder);
+
+                // Absolute path for PDF engine
+                $absoluteFolderPath = storage_path('app/public/' . $folder);
+
+                $html_file_path = $absoluteFolderPath . '/' . $html_filename;
+                $pdf_file_path  = $absoluteFolderPath . '/' . $pdf_filename;
+
+                /*
+                |--------------------------------------------------------------------------
+                | 4. Save HTML Temporarily
+                |--------------------------------------------------------------------------
+                */
+
+                file_put_contents($html_file_path, $final_html);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 5. Generate PDF
+                |--------------------------------------------------------------------------
+                */
+
+
+                if (in_array($action, ['Bonafide', 'Character Certificate', 'imprest_fees_cancel_refund_receipt'])) {
+
+                    htmlToPDFLandscapeCertificate($html_file_path, $pdf_file_path);
+
+                } elseif (in_array($action, ['other_fees_re_receipt','other_fees_collect_receipt'])) {
+
+                    $this->htmlToPDF_making($paper_size, $html_file_path, $pdf_file_path);
+
+                } else {
+
+                    htmlToPDF($html_file_path, $pdf_file_path);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 6. Delete Temporary HTML
+                |--------------------------------------------------------------------------
+                */
+
+                if (file_exists($html_file_path)) {
+                    unlink($html_file_path);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 7. Public URL (Correct Laravel Way)
+                |--------------------------------------------------------------------------
+                */
+
+                $PDF_path_for_open = url('storage/' . $folder . '/' . $pdf_filename);
+
+            }
+
         }
         return $PDF_path_for_open;
     }
@@ -2220,7 +2336,7 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
         $syear = session()->get('syear');
         $html_array = array();
 
-        if ($action == 'other_fees_collect_receipt') {
+        if (in_array($action, ['other_fees_re_receipt','other_fees_collect_receipt'])) {
 
             $get_data = DB::table('fees_other_collection')
                 ->where('sub_institute_id', $sub_institute_id)
@@ -2300,7 +2416,7 @@ $search_ids2 = array_diff($search_ids2, $search_ids);
             $receipt_css = $fees_config[0]->css;
         }
 
-        if ($action == 'imprest_ledger_view' || $action == 'Bonafide' || $action == 'Character Certificate' || $action == 'Transfer Certificate' || $action == 'certificate_re_receipt' || $action == 'other_fees_re_receipt') {
+        if ($action == 'imprest_ledger_view' || $action == 'Bonafide' || $action == 'Character Certificate' || $action == 'Transfer Certificate' || $action == 'certificate_re_receipt') {// || $action == 'other_fees_re_receipt'
             $fees_receipt_css = '';
         } else {
             $fees_receipt_css = $receipt_css;
