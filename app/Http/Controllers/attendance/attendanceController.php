@@ -224,6 +224,10 @@ class attendanceController extends Controller
             $res['message'] = "Success";
             $res['student_data'] = $student_data;
         }
+        
+        $attendance_for = $request->get('exampleRadios') != 'Regular'
+            ? $request->get('attendance_type')
+            : $request->get('lecture_name');
 
         // use ajax controller function 
         $ajaxController = new AJAXController;
@@ -231,7 +235,7 @@ class attendanceController extends Controller
         // get subjects 
         $sub_req = new Request([
             'attendance_type' => $request->get('exampleRadios'),
-            'attendance_for' => $request->get('attendance_type'),
+            'attendance_for' => $attendance_for,//$request->get('attendance_type'),
             'standard_id' => $standard,
             'division_id' => $division, 
             'sub_institute_id' => $sub_institute_id, 
@@ -270,7 +274,7 @@ class attendanceController extends Controller
             : null;
 
         $res['exampleRadios'] = $request->get('exampleRadios');
-        $res['attendance_type'] = $request->get('attendance_type');
+        $res['attendance_type'] = $attendance_for;//$request->get('attendance_type');
         $res['from_date'] = $request->get('from_date');
         $res['grade_id'] = $request->get('grade');
         $res['standard_id'] = $request->get('standard');
@@ -293,7 +297,7 @@ class attendanceController extends Controller
             'section_id'        => $division,
             'subject_id'        => $subject_id,//$request->get('subject'),
             'attendance_type'   => $request->get('exampleRadios'),
-            'attendance_for'    => $request->get('attendance_type'),
+            'attendance_for'    => $attendance_for,//$request->get('attendance_type'),
             'lecture_no'        => $lecture_no,
         ];
 
