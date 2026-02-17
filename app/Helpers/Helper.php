@@ -136,6 +136,7 @@ if (!function_exists('SearchChain')) {
             '4' => 'lmsExamwise_progress_report',
             '5' => 'questionReport',
             '6' => 'parent_communication',
+            '7' => 'students_attendance',
         );
 
         $teacher_id = session()->get('user_id');
@@ -145,7 +146,9 @@ if (!function_exists('SearchChain')) {
 
         $getUserData =tbluserModel::where('id',session()->get('user_id'))->first();
 
-        if(!empty($getUserData) && isset($getUserData->allocated_standards) && $getUserData->allocated_standards!=''){
+        if(!empty($getUserData) && isset($getUserData->allocated_standards) 
+            && $getUserData->allocated_standards!=''
+            && !in_array($module_name, $module_array)){
                 $getAllocatedStandard = DB::table('standard as s')
                     ->join('academic_section as a', function ($join) {
                         $join->on('a.id', '=', 's.grade_id')
@@ -175,7 +178,7 @@ if (!function_exists('SearchChain')) {
                 Session::put('subjectTeacherGrdArr', $subjectTeacherGrdArr);
                 Session::put('subjectTeacherStdArr', $subjectTeacherStdArr);
         
-        } else if (session()->get('profile_parent_id') == 2) {
+        } else if (session()->get('profile_parent_id') == 2 || in_array($module_name, $module_array)) {
 
             $subject_teacher = DB::table('subject as s')
                 ->join('timetable as t', function ($join) {
@@ -200,14 +203,6 @@ if (!function_exists('SearchChain')) {
             Session::put('subjectTeacherDivArr', $subjectTeacherDivArr);
         }
         // END 07/09/2021 code for getting standard , grade , division according to timetable wise for homework module
-        
-        // 10-01-2025 start supervisor rights
-        //else if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile()))
-        {
-            
-            
-        }
-        // 10-01-2025 end supervisor rights
 
         $explod_list = explode(',', $listed_drop);
         $grade_name = 'grade';
