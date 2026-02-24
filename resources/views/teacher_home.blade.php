@@ -283,6 +283,108 @@
                 </div>
             </div>
             @endif
+            @if(isset($data['pending_attendance']) && count($data['pending_attendance']) > 0)
+                <div class="col-md-12 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">My Pending Attendance</h3>
+                            <div class="alert alert-info">
+                                <strong>Date: </strong> {{ \Carbon\Carbon::parse($data['current_date'])->format('d-m-Y') }} 
+                                ({{ $data['day_name'] }})
+                            </div>
+                            
+                            <!-- Summary Cards -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-aqua"><i class="fa fa-calendar"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Total Classes</span>
+                                            <span class="info-box-number">{{ $data['pending_total_classes'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-green"><i class="fa fa-check"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Completed</span>
+                                            <span class="info-box-number">{{ $data['pending_completed_count'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-red"><i class="fa fa-clock-o"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Pending</span>
+                                            <span class="info-box-number">{{ $data['pending_count'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pending Attendance Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SEMESTER</th>    
+                                            <th>DIV</th>
+                                            <th>SUBJECT</th>
+                                            <th>TYPE</th>
+                                            <th>LECTURE NO</th>
+                                            <th>STATUS</th>
+                                            <th>ACTION</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($data['pending_attendance'] as $key => $value)
+                                            <tr>
+                                                <td>{{ $value['standard_name'] ?? '-' }}</td>
+                                                <td>{{ $value['division_name'] ?? '-' }}</td>
+                                                <td>{{ $value['subject_name'] ?? '-' }}</td>
+                                                <td>
+                                                    @if($value['type'] == 'Lecture')
+                                                        <span class="label label-primary">Lecture</span>
+                                                    @elseif($value['type'] == 'Lab')
+                                                        <span class="label label-info">Lab</span>
+                                                    @elseif($value['type'] == 'Tutorial')
+                                                        <span class="label label-warning">Tutorial</span>
+                                                    @else
+                                                        <span class="label label-default">{{ $value['type'] ?? 'Lecture' }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $value['period_name'] ?? '-' }}</td>
+                                                <td>
+                                                    @if($value['attStatus'] == 'Completed')
+                                                        <span class="label label-success">Completed</span>
+                                                    @else
+                                                        <span class="label label-danger">Pending</span>
+                                                    @endif
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    @if($value['attStatus'] == 'Pending')
+                                                        <a href="{{ route('students_attendance.index') }}" 
+                                                           class="btn btn-primary btn-sm">
+                                                            <i class="fa fa-check"></i> Mark Attendance
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('students_attendance.index') }}" 
+                                                           class="btn btn-info btn-sm">
+                                                            <i class="fa fa-eye"></i> View
+                                                        </a>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             @if(isset($data['recentFeesCollection']) && Session::get('user_profile_name') != 'Student')
             <div class="col-md-12 col-lg-6 col-sm-12 slide">

@@ -6,6 +6,7 @@ use App\Http\Controllers\school_setup\facultywisetimetableController;
 use App\Models\fees\fees_collect\fees_collect;
 use App\Models\tblmenumasterModel;
 use App\Models\user\tbluserModel;
+use App\Models\school_setup\timetableModel;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -1072,6 +1073,17 @@ class dashboardController extends Controller
 
             $date15 = date('Y-m-d', strtotime($date . ' +15 day'));
 
+            // START: Get pending attendance for logged-in teacher
+            $pendingAttendanceData = $this->getTeacherPendingAttendance($sub_institute_id, $syear, $user_id);
+            $res['pending_attendance'] = $pendingAttendanceData['pending_attendance'];
+            $res['pending_total_classes'] = $pendingAttendanceData['total_classes'];
+            $res['pending_completed_count'] = $pendingAttendanceData['completed_count'];
+            $res['pending_count'] = $pendingAttendanceData['pending_count'];
+            $res['current_date'] = $pendingAttendanceData['current_date'];
+            $res['day_name'] = $pendingAttendanceData['day_name'];
+            $res['calendar_event'] = $pendingAttendanceData['calendar_event'];
+            // END: Get pending attendance for logged-in teacher
+
             $users = tbluserModel::selectRaw("count(id) as users")->where([
                 'sub_institute_id' => $sub_institute_id, 'status' => "1",
             ])->get()->toArray();
@@ -1490,7 +1502,7 @@ class dashboardController extends Controller
             $res['used_space_in_MB'] = $used_space_in_MB;
             $res['available_space_in_MB'] = $available_space_in_MB;
             //END Code for calculate used space using folder-wise table
-
+//echo "<pre>";print_r($res);exit;
             return is_mobile($type, "teacher_home", $res, "view");
         }
     }
@@ -2620,6 +2632,119 @@ class dashboardController extends Controller
         }
 
         return is_mobile($type, "setup_institute_details", $res, 'view');
+    }
+
+    /**
+     * Get pending attendance for logged-in teacher
+     * 
+     * @param int $sub_institute_id
+     * @param int $syear
+     * @param int $user_id
+     * @return array
+     */
+    private function getTeacherPendingAttendance($sub_institute_id, $syear, $user_id)
+    {
+        // Get current date and convert day to single letter code
+        $curDate = date('Y-m-d');
+        $days = date('D', strtotime($curDate));
+        $marking_period_id = session()->get('term_id');
+        
+        // Convert day name to single letter (Mon=M, Tue=T, Wed=W, Thu=H, Fri=F, Sat=S, Sun=S)
+        if ($days == 'Thu') {
+            $dayCode = 'H';
+        } else {
+            $dayCode = substr($days, 0, 1);
+        }
+        
+        // Check if there's a calendar event for current date (holiday/event)
+        $calendarEvent = DB::table('calendar_events')
+            ->where('school_date', $curDate)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->first();
+        
+        $result = [
+            'pending_attendance' => [],
+            'total_classes' => 0,
+            'completed_count' => 0,
+            'pending_count' => 0,
+            'current_date' => $curDate,
+            'day_name' => $days,
+            'calendar_event' => $calendarEvent
+        ];
+        
+        // If there's an event (holiday), don't show pending attendance
+        if ($calendarEvent) {
+            return $result;
+        }
+        
+        // Get teacher's timetable for current day
+        $timetableData = timetableModel::from('timetable')
+            ->select(
+                'timetable.id as timetable_id',
+                'timetable.standard_id',
+                'timetable.division_id',
+                'timetable.period_id',
+                'timetable.subject_id',
+                'timetable.batch_id',
+                'standard.name as standard_name',
+                'division.name as division_name',
+                'sub_std_map.display_name as subject_name',
+                'timetable.type',
+                'period.title as period_name'
+            )
+            ->join('standard', function ($join) use ($marking_period_id) {
+                $join->on('standard.id', '=', 'timetable.standard_id')
+                    ->where('standard.marking_period_id', $marking_period_id);
+            })
+            ->join('sub_std_map', 'sub_std_map.subject_id', '=', 'timetable.subject_id')
+            ->join('division', 'division.id', '=', 'timetable.division_id')
+            ->join('period', 'period.id', '=', 'timetable.period_id')
+            ->where('timetable.teacher_id', $user_id)
+            ->where('timetable.sub_institute_id', $sub_institute_id)
+            ->where('timetable.syear', $syear)
+            ->where('timetable.week_day', $dayCode)
+            ->orderBy('period.sort_order', 'ASC')
+            ->get();
+
+        // Check which periods have attendance marked
+        $pendingAttendance = [];
+        
+        foreach ($timetableData as $timetable) {
+            // Check if attendance is already marked for this timetable entry
+            $attendanceMarked = DB::table('attendance_student')
+                ->where('timetable_id', $timetable->timetable_id)
+                ->where('attendance_date', $curDate)
+                ->where('teacher_id', $user_id)
+                ->exists();
+            
+            $status = $attendanceMarked ? 'Completed' : 'Pending';
+            
+            $pendingAttendance[] = [
+                'timetable_id' => $timetable->timetable_id,
+                'standard_id' => $timetable->standard_id,
+                'standard_name' => $timetable->standard_name,
+                'division_id' => $timetable->division_id,
+                'division_name' => $timetable->division_name,
+                'period_id' => $timetable->period_id,
+                'period_name' => $timetable->period_name,
+                'subject_id' => $timetable->subject_id,
+                'subject_name' => $timetable->subject_name,
+                'batch_id' => $timetable->batch_id,
+                'type' => $timetable->type,
+                'attStatus' => $status,
+            ];
+        }
+        
+        $result['pending_attendance'] = $pendingAttendance;
+        $result['total_classes'] = count($pendingAttendance);
+        $result['completed_count'] = count(array_filter($pendingAttendance, function($item) {
+            return $item['attStatus'] === 'Completed';
+        }));
+        $result['pending_count'] = count(array_filter($pendingAttendance, function($item) {
+            return $item['attStatus'] === 'Pending';
+        }));
+        //echo "<pre>";print_r($result);exit;
+        return $result;
     }
 
 }
