@@ -109,14 +109,14 @@ class studentSearchController extends Controller
         $classTeacherStdArr = session()->get('classTeacherStdArr');
         if (isset($classTeacherStdArr)) {
             if (count($classTeacherStdArr) > 0) {
-                $extraRaw = "standard.id IN (".implode(",", $classTeacherStdArr).")";
+                $extraRaw .= " AND standard.id IN (".implode(",", $classTeacherStdArr).")";
             } 
         }
 
         $classTeacherDivArr = session()->get('classTeacherDivArr');
         if (isset($classTeacherStdArr)) {
             if (count($classTeacherDivArr) > 0) {
-                $extraRaw .= " and division.id IN (".implode(",", $classTeacherDivArr).")";
+                $extraRaw .= " AND division.id IN (".implode(",", $classTeacherDivArr).")";
             }
         }
 

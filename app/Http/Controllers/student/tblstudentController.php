@@ -502,17 +502,23 @@ class tblstudentController extends Controller
                 ])->first();
         } else {
 
-            $student_data = tblstudentModel::select('tblstudent.*', 'tblstudent_enrollment.*', 'tblstudent.id as id',
-                'tblstudent_enrollment.house_id', 'admission_enquiry.enquiry_no')
+            $student_data = tblstudentModel::select(
+                    'tblstudent.*',
+                    'tblstudent_enrollment.*',
+                    'tblstudent.id as id',
+                    'tblstudent_enrollment.house_id',
+                    'admission_enquiry.enquiry_no'
+                )
                 ->join('tblstudent_enrollment', 'tblstudent.id', '=', 'tblstudent_enrollment.student_id')
                 ->leftJoin('admission_enquiry', 'tblstudent.admission_id', '=', 'admission_enquiry.id')
-                ->where([
-                    'tblstudent_enrollment.sub_institute_id' => $sub_institute_id,
-                    'tblstudent_enrollment.syear' => $syear,
-                    'tblstudent_enrollment.standard_id' => $request->semId, // added semId for std wise by uma on 25-02-2025
-                    'tblstudent.status' => 1,
-                    'tblstudent.id' => $id,
-                ])->first();
+                ->where('tblstudent_enrollment.sub_institute_id', $sub_institute_id)
+                ->where('tblstudent_enrollment.syear', $syear)
+                ->where('tblstudent.status', 1)
+                ->where('tblstudent.id', $id)
+                ->when($type != "API", function ($query) use ($request) {
+                    $query->where('tblstudent_enrollment.standard_id', $request->semId);
+                })
+                ->first();
         }
         //echo "<pre>";print_r($student_data);exit;
 		// RAJESH	->whereRaw('tblstudent_enrollment.end_date is NULL')
