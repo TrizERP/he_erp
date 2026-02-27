@@ -17,10 +17,24 @@
                     <form action="{{ route('send_sms_staff.store') }}" method="post">
                         @csrf
                         <input type="hidden" name="group_id" value="{{ $data['group_id'] }}">
-                        <div class="row">                            
+                        <div class="row">
                             <div class="col-md-4 form-group">
+                                <label>SMS</label>
+                                <select name="smsText" id="smsText" class="form-control">
+                                    <option value="">-- Select SMS Remark --</option>
+                                    @if(isset($data['sms_remarks']))
+                                        @foreach($data['sms_remarks'] as $remark)
+                                            <option value="{{ $remark->title }}">{{ $remark->title }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 form-group">
                                 <label>SMS Text</label>
-                                <textarea required name="smsText" class="form-control"></textarea>
+                                <textarea required name="sms_content" id="smsContent" class="form-control" rows="4" placeholder="Enter SMS content..."></textarea>
                             </div>
                         </div>
                         <div class="table-responsive">                      
@@ -86,6 +100,12 @@
         var $tblChkBox = $("input:checkbox");
         $("#ckbCheckAll").on("click", function () {
             $($tblChkBox).prop('checked', $(this).prop('checked'));
+        });
+
+        // Auto-fill SMS text when dropdown selection changes
+        $('#smsText').on('change', function() {
+            var selectedText = $(this).val();
+            $('#smsContent').val(selectedText);
         });
     });
 </script>
