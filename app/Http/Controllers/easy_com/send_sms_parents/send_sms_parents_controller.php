@@ -4,6 +4,7 @@ namespace App\Http\Controllers\easy_com\send_sms_parents;
 
 use App\Http\Controllers\Controller;
 use App\Models\easy_com\manage_sms_api\manage_sms_api;
+use App\Models\sms\SmsRemarkMaster;
 use GenTux\Jwt\GetsJwtToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -55,11 +56,17 @@ class send_sms_parents_controller extends Controller
     public function create(Request $request)
     {
         $type = $request->input('type');
-        $student_data = SearchStudent($_REQUEST['grade'], $_REQUEST['standard'], $_REQUEST['division']);
-        $responce_arr['grade'] = $_REQUEST['grade'];
-        $responce_arr['standard'] = $_REQUEST['standard'];
-        $responce_arr['division'] = $_REQUEST['division'];
-        $responce_arr['number_type'] = $_REQUEST['number_type'];
+        
+        // Check if required parameters exist
+        if (!$request->has('grade') || !$request->has('standard') || !$request->has('division')) {
+            return redirect()->route('send_sms_parents.index')->with('error', 'Missing required parameters');
+        }
+        
+        $student_data = SearchStudent($request->input('grade'), $request->input('standard'), $request->input('division'));
+        $responce_arr['grade'] = $request->input('grade');
+        $responce_arr['standard'] = $request->input('standard');
+        $responce_arr['division'] = $request->input('division');
+        $responce_arr['number_type'] = $request->input('number_type');
 
         foreach ($student_data as $id => $arr) {
             $responce_arr['stu_data'][$id]['sr.no'] = $id + 1;
@@ -81,6 +88,12 @@ class send_sms_parents_controller extends Controller
         ];
         
         $responce_arr['number_types'] =$number_types;
+        
+        // Get SMS remarks from sms_remark_master table
+        $responce_arr['sms_remarks'] = SmsRemarkMaster::where('remark_status', 'Y')
+            ->orderBy('sort_order')
+            ->get();
+        
         return is_mobile($type, "easy_comm/send_sms_parents/add", $responce_arr, "view");
     }
 
@@ -92,13 +105,21 @@ class send_sms_parents_controller extends Controller
      */
     public function store(Request $request)
     {
+        // Validate required inputs
+        $request->validate([
+            'grade' => 'required',
+            'standard' => 'required',
+            'division' => 'required',
+            'smsText' => 'required'
+        ]);
+        
         $sub_institute_id = session()->get('sub_institute_id');
         $syear = session()->get('syear');
-        $text = $_REQUEST['smsText'];
+        $text = $request->input('smsText');
         $responce = [];
-        $student_data = SearchStudent($_REQUEST['grade'], $_REQUEST['standard'], $_REQUEST['division']);
+        $student_data = SearchStudent($request->input('grade'), $request->input('standard'), $request->input('division'));
 
-        foreach ($_REQUEST['sendsms'] as $number => $on) {
+        foreach ($request->input('sendsms') as $number => $on) {
             $responce = $this->sendSMS($number, $text, $sub_institute_id);
             if ($responce['error'] == 1) {
                 break;
