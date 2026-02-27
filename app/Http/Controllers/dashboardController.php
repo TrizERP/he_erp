@@ -2696,7 +2696,10 @@ class dashboardController extends Controller
                 $join->on('standard.id', '=', 'timetable.standard_id')
                     ->where('standard.marking_period_id', $marking_period_id);
             })
-            ->join('sub_std_map', 'sub_std_map.subject_id', '=', 'timetable.subject_id')
+            ->join('sub_std_map', function ($join) {
+                $join->on('sub_std_map.subject_id', '=', 'timetable.subject_id')
+                     ->on('sub_std_map.standard_id', '=', 'timetable.standard_id');
+            })
             ->join('division', 'division.id', '=', 'timetable.division_id')
             ->join('period', 'period.id', '=', 'timetable.period_id')
             ->where('timetable.teacher_id', $user_id)
@@ -2712,7 +2715,9 @@ class dashboardController extends Controller
         foreach ($timetableData as $timetable) {
             // Check if attendance is already marked for this timetable entry
             $attendanceMarked = DB::table('attendance_student')
-                ->where('timetable_id', $timetable->timetable_id)
+                //->where('timetable_id', $timetable->timetable_id)
+                ->where('period_id', $timetable->period_id)
+                ->where('attendance_for', $timetable->type)
                 ->where('attendance_date', $curDate)
                 ->where('teacher_id', $user_id)
                 ->exists();

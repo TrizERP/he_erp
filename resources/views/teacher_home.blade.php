@@ -369,11 +369,6 @@
                                                            class="btn btn-primary btn-sm">
                                                             <i class="fa fa-check"></i> Mark Attendance
                                                         </a>
-                                                    @else
-                                                        <a href="{{ route('students_attendance.index') }}" 
-                                                           class="btn btn-info btn-sm">
-                                                            <i class="fa fa-eye"></i> View
-                                                        </a>
                                                     @endif
                                                 </td>
                                             </tr>
