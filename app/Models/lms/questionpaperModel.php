@@ -23,6 +23,7 @@ class questionpaperModel extends Model
         'total_marks',
         'total_ques',
         'question_ids',
+        'tag_name',
         'shuffle_question',
         'attempt_allowed',
         'show_feedback',

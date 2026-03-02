@@ -211,9 +211,19 @@ class questionpaperController extends Controller
         $timelimit_enable_val = isset($timelimit_enable) ? $timelimit_enable : '';
 
         $question_ids = "";
-        if ($request['question_ids']) {
-            $question_ids = implode(",", $request['question_ids']);
+        // Check for questions from direct form submission or question_ids from search method
+        if (isset($request['questions']) && $request['questions']) {
+            $question_ids = implode(",", $request['questions']);
+        } elseif (isset($request['question_ids']) && $request['question_ids']) {
+            // Handle case when store is called from search method with question_ids array
+            if (is_array($request['question_ids'])) {
+                $question_ids = implode(",", $request['question_ids']);
+            } else {
+                $question_ids = $request['question_ids'];
+            }
         }
+        // echo "<pre>";print_r($request);exit;
+        $tag_name = $request['tag_name'] ?? '';
 
         $questionpaper = array(
             'grade_id'         => $request['grade'],
@@ -228,6 +238,7 @@ class questionpaperController extends Controller
             'total_ques'       => $request['total_ques'],
             'total_marks'      => $request['total_marks'],
             'question_ids'     => $question_ids,
+            'tag_name'         => $tag_name,
             'shuffle_question' => $shuffle_question_val,
             'attempt_allowed'  => $request['attempt_allowed'],
             'show_feedback'    => $show_feedback_val,
@@ -477,6 +488,8 @@ foreach ($questionData as $key => $val) {
         $timelimit_enable = $request->get('timelimit_enable');
         $timelimit_enable_val = $timelimit_enable ?? '';
 
+        $tag_name = $request->get('tag_name') ?? '';
+
         $question_ids = "";
         if ($request->has('questions')) {
             $question_ids = implode(",", $request->get('questions'));
@@ -493,6 +506,7 @@ foreach ($questionData as $key => $val) {
             'total_ques'       => $request->get('total_ques'),
             'total_marks'      => $request->get('total_marks'),
             'question_ids'     => $question_ids,
+            'tag_name'         => $tag_name,
             'shuffle_question' => $shuffle_question_val,
             'attempt_allowed'  => $request->get('attempt_allowed'),
             'show_feedback'    => $show_feedback_val,
@@ -544,6 +558,21 @@ foreach ($questionData as $key => $val) {
         //Get all questions subject wise
         $question_ids = explode(",", $data['questionpaper_data']['question_ids']);
         $data['question_arr'] = lmsQuestionMasterModel::whereIn("id", $question_ids)->get()->toArray();
+        
+        // Get tag_name (mandatory question IDs) from question paper
+        $tag_name = $data['questionpaper_data']['tag_name'] ?? '';
+        $mandatoryQuestionIds = [];
+        if (!empty($tag_name)) {
+            $mandatoryQuestionIds = array_map('trim', explode(',', $tag_name));
+        }
+        $data['mandatory_question_ids'] = $mandatoryQuestionIds;
+        
+        // Group questions by OR/AND logic based on tag_name
+        // Questions IN tag_name are mandatory (AND)
+        // Questions NOT in tag_name are OR-type (optional)
+        $groupedQuestions = $this->groupQuestionsByTagName($data['question_arr'], $mandatoryQuestionIds);
+        $data['grouped_questions'] = $groupedQuestions;
+        
         $answer = [];
         foreach ($data['question_arr'] as $key => $val) {
             $answer_arr = answermasterModel::where("question_id", $val['id'])->get()->toArray();
@@ -554,8 +583,102 @@ foreach ($questionData as $key => $val) {
             }
         }
         $data['answer_arr'] = $answer;
-
+        // return $data;
         return is_mobile($type, "lms/view_questionpaper", $data, "view");
+    }
+    
+    /**
+     * Group questions by tag_name field
+     * 
+     * Questions IN tag_name are mandatory (AND)
+     * Questions NOT in tag_name are OR-type (optional)
+     */
+    private function groupQuestionsByTagName($questions, $mandatoryQuestionIds)
+    {
+        $grouped = [
+            'and' => [],       // Mandatory questions (from tag_name)
+            'or' => []         // OR-type questions (not in tag_name)
+        ];
+        
+        foreach ($questions as $question) {
+            $questionId = (string) $question['id'];
+            
+            if (in_array($questionId, $mandatoryQuestionIds)) {
+                // This question is mandatory (AND type)
+                $grouped['and'][] = $question;
+            } else {
+                // This question is OR type (optional)
+                $grouped['or'][] = $question;
+            }
+        }
+        
+        return $grouped;
+    }
+    
+    /**
+     * Group questions by tags using OR and AND logic
+     * 
+     * If tags are consecutive (e.g., 1,2,3), use AND logic - display as "Question 1, Question 2, Question 3"
+     * If tags are non-consecutive (e.g., 1,3,5 or 1,4), use OR logic - display as "Question 1 OR Question 2 OR ..."
+     */
+    private function groupQuestionsByTags($questions, $questionTags)
+    {
+        $grouped = [];
+        $processedQuestionIds = [];
+        
+        // Collect all unique tag values across all questions
+        $allTags = [];
+        foreach ($questionTags as $qid => $tags) {
+            foreach ($tags as $tag) {
+                $allTags[$qid][] = $tag['mapping_value_id'];
+            }
+        }
+        
+        // Group questions by their tag sets
+        $tagGroups = [];
+        foreach ($questions as $question) {
+            $qid = $question['id'];
+            $tags = isset($allTags[$qid]) ? $allTags[$qid] : [];
+            
+            if (empty($tags)) {
+                // Questions without tags are treated as individual (AND logic)
+                $tagGroups['individual'][] = $question;
+            } else {
+                // Sort tags to check for consecutive values
+                sort($tags);
+                $tagKey = implode(',', $tags);
+                
+                // Check if tags are consecutive
+                $isConsecutive = $this->isConsecutive($tags);
+                
+                if ($isConsecutive) {
+                    // AND logic - consecutive tags
+                    $tagGroups['and'][$tagKey][] = $question;
+                } else {
+                    // OR logic - non-consecutive tags
+                    $tagGroups['or'][$tagKey][] = $question;
+                }
+            }
+        }
+        
+        return $tagGroups;
+    }
+    
+    /**
+     * Check if array of numbers are consecutive
+     */
+    private function isConsecutive($arr)
+    {
+        if (count($arr) <= 1) {
+            return true;
+        }
+        
+        for ($i = 1; $i < count($arr); $i++) {
+            if ($arr[$i] != $arr[$i-1] + 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -699,7 +822,7 @@ $validate = Validator::make($request->all(), [
     $standard = $request->standard;
     $search_chapter = $request->search_chapter;
 
-    // print_r($search_chapter);exit;
+    // echo "<pre>";print_r($request->all());exit;
     $search_topic = $request->input('search_topic');
     $search_mapping_type = $request->search_mapping_type;
     $search_mapping_value = $request->search_mapping_value;
@@ -721,6 +844,7 @@ $validate = Validator::make($request->all(), [
         $show_hide        = $request->get('show_hide');
         $result_show_ans  = $request->get('result_show_ans');
         $exam_type        = $request->get('exam_type');
+        $tag_name        = $request->get('tag_name');
 
 if(!isset($request->paper_name) && !isset($request->attempt_allowed) && !isset($request->time_allowed) || $request->action=="Search" ){
     if(!empty($grade) && !empty($standard) && !empty($subject) && !empty($search_chapter)){
@@ -752,6 +876,7 @@ if(isset($request->paper_name) && isset($request->attempt_allowed) && isset($req
             'subject'          => $subject,
             'paper_name'       => $paper_name,
             'paper_desc'       => $paper_desc,
+            'tag_name'         => $tag_name,
             'open_date'        => $open_date,
             'close_date'       => $close_date,
             'timelimit_enable' => $timelimit_enable,
