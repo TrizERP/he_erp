@@ -32,6 +32,7 @@ $loginpage_backgrond = session()->get('loginpage_backgrond');
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="{{asset('css/style2.css')}}">
     <title>Login | TRIZ</title>
 
@@ -108,12 +109,18 @@ $loginpage_backgrond = session()->get('loginpage_backgrond');
                                 <div class="form-group">
                                     <label for="email">Email Address</label>
                                     <input class="form-control" name="email" type="text" required=""
-                                        placeholder="Username">
+                                        placeholder="Username" value="{{ !empty($data['email']) ? $data['email'] : '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label for="password">Password</label>
-                                    <input class="form-control" name="password" type="password" required=""
-                                        placeholder="Password">
+                                    <div class="input-group">
+                                        <input class="form-control" name="password" type="password" required=""
+                                            placeholder="Password" value="{{ !empty($data['password']) ? $data['password'] : '' }}">
+                                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                                <i class="fa fa-eye" id="eyeIcon"></i>
+                                            </button>
+                                        
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="row">
@@ -170,6 +177,20 @@ $(document).ready(function() {
         }
     });
 
+});
+
+// Toggle password visibility
+$('#togglePassword').click(function() {
+    var passwordField = $('input[name="password"]');
+    var eyeIcon = $('#eyeIcon');
+    
+    if (passwordField.attr('type') === 'password') {
+        passwordField.attr('type', 'text');
+        eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+    } else {
+        passwordField.attr('type', 'password');
+        eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+    }
 });
 </script>
 

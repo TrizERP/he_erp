@@ -77,11 +77,27 @@ tbody tr th th {
                         <table class="table table-striped table-bordered" style="width:100%">
                             @php $i = 1; @endphp
                             @foreach($data['question_arr'] as $quesid => $quesarr)
+
+                            @php 
+                                $orText = '';
+                                $orSrNo = explode(",",$data['questionpaper_data']['tag_name']) ?? [];
+                                // Check if the NEXT question is in the OR list (meaning this question is first in an OR pair)
+                                // Since $i is incremented after display, we use $i+1 to check the next question
+                                if(in_array($i+1, $orSrNo)){
+                                    $orText = '<span style="background:#1a237e;color:#ffffff;padding:2px 6px;border-radius:3px;font-size:11px;margin:10px 0;display:inline-block;">OR</span>';
+                                }
+                            @endphp
                             <tr>
-                                <td style="text-align:left;background: #303030;color: #ffffff;">{{$i++}}) &nbsp;&nbsp; {!!$quesarr['question_title']!!}
+                                <td style="text-align:left;background: #303030ff;color: #ffffff;">
+                                {{$i++}}) &nbsp;&nbsp; {!!$quesarr['question_title']!!}
                                 <span style="float:right;">({{$quesarr['points']}})</span>
                                 </td>
                             </tr>
+                            @if($orText != '')
+                            <tr>
+                                <td style="text-align:center;padding:5px;">{!!$orText!!}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <td>
                                 <table class="table table-striped table-bordered" style="width:100%">

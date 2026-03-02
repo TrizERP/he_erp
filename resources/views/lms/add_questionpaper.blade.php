@@ -1,6 +1,8 @@
 {{--@include('includes.lmsheadcss')--}}
 @extends('lmslayout')
 @section('container')
+<link href="../../../plugins/bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.css" rel="stylesheet">
+
 <link href="/plugins/bower_components/clockpicker/dist/jquery-clockpicker.min.css" rel="stylesheet">
 <style>
 .tooltip-inner {
@@ -311,6 +313,24 @@ br{
                             <label for='total_marks'>Total Marks</label>
                             <input type="text" id='total_marks' name="total_marks" value="@if(isset($data['questionpaper_data']['total_marks'])){{$data['questionpaper_data']['total_marks']}}@endif" class="form-control mb-0" readonly>
                         </div>
+
+                        <div class="col-md-4 form-group">
+                            <label for='tag_name'>Tags</label>
+                            <input type="text" id='tag_name' name="tag_name" value="@if(isset($data['questionpaper_data']['tag_name'])){{$data['questionpaper_data']['tag_name']}}@endif" class="form-control mb-0" placeholder="Enter tags separated by comma" data-role="tagsinput">
+                            <!-- Hidden input to ensure tag_name is always submitted -->
+                            <input type="hidden" name="tag_name_hidden" id="tag_name_hidden" value="@if(isset($data['questionpaper_data']['tag_name'])){{$data['questionpaper_data']['tag_name']}}@endif">
+                        </div>
+
+                    
+
+                        <!-- <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="meta_tags">Tags</label>
+                                <div class="tags-default">
+                                    <input type="text" name="meta_tags" value="@if( isset($data['content_data']['meta_tags']) ) {{$data['content_data']['meta_tags']}} @endif" data-role="tagsinput" placeholder="add tags"  />
+                                </div>
+                            </div>
+                        </div> -->
                         @if(isset($data['questionData']) && count($data['questionData']) > 0)
 
                         <div class="col-md-12 form-group border border-dark" >
@@ -417,6 +437,7 @@ br{
 <!--END Modal -->
 
 @include('includes.lmsfooterJs')
+<script src="{{asset('/plugins/bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js')}}"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment-with-locales.js"></script>
 <script src="//cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/src/js/bootstrap-datetimepicker.js"></script>
 
@@ -436,6 +457,22 @@ $(function () {
         //format: 'DD/MM/YYYY hh:SS A'
     });
 
+    // Initialize tagsinput and sync values for tag_name field
+    $('#tag_name').tagsinput({
+        trimValue: true,
+        confirmKeys: [13, 44, 32], // Enter, Comma, Space
+        maxChars: 50
+    });
+
+    // Update hidden input when tags change
+    $('#tag_name').on('itemAdded itemRemoved', function(event) {
+        var tags = $(this).val();
+        $('#tag_name_hidden').val(tags);
+    });
+
+    // Initial sync of tags to hidden input
+    var initialTags = $('#tag_name').val();
+    $('#tag_name_hidden').val(initialTags);
 });
 
 function getStandardwiseDivision(std_id){
@@ -582,6 +619,10 @@ function add_question(points) {
 
 function check_validation()
 {
+    // Sync tag_name value to hidden input before validation
+    var tags = $('#tag_name').val();
+    $('#tag_name_hidden').val(tags);
+    
     var checked_questions = err = 0;
 
    if($('#paper_name').val() == ''){

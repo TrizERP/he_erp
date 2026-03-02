@@ -40,11 +40,13 @@ class loginController extends Controller
                 $res['status_code'] = 0;
                 $res['message'] = "Parameter Missing";
             }
+            // Pass back email if provided, clear password if invalid
+            $res['email'] = $request->input('email', '');
+            $res['password'] = ''; // Clear password on validation failure
             $data = is_mobile($type, "login", $res, "view");
 
             return $data;
         }
-
 
         $email = $request->input("email");
         $password = $request->input("password");
@@ -58,6 +60,9 @@ class loginController extends Controller
             if ($validator->fails()) {
                 $res['status_code'] = 0;
                 $res['message'] = "Invalid Captcha";
+                // Keep both email and password when captcha is invalid
+                $res['email'] = $email;
+                $res['password'] = $password;
 
                 return is_mobile($type, "login", $res, "view");
             }
@@ -192,12 +197,18 @@ class loginController extends Controller
         if (count($data) == 0) {
             $res['status_code'] = 0;
             $res['message'] = "Invalid User Id And Password";
+            // Keep email, clear password when credentials are invalid
+            $res['email'] = $email;
+            $res['password'] = '';
 
             return is_mobile($type, "login", $res, "view");
         } else {
             if ($rightsMenusIds == 0) { //Check user Rights
                 $res['status_code'] = 0;
                 $res['message'] = "Please Contact Administrator For ERP Rights";
+                // Keep email, clear password when user has no rights
+                $res['email'] = $email;
+                $res['password'] = '';
 
                     return is_mobile($type, "login", $res, "view");
                 } else {
