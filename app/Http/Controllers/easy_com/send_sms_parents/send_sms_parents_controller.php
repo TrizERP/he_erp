@@ -4,7 +4,7 @@ namespace App\Http\Controllers\easy_com\send_sms_parents;
 
 use App\Http\Controllers\Controller;
 use App\Models\easy_com\manage_sms_api\manage_sms_api;
-use App\Models\sms\SmsRemarkMaster;
+use App\Models\easy_com\SmsTemplateMaster;
 use GenTux\Jwt\GetsJwtToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -90,7 +90,8 @@ class send_sms_parents_controller extends Controller
         $responce_arr['number_types'] =$number_types;
         
         // Get SMS remarks from sms_remark_master table
-        $responce_arr['sms_remarks'] = SmsRemarkMaster::where('remark_status', 'Y')
+        $responce_arr['sms_template'] = SmsTemplateMaster::where('sub_institute_id', session()->get('sub_institute_id'))
+            ->where('status', 'Y')
             ->orderBy('sort_order')
             ->get();
         

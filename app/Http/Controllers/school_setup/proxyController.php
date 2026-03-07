@@ -174,12 +174,12 @@ class proxyController extends Controller
             'p.title as period_name',
             'timetable.id as timetable_id'
         )
-            ->join('standard AS s', function ($join)  use ($marking_period_id) {
-                $join->on('s.id', '=', 'timetable.standard_id');
-                $join->on('s.sub_institute_id', '=', 'timetable.sub_institute_id');
-                // $join->when($marking_period_id,function($query) use($marking_period_id){
-                //     $query->where('s.marking_period_id',$marking_period_id);
-                // });
+            ->join('standard AS s', function ($join) use ($marking_period_id) {
+                $join->on('s.id', '=', 'timetable.standard_id')
+                    ->on('s.sub_institute_id', '=', 'timetable.sub_institute_id')
+                    ->when($marking_period_id, function ($query) use ($marking_period_id) {
+                        $query->where('s.marking_period_id', $marking_period_id);
+                    });
             })
             ->join('division AS d', function ($join) {
                 $join->on('d.id', '=', 'timetable.division_id');
@@ -241,14 +241,19 @@ class proxyController extends Controller
                     ->where('t.status', '=', 1)
                     // Exclude employees who already have proxy assignments in the selected date range
                     
-                    ->where(function ($q) use ($tval, $syear, $sub_institute_id) {
-                        $q->whereNotIn('ti.teacher_id', function ($sub) use ($tval, $syear, $sub_institute_id) {
+                    ->where(function ($q) use ($tval, $syear, $sub_institute_id,$marking_period_id) {
+                        $q->whereNotIn('ti.teacher_id', function ($sub) use ($tval, $syear, $sub_institute_id,$marking_period_id) {
                             $sub->select('tt.teacher_id')
                                 ->from('timetable as tt')
-                                ->where('tt.syear', '=', $syear)
-                                ->where('tt.sub_institute_id', '=', $sub_institute_id)
-                                ->where('tt.period_id', '=', $tval["period_id"])
-                                ->where('tt.week_day', '=', $tval["week_day"]);
+                                ->join('standard as s', function ($join) {
+                                    $join->on('s.id', '=', 'tt.standard_id')
+                                         ->on('s.sub_institute_id', '=', 'tt.sub_institute_id');
+                                })
+                                ->where('tt.syear', $syear)
+                                ->where('tt.sub_institute_id', $sub_institute_id)
+                                ->where('tt.period_id', $tval["period_id"])
+                                ->where('tt.week_day', $tval["week_day"])
+                                ->where('s.marking_period_id', $marking_period_id);
                         })
                         ->orWhereNull('ti.week_day');
                     })

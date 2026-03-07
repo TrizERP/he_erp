@@ -19,12 +19,12 @@
                         <input type="hidden" name="group_id" value="{{ $data['group_id'] }}">
                         <div class="row">
                             <div class="col-md-4 form-group">
-                                <label>SMS</label>
+                                <label>SMS Template</label>
                                 <select name="smsText" id="smsText" class="form-control">
-                                    <option value="">-- Select SMS Remark --</option>
-                                    @if(isset($data['sms_remarks']))
-                                        @foreach($data['sms_remarks'] as $remark)
-                                            <option value="{{ $remark->title }}">{{ $remark->title }}</option>
+                                    <option value="">--Select SMS Template--</option>
+                                    @if(isset($data['sms_template']))
+                                        @foreach($data['sms_template'] as $template)
+                                            <option value="{{ $template->template_content }}">{{ $template->template_name }}</option>
                                         @endforeach
                                     @endif
                                 </select>
