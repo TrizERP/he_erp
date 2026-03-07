@@ -315,8 +315,8 @@ br{
                         </div>
 
                         <div class="col-md-4 form-group">
-                            <label for='tag_name'>Tags</label>
-                            <input type="text" id='tag_name' name="tag_name" value="@if(isset($data['questionpaper_data']['tag_name'])){{$data['questionpaper_data']['tag_name']}}@endif" class="form-control mb-0" placeholder="Enter tags separated by comma" data-role="tagsinput">
+                            <label for='tag_name'>Question No:</label>
+                            <input type="text" id='tag_name' name="tag_name" value="@if(isset($data['questionpaper_data']['tag_name'])){{$data['questionpaper_data']['tag_name']}}@endif" class="form-control mb-0" placeholder="Enter Question No separated by comma" data-role="tagsinput">
                             <!-- Hidden input to ensure tag_name is always submitted -->
                             <input type="hidden" name="tag_name_hidden" id="tag_name_hidden" value="@if(isset($data['questionpaper_data']['tag_name'])){{$data['questionpaper_data']['tag_name']}}@endif">
                         </div>
