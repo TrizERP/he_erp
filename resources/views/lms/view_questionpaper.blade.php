@@ -1,7 +1,3 @@
-{{--@include('includes.headcss')
-@include('includes.header')
-@include('includes.sideNavigation')--}}
-
 @extends('layout')
 @section('container')
 <style>
@@ -37,7 +33,6 @@ tbody tr th th {
         border: solid #000 !important;
         border-width: 0 1px 1px 0 !important;
     }
-
  }
  br{
     display:  block !important;
@@ -77,31 +72,18 @@ tbody tr th th {
                         <table class="table table-striped table-bordered" style="width:100%">
                             @php $i = 1; @endphp
                             @foreach($data['question_arr'] as $quesid => $quesarr)
-
-                            @php 
-                                $orText = '';
-                                $orSrNo = explode(",",$data['questionpaper_data']['tag_name']) ?? [];
-                                // Check if the CURRENT question is in the OR list (meaning this question is second in an OR pair)
-                                // If so, we display the OR label before this question
-                                if(in_array($i, $orSrNo)){
-                                    $orText = '<span style="background:#1a237e;color:#ffffff;padding:5px 12px;border-radius:3px;font-size:14px;margin:10px 0;display:inline-block;">OR</span>';
-                                }
-                            @endphp
-                            @if($orText != '')
                             <tr>
-                                <td style="text-align:center;padding:5px;">{!!$orText!!}</td>
-                            </tr>
-                            @endif
-                            <tr>
-                                <td style="text-align:left;background: #303030ff;color: #ffffff;">
-                                {{$i++}}) &nbsp;&nbsp; {!!$quesarr['question_title']!!}
-                                <span style="float:right;">({{$quesarr['points']}})</span>
+                                <td style="text-align:left;background: #303030;color: #ffffff;">{{$i++}}) &nbsp;&nbsp; {!! html_entity_decode($quesarr['question_title'], ENT_QUOTES | ENT_HTML5, 'UTF-8') !!}
+                                <span style="float:right;">({{$quesarr['points']}}) 
+                                    <span style="padding:0px 10px" onclick="mapValueModel({{$quesarr['id']}});"><i class="fa fa-ellipsis-v" aria-hidden="true"></i></span> 
+                                </span> 
+                               
                                 </td>
                             </tr>
                             <tr>
                                 <td>
                                 <table class="table table-striped table-bordered" style="width:100%">
-                                    @if(isset($data['answer_arr'][$quesarr['id']]))
+                                    @if(isset($data['answer_arr'][$quesarr['id']]) && count($data['answer_arr'][$quesarr['id']]) > 0)
                                         @foreach($data['answer_arr'][$quesarr['id']] as $ansid => $ansarr)
                                             <tr>
                                                 @php
@@ -113,10 +95,15 @@ tbody tr th th {
                                                     $btnclass = "dot";
                                                 }
                                                 @endphp
-                                                <td style="text-align:left;"><div class="{{$btnclass}}"></div>
-                                                {{$ansarr['answer']}}</td>
+                                                <td style="text-align:left;">
+                                                    <div class="{{$btnclass}}"></div>
+                                                    {{$ansarr['answer']}}
+                                                </td>
                                             </tr>
                                         @endforeach
+                                    @else
+                                        <!-- For narrative questions, show a message or leave blank -->
+                                       
                                     @endif
                                 </table>
                                 </td>
@@ -133,6 +120,37 @@ tbody tr th th {
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document" style="max-width:1000px !important">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Question Mapped Values</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+            <h4>Question - <span id="questionValue"></span></h4>
+            <table class="table" style="filter:none !important">
+                <thead>
+                    <tr>
+                        <th>Sr No.</th>
+                        <th>Mapped Types</th>
+                        <th class="text-left">Mapped Values</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @include('includes.footerJs')
 <script src="//cdn.mathjax.org/mathjax/latest/MathJax.js">
  MathJax.Hub.Config({
@@ -141,17 +159,50 @@ tbody tr th th {
  });
 </script>
 
-
 <script type="text/javascript">
 function printData()
 {
    var divToPrint=document.getElementById("questionpaper");
-   // divToPrint.addClass('dot');
-   // divToPrint.addClass('square');
    newWin= window.open("");
    newWin.document.write(divToPrint.outerHTML);
    newWin.print();
    newWin.close();
+}
+
+function mapValueModel(questionId){
+    $('#tableBody').empty(); 
+    $('#questionValue').empty();
+
+    $.ajax({
+        url : "{{route('question_mapped_value')}}",
+        data : {question_id:questionId},
+        type: 'GET',
+        success : function(response){
+            console.log(response);
+            if (response.questionTitle) {
+                $('#questionValue').html(response.questionTitle);
+            } else {
+                $('#questionValue').text('No question title found');
+            }
+            
+            if (response.MappedData) {
+                $('#tableBody').empty(); 
+                $.each(response.MappedData, function(index, mappedItem) {
+                    let row = `<tr>
+                        <td>${index + 1}</td>
+                        <td>${mappedItem.name}</td>
+                        <td><ul>`;
+                        $.each(mappedItem.mappedValue, function(subIndex, mappedSubItem) {
+                            row += `<li>${subIndex+1}) ${mappedSubItem.name}</li>`;
+                        });
+                    row += `</ul></td>
+                    </tr>`;
+                    $('#tableBody').append(row);
+                });
+            }
+            $('#exampleModal').modal('show');
+        }
+    });
 }
 </script>
 @include('includes.footer')
