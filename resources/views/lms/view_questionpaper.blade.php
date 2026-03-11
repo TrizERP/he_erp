@@ -37,6 +37,17 @@ tbody tr th th {
  br{
     display:  block !important;
 }
+.or-separator {
+    text-align: center;
+    background: #1f0455ff;
+    color: #ffffff;
+    padding: 3px 10px;
+    font-weight: bold;
+    font-size: 11px;
+    margin: 5px 0;
+    display: inline-block;
+    width: 50px;
+}
 </style>
 <div id="page-wrapper">
     <div class="container-fluid">
@@ -70,10 +81,16 @@ tbody tr th th {
                     </tr>
                     <tr><td style="background:#ffffff;">
                         <table class="table table-striped table-bordered" style="width:100%">
-                            @php $i = 1; @endphp
+                            @php 
+                            $i = 1;
+                            $tagNames = isset($data['questionpaper_data']['tag_name']) ? explode(',',$data['questionpaper_data']['tag_name']) : [];
+                            $tagNames = array_map('intval', $tagNames);
+                            sort($tagNames);
+                            $totalQues = count($data['question_arr']);
+                            @endphp
                             @foreach($data['question_arr'] as $quesid => $quesarr)
                             <tr>
-                                <td style="text-align:left;background: #303030;color: #ffffff;">{{$i++}}) &nbsp;&nbsp; {!! html_entity_decode($quesarr['question_title'], ENT_QUOTES | ENT_HTML5, 'UTF-8') !!}
+                                <td style="text-align:left;background: #303030;color: #ffffff;">{{$i}}) &nbsp;&nbsp; {!! html_entity_decode($quesarr['question_title'], ENT_QUOTES | ENT_HTML5, 'UTF-8') !!}
                                 <span style="float:right;">({{$quesarr['points']}}) 
                                     <span style="padding:0px 10px" onclick="mapValueModel({{$quesarr['id']}});"><i class="fa fa-ellipsis-v" aria-hidden="true"></i></span> 
                                 </span> 
@@ -108,6 +125,18 @@ tbody tr th th {
                                 </table>
                                 </td>
                             </tr>
+                            @php 
+                            // Show OR after this question if:
+                            // 1. This question's number is NOT in tagNames
+                            // 2. There are more questions after this one
+                            $showOr = (!in_array($i, $tagNames) && $i < $totalQues);
+                            @endphp
+                            @if($showOr)
+                            <tr>
+                                <td style="text-align:center;"><span class="or-separator">OR</span></td>
+                            </tr>
+                            @endif
+                            @php $i++; @endphp
                             @endforeach
                         </table>
                     </td></tr>

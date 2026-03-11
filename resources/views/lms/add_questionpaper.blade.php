@@ -1,7 +1,8 @@
 {{--@include('includes.lmsheadcss')--}}
 @extends('lmslayout')
 @section('container')
-<link href="../../../plugins/bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.css" rel="stylesheet">
+<link href="../../plugins/bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.css" rel="stylesheet">
+
 
 <link href="/plugins/bower_components/clockpicker/dist/jquery-clockpicker.min.css" rel="stylesheet">
 <style>
@@ -579,13 +580,20 @@ br{
             // Get the correct answer from the hidden input in the same row
             var correctAnswer = $(this).closest('tr').find('.correct-answer-input').val();
             
-            // Check for MCQ/Objective questions that need answers
-            if (!correctAnswer || correctAnswer == '-' || correctAnswer == 'NULL' || correctAnswer == '' || correctAnswer == '-') {
-                alert("Answer for selected question is not mapped. Please map the answer first.");
-                $(this).prop('checked', false);
-                checked_questions--; // Decrement count since we uncheck
-                hasError = true;
-            }
+           // Validate only for objective questions
+var questionType = $(this).closest('tr').find('td:nth-child(6)').text().toLowerCase().trim();
+
+if(questionType == 'multiple' || questionType == 'mcq' || questionType == 'objective') {
+
+    if (!correctAnswer || correctAnswer == '-' || correctAnswer == 'NULL' || correctAnswer == '') {
+
+        alert("Answer for selected question is not mapped. Please map the answer first.");
+        $(this).prop('checked', false);
+        checked_questions--;
+        hasError = true;
+    }
+
+}
         });
 
         $("#total_ques").val(checked_questions);

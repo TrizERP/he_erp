@@ -242,6 +242,7 @@ class questionpaperController extends Controller
             'sub_institute_id' => $sub_institute_id,
             'syear'            => $syear,
             'exam_type'        => $request['exam_type'],
+            'tag_name'         => $request['tag_name'],
         );
         
         $query = questionpaperModel::insertGetId($questionpaper);
@@ -466,7 +467,7 @@ class questionpaperController extends Controller
             ->whereIn('qm.chapter_id', $chapters)
             ->where('qm.standard_id', $std_id)
             ->where('qm.subject_id', $sub_id)
-            ->whereRaw($sub_institute_id_by_lms)
+            ->whereRaw("qm.sub_institute_id = $sub_institute_id")
             ->where('qm.status', 1)
             ->groupBy('qm.id')
             ->orderBy('chapter_master.sort_order')
@@ -824,6 +825,7 @@ class questionpaperController extends Controller
                     'sub_institute_id' => $sub_institute_id,
                     'syear'            => $syear,
                     'type'             => $type,
+                    'tag_name'         => $request['tag_name'],
                 );
                 return $this->store($array);
             }
