@@ -89,6 +89,17 @@ tbody tr th th {
                             $totalQues = count($data['question_arr']);
                             @endphp
                             @foreach($data['question_arr'] as $quesid => $quesarr)
+                             @php 
+                            // Show OR after this question if:
+                            // 1. This question's number is NOT in tagNames
+                            // 2. There are more questions after this one
+                            $showOr = (!in_array($i, $tagNames) && in_array($i-1, $tagNames));
+                            @endphp
+                            @if($showOr)
+                            <tr>
+                                <td style="text-align:center;"><span class="or-separator">OR</span></td>
+                            </tr>
+                            @endif
                             <tr>
                                 <td style="text-align:left;background: #303030;color: #ffffff;">{{$i}}) &nbsp;&nbsp; {!! html_entity_decode($quesarr['question_title'], ENT_QUOTES | ENT_HTML5, 'UTF-8') !!}
                                 <span style="float:right;">({{$quesarr['points']}}) 
@@ -125,17 +136,7 @@ tbody tr th th {
                                 </table>
                                 </td>
                             </tr>
-                            @php 
-                            // Show OR after this question if:
-                            // 1. This question's number is NOT in tagNames
-                            // 2. There are more questions after this one
-                            $showOr = (!in_array($i, $tagNames) && $i < $totalQues);
-                            @endphp
-                            @if($showOr)
-                            <tr>
-                                <td style="text-align:center;"><span class="or-separator">OR</span></td>
-                            </tr>
-                            @endif
+                           
                             @php $i++; @endphp
                             @endforeach
                         </table>
