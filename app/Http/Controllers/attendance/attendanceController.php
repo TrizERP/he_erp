@@ -137,8 +137,9 @@ class attendanceController extends Controller
             $extraRaw .= " AND batch.id='" . $request->batch . "'";
         }
         //     $res['batch_id'] = $request->get('batch') ?? '-';    
+        
         //START Check for class teacher assigned standards
-
+        /* Hide By Rajesh 17-03-2026 for ONLY TIMETABLE ALLOCATED TEACHER TAKE ATTENDCANCE
         $classTeacherStdArr = session()->get('classTeacherStdArr');
         if (isset($classTeacherStdArr)) {
             if (count($classTeacherStdArr) > 0) {
@@ -154,6 +155,7 @@ class attendanceController extends Controller
                 $extraRaw .= " and division.id IN (" . implode(",", $classTeacherDivArr) . ")";
             }
         }
+        */
         //END Check for class teacher assigned standards
 
         $query = tblstudentModel::select(
