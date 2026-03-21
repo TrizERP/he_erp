@@ -375,7 +375,7 @@ class dashboardController extends Controller
                     ":syear" => $syear,
                     ":mode" => "cash",
                 );
-
+                /*
                 $fees_chart1_cash_data = DB::table('fees_collect as fc')
                     ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
                         $join->whereRaw("se.student_id = fc.student_id and se.syear = " . $syear);
@@ -389,7 +389,8 @@ class dashboardController extends Controller
                     ->where("fc.sub_institute_id", "=", $sub_institute_id)
                     ->where("fc.payment_mode", "=", "cash")
                     ->groupBy('se.standard_id')->get()->toArray();
-
+                */
+                $fees_chart1_cash_data = [];
                 $today = date("Y-m-d");
                 $parameters = array(
                     ":dt" => $today,
@@ -397,7 +398,7 @@ class dashboardController extends Controller
                     ":syear" => $syear,
                     ":mode" => "cheque",
                 );
-
+                /*
                 $fees_chart1_cheque_data = DB::table('fees_collect as fc')
                     ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
                         $join->whereRaw("se.student_id = fc.student_id and se.syear = " . $syear);
@@ -411,6 +412,8 @@ class dashboardController extends Controller
                     ->where("fc.sub_institute_id", "=", $sub_institute_id)
                     ->where("fc.payment_mode", "=", "cheque")
                     ->get()->toArray();
+                */
+                $fees_chart1_cheque_data = [];
 
                 $final_chart1_data = " [{
                     'id': '0.0',
@@ -1747,7 +1750,7 @@ class dashboardController extends Controller
                 ":syear" => $syear,
                 ":mode" => "cash",
             );
-
+            /*
             $fees_chart1_cash_data = DB::table('fees_collect as fc')
                 ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
                     $join->whereRaw("se.student_id = fc.student_id and se.syear = " . $syear);
@@ -1762,6 +1765,8 @@ class dashboardController extends Controller
                 ->whereRaw('DATE_FORMAT(fc.receiptdate, "%Y-%m-%d") = ' . $today . ' and fc.sub_institute_id = ' . $sub_institute_id)
                 ->where('payment_mode', 'cash')
                 ->groupBy('se.standard_id')->get()->toArray();
+            */
+            $fees_chart1_cash_data = [];
 
             $today = date("Y-m-d");
             $parameters = array(
@@ -1770,7 +1775,7 @@ class dashboardController extends Controller
                 ":syear" => $syear,
                 ":mode" => "cheque",
             );
-
+            /*
             $fees_chart1_cheque_data = DB::table('fees_collect as fc')
                 ->join('tblstudent_enrollment as se', function ($join) use ($syear) {
                     $join->whereRaw("se.student_id = fc.student_id and se.syear = " . $syear);
@@ -1785,6 +1790,8 @@ class dashboardController extends Controller
                 ->whereRaw('DATE_FORMAT(fc.receiptdate, "%Y-%m-%d") = ' . $today . ' and fc.sub_institute_id = ' . $sub_institute_id)
                 ->where('payment_mode', 'cheque')
                 ->get()->toArray();
+            */
+            $fees_chart1_cheque_data =[];
 
             $final_chart1_data = " [{
                 'id': '0.0',
