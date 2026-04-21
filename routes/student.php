@@ -166,7 +166,7 @@ Route::post('/studentTeacherListAPI', [studentAttendanceController::Class, 'stud
 Route::post('/studentHealthAPI', [studentHealthController::class, 'studentHealthAPI']);
 Route::post('/studentExamScheduleAPI', [exam_scheduleController::class, 'studentExamScheduleAPI']);
 Route::post('/studentDisciplineAPI', [diciplineController::class, 'studentDisciplineAPI']);
-Route::post('/schoolDetailAPI', [schooldetailController::class, 'schoolDetailAPI']);
+Route::get('/schoolDetailAPI', [schooldetailController::class, 'schoolDetailAPI']);
 Route::post('/studentPhotoVideoGalleryAPI', [photo_video_gallaryController::class, 'studentPhotoVideoGalleryAPI']);
 Route::post('/studentLeaveApplicationAPI', [leaveApplicationController::class, 'studentLeaveApplicationAPI']);
 Route::post('/studentHostelAllocationAPI', [tblhostelRoomAllocationController::class, 'studentHostelAllocationAPI']);

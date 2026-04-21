@@ -242,30 +242,6 @@ class classwisetimetableController extends Controller
         $syear = $request->input("syear");
         $marking_period_id = session()->get('term_id');
         if ($student_id != "" && $sub_institute_id != "" && $syear != "") {
-            /*$data = DB::select("SELECT * FROM (
-            SELECT CASE
-                    WHEN week_day = 'M' THEN 'Mon'
-                    WHEN week_day = 'T' THEN 'Tue'
-                    WHEN week_day = 'W' THEN 'Wed'
-                    WHEN week_day = 'H' THEN 'Thu'
-                    WHEN week_day = 'F' THEN 'Fri'
-                    WHEN week_day = 'S' THEN 'Sat'
-                END AS week_day,s.name as standard_name,sub.subject_name,
-            CONCAT_WS(' ',u.first_name,u.middle_name,u.last_name) as teacher_name,p.title as period_name,p.start_time,p.end_time,
-            ts.studentbatch,b.title as batch_name,t.batch_id,p.id as period_id
-            FROM timetable t
-            INNER JOIN tblstudent_enrollment se ON se.standard_id = t.standard_id AND se.section_id = t.division_id AND se.sub_institute_id = t.sub_institute_id AND se.syear = t.syear             
-            INNER JOIN tblstudent ts ON ts.id = se.student_id AND ts.sub_institute_id = se.sub_institute_id
-            INNER JOIN standard s ON s.id = t.standard_id AND s.sub_institute_id = t.sub_institute_id
-            INNER JOIN subject sub ON sub.id = t.subject_id AND sub.sub_institute_id = t.sub_institute_id
-            INNER JOIN tbluser u ON u.id = t.teacher_id AND u.sub_institute_id = t.sub_institute_id
-            LEFT JOIN period p ON p.id = t.period_id AND p.sub_institute_id = t.sub_institute_id
-            LEFT JOIN batch b ON b.id = t.batch_id AND b.sub_institute_id = t.sub_institute_id
-            WHERE se.student_id = '".$student_id."' AND t.sub_institute_id = '".$sub_institute_id."' AND t.syear = '".$syear."'
-            ) AS A WHERE batch_id IS NULL OR batch_id = studentbatch
-            ORDER BY week_day,period_id
-            ");*/
-
             $data = DB::table('timetable as t')
                 ->join('tblstudent_enrollment as se', function ($join) {
                     $join->whereRaw('se.standard_id = t.standard_id AND se.section_id = t.division_id AND se.sub_institute_id 
@@ -295,7 +271,7 @@ class classwisetimetableController extends Controller
                         WHEN week_day = 'S' THEN 'Sat' 
                         END AS week_day,s.name AS standard_name,GROUP_CONCAT(sub.subject_name) subject_name, 
                         GROUP_CONCAT(CONCAT_WS(' ',u.first_name,u.middle_name,u.last_name)) AS teacher_name,p.title AS period_name,
-                        p.start_time,p.end_time,ts.studentbatch,b.title AS batch_name,t.batch_id,p.id AS period_id
+                        p.start_time,p.end_time,ts.studentbatch,b.title AS batch_name,t.batch_id,p.id AS period_id,t.type
                 ")->where('se.student_id', $student_id)
                 ->where('t.sub_institute_id', $sub_institute_id)
                 ->where('t.syear', $syear)
