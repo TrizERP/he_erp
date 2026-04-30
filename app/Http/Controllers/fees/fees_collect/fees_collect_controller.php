@@ -743,7 +743,7 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
 
                 $insert_arr = [
                     'student_id' => $stu_arr[0],
-                    'standard_id' => $standard_ids[$month_id] ?? null,
+                    'standard_id' => $standard_ids[$month_id] ?? $_REQUEST['standard_id'],
                     'term_id' => $month_id,
                     'syear' => $syears[$month_id],
                     'sub_institute_id' => $sub_institute_id,
@@ -787,7 +787,7 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
                 $receipt_id = $receipt_id_arr[0];
                 $insert_arr = array(
                     'student_id' => $stu_arr[0],
-                    'standard_id' => $standard_ids[$month_id] ?? null,
+                    'standard_id' => $standard_ids[$month_id] ?? $_REQUEST['standard_id'],
                     'month_id' => $month_id,
                     'syear' => $syear,
                     'sub_institute_id' => $sub_institute_id,
