@@ -57,8 +57,10 @@ class tbluserController extends Controller
             'sub_institute_id' => $sub_institute_id,
             'status' => "1",
             'table_name' => "tbluser",
+            'user_type' => ""
         ])
-            ->get();
+        ->orderBy('sort_order', 'ASC')
+        ->get();
 
         $subject_data = subjectModel::where(['sub_institute_id' => $sub_institute_id])->get();
         $employees = tbluserModel::where('sub_institute_id', $sub_institute_id)->get();
@@ -248,8 +250,10 @@ class tbluserController extends Controller
             'sub_institute_id' => $sub_institute_id,
             'status' => "1",
             'table_name' => "tbluser",
+            'user_type' => ""
         ])
-            ->get();
+        ->orderBy('sort_order', 'ASC')
+        ->get();
 
         $fieldsData = tblfields_dataModel::get()->toArray();
         $i = 0;

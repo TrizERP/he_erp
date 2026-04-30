@@ -64,46 +64,43 @@
                                           <option @if(isset($data['status']) && $data['status']==0) selected @endif value="0">In-Active</option>
                                         </select>
                                     </div>
-                                <!-- end by uma -->
+                                <div class="col-md-12">
+                                <div class="dataDiv" style="padding:10px;max-height:350px;overflow-y:scroll;border:1px solid #ddd;">
+                                @php 
+                                    $i=0;
+                                 @endphp
+                                    @foreach($data['data'] as $header => $headerValue)
 
-                                <div class="col-md-12 form-group">
-                                    <div class="checkbox checkbox-info">
-                                        <input id="checkall" onclick="checkedAll();" name="checkall" type="checkbox">
-                                        <label for="checkall"> Check All </label>
-                                    </div>
-                                </div>
-                                @if(isset($data['data']))
-                                    @php
-                                        $checkedArray = array();
+                                    @if(isset($data['data'][$header]) && !empty($data['data'][$header]))
+                                          <div class="col-md-12 form-group py-8">
+                                             <div class="row mb-4"  style="border-bottom:1px solid black">
+                                                <div class="col-md-4"><h4><b>{{$header}}</b></h5></div>
+                                                <div class="col-md-2">Check All <input type="checkbox" onclick="checkAll('chkClass{{$i}}')" class="chkClass{{$i}}"></div>
+                                             </div>
+                                             <div class="row"  style="width:80%">
+                                             @foreach($data['data'][$header] as $key => $value)
+                                             @php $val = $value->field_name.'/'.$value->id;
+                                                $joinVal = str_replace(' ','',$value->field_label);
+                                                $lowerCase = strtolower($joinVal);
+                                                // norm clature
+                                                $checkNorm = DB::table('app_language')->where('sub_institute_id',session()->get('sub_institute_id'))->where('string',$joinVal)->first(); 
+
+                                                   if(!empty($checkNorm)){
+                                                      $value->field_label = $checkNorm->value;
+                                                   }
+                                             @endphp
+                                             <div class="col-md-2 pb-2"><input type="checkbox" name="dynamicFields[]" class="chkClass{{$i}}" value="{{$val}}" @if(isset($data['dynamicFields']) && in_array($val,$data['dynamicFields'])) checked @endif> {{$value->field_label}}</div>
+                                             @endforeach
+                                             </div>
+                                          </div>
+                                    @endif
+                                    @php 
+                                          $i++;
                                     @endphp
-                                    @foreach($data['data'] as $key => $value)
-                                        <div class="form-group col-md-2 ml-0 mr-0">
-                                            <div class="custom-control custom-checkbox d-flex align-items-center">
-                                                @php
-                                                    $checked = '';
-                                                    if(in_array($key,$checkedArray)){
-                                                        $checked = 'checked="checked"';
-                                                    }
-                                                    if(isset($data['headers'])){
-                                                        if(count($data['headers']) > 0){
-                                                            $headersChecked = array_keys($data['headers']);
-                                                        }
-                                                        $checked = '';
-                                                        if(in_array($key,$headersChecked)){
-                                                            $checked = 'checked="checked"';
-                                                        }
-                                                    }
-                                                @endphp
-                                                <input id="{{$key}}" {{$checked}} value="{{$key}}"
-                                                       class="custom-control-input" name="dynamicFields[]"
-                                                       type="checkbox">
-                                                <label class="custom-control-label mb-0 pt-1"
-                                                       for="{{$key}}"> {{$value}} </label>
-                                            </div>
-                                        </div>
                                     @endforeach
-                                @endif
-                                <div class="col-md-12 form-group">
+                                </div>
+                                </div>
+                                <div class="col-md-12 pt-2 form-group">
                                     <input type="submit" name="submit" value="Search" class="btn btn-success">
                                 </div>
                             </div>
@@ -116,12 +113,21 @@
                                 $user_data = $data['user_data'];
                             }
                         @endphp
-                        <div class="card">
-                        <div class="table-responsive">
+                        <div class="card table-responsive">
                             <table id="example" class="table table-striped">
                                 <thead>
                                 <tr>
                                     @foreach($data['headers'] as $hkey => $header)
+                                        @php 
+                                        $joinVal = str_replace(' ','',$header);
+                                        $lowerCase = strtolower($joinVal);
+                                        // norm clature
+                                        $checkNorm = DB::table('app_language')->where('sub_institute_id',session()->get('sub_institute_id'))->where('string',$joinVal)->first(); 
+
+                                            if(!empty($checkNorm)){
+                                                $header = $checkNorm->value;
+                                            }
+                                        @endphp
                                         <th class="text-left"> {{$header}} </th>
                                     @endforeach
                                 </tr>
@@ -132,8 +138,10 @@
                                         @foreach($data['headers'] as $hkey => $header)
                                             @if($hkey == "birthdate")
                                                 <td> {{date('d-m-Y',strtotime($value->$hkey))}}</td>
+                                            @elseif($hkey == "teaching_type")
+                                                <td> {{ $value->$hkey == 1 ? 'Teaching' : ($value->$hkey == 2 ? 'Non Teaching' : $value->$hkey) }} </td>
                                             @else
-                                                <td> {{$value->$hkey}} </td>
+                                                <td> {{ is_array($value->$hkey) ? implode(', ', $value->$hkey) : $value->$hkey }} </td>
                                             @endif
                                         @endforeach
                                     </tr>
@@ -141,24 +149,28 @@
                                 </tbody>
                             </table>
                         </div>
-                        </div>
         </div>
         @endif
     </div>
 
     @include('includes.footerJs')
     <script>
-        var checked = false;
+        // var checked = false;
 
-        function checkedAll() {
-            if (checked == false) {
-                checked = true
-            } else {
-                checked = false
-            }
-            for (var i = 0; i < document.getElementsByName('dynamicFields[]').length; i++) {
-                document.getElementsByName('dynamicFields[]')[i].checked = checked;
-            }
+        // function checkedAll() {
+        //     if (checked == false) {
+        //         checked = true
+        //     } else {
+        //         checked = false
+        //     }
+        //     for (var i = 0; i < document.getElementsByName('dynamicFields[]').length; i++) {
+        //         document.getElementsByName('dynamicFields[]')[i].checked = checked;
+        //     }
+        // }
+        function checkAll(chkName){
+            $('.'+chkName).each(function() {
+                    $(this).prop('checked', !$(this).prop('checked'));
+                });
         }
     </script>
     <script>

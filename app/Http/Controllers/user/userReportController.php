@@ -41,108 +41,29 @@ class userReportController extends Controller
 
     public function customFields(Request $request)
     {
-
-        $tblcustom_fields['first_name'] = 'First Name';
-        $tblcustom_fields['middle_name'] = 'Middle Name';
-        $tblcustom_fields['last_name'] = 'Last Name';
-        $tblcustom_fields['mobile'] = 'Mobile';
-        // $tblcustom_fields['father_name'] = 'Father Name';
-        $tblcustom_fields['gender'] = 'Gender';
-        $tblcustom_fields['birthdate'] = 'Birthdate';
-        $tblcustom_fields['email'] = 'Email';
-        // $tblcustom_fields['username'] = 'Username';
-        $tblcustom_fields['city'] = 'City';
-        $tblcustom_fields['state'] = 'State';
-        $tblcustom_fields['address'] = 'Address';
-        $tblcustom_fields['pincode'] = 'Pincode';
-        $tblcustom_fields['designation'] = 'Designation';
-
+        $sub_institute_id = session()->get('sub_institute_id');
         $tblcustoms = DB::table("tblcustom_fields")
-            ->where(["sub_institute_id" => session()->get('sub_institute_id'), "table_name" => "tbluser"])
-            ->pluck("field_label", "field_name");
-
-        $customfieldArray = [];
+        ->whereRaw("status=1 AND (common_to_all= 1 or sub_institute_id=$sub_institute_id) AND is_deleted != 'Y'")
+        ->where('user_type','staff')
+        ->orderByRaw('tab_sort_order,sort_order')
+        ->get()->toArray();    
+        
+        $headerType =[];
         foreach ($tblcustoms as $key => $value) {
-            $customfieldArray[$key] = $value;
+            $headerType[$value->column_header][]=$value;
         }
+        return $headerType;
 
-        return array_merge($tblcustom_fields, $customfieldArray);
-
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return void
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  Request  $request
-     * @return void
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return void
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return void
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  Request  $request
-     * @param  int  $id
-     * @return void
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return void
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     public function searchUser(Request $request)
     {
+        //echo "<pre>";print_r($request->all()); exit;
         $profile = $request->input("profile");
-        $type = $request->input('type');
+        $emp_id = $request->input("emp_id");
         $status = $request->input("status");
         $department_id = $request->input("department_id");
-        $emp_id = $request->input("emp_id");
+        $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $syear = $request->session()->get('syear');
 
@@ -151,7 +72,7 @@ class userReportController extends Controller
             ->orderBy('sort_order', 'asc')
             ->pluck("name", "id");
 
-        $header = [];
+        $header = $array = $tables = [];
         $searchArr = ['_'];
         $replaceArr = [' '];
         if ($request->input('dynamicFields') == '') {
@@ -160,9 +81,29 @@ class userReportController extends Controller
 
             return is_mobile($type, "user_report.index", $res);
         }
-        foreach ($request->input('dynamicFields') as $key => $value) {
+        foreach ($request->input('dynamicFields') as $key => $fieldValue) {
+            $seprateVal = explode('/',$fieldValue);
+            $value = $seprateVal[0];
+            $fieldId = $seprateVal[1];
             $value1 = str_replace($searchArr, $replaceArr, $value);
-            $header[$value] = ucfirst($value1);
+            if($value=="user_name"){
+                $array[] = 'CONCAT_WS(" ", tbluser.last_name, tbluser.first_name, tbluser.middle_name) AS user_name';
+                $header[$value] = ucfirst($value1);
+            }else{
+                $customDetails = DB::table("tblcustom_fields")
+                ->whereRaw("status=1 AND (common_to_all= 1 or sub_institute_id=$sub_institute_id) AND is_deleted != 'Y'")
+                ->where('id',$fieldId)
+                ->where('user_type','staff')
+                ->first();
+                if(!empty($customDetails) && !in_array($value,["user_name"])){
+                    $array[] = $customDetails->table_name.".".$value." as ".str_ireplace(" ","_",$customDetails->field_label);
+                    $makeKey = strtolower(str_replace(" ","_",$customDetails->field_label));
+                    $header[$makeKey] = ucfirst(str_replace(['_'], [' '], str_replace($searchArr, $replaceArr, $customDetails->field_label)));
+                    $tables[] = $customDetails->table_name;
+                }else{
+                    $header[$value] = ucfirst($value1);
+                }
+            }
         }
         $extraSearchArray = [];
         $extraSearchArray['tbluser.sub_institute_id'] = $sub_institute_id;
@@ -176,16 +117,31 @@ class userReportController extends Controller
         if(isset($emp_id) && $emp_id!=0){
             $extraSearchArray['tbluser.id'] = $emp_id;
         }
-        $user_data = tbluserModel::selectRaw('tbluser.*,tbluserprofilemaster.name as designation')
+
+        $user_data = tbluserModel::select(DB::raw(strtolower(implode(',', $array))))
             ->join('tbluserprofilemaster', 'tbluser.user_profile_id', '=', 'tbluserprofilemaster.id')
-            ->leftJoin('hrms_departments',function($q) use($sub_institute_id){
-                $q->on('tbluser.department_id',"=","hrms_departments.id")->where('hrms_departments.sub_institute_id',$sub_institute_id);
+            ->when(in_array('hrms_departments', $tables), function($q) {
+                $q->leftJoin('hrms_departments','hrms_departments.id','=','tbluser.department_id');
             })
+            ->when(in_array('blood_group', $tables), function($q) {
+                $q->leftJoin('blood_group','blood_group.id','=','tbluser.bloodgroup');
+            })
+            ->when(in_array('cast', $tables), function($q) {
+                $q->leftJoin('cast', function($join) {
+                    $join->on('cast.id', '=', 'tbluser.category')
+                        ->on('cast.sub_institute_id', '=', 'tbluser.sub_institute_id');
+                });
+            })
+            ->when(in_array('tbluser_experience_details', $tables), function($q) {
+                $q->leftJoin('tbluser_experience_details','tbluser_experience_details.user_id','=','tbluser.id');
+            })
+            //->leftJoin('tbluser_past_educations','tbluser_past_educations.user_id','=','tbluser.id')
             ->where($extraSearchArray)
             ->get();
-
+            // echo "<pre>";print_r($header);exit;
+        
         $res['status_code'] = 1;
-        $res['message'] = "Student List";
+        $res['message'] = "User List";
         $res['user_data'] = $user_data;
         $res['data'] = $this->customFields($request);
         $res['headers'] = $header;
@@ -194,7 +150,11 @@ class userReportController extends Controller
         $res['status'] = $status;
         $res['department_id'] = $request->department_id;
         $res['selected_emp'] = $request->emp_id;
-        
+        $res['profileIds'] = $request->input('profile');
+        $res['employeeIds'] = $request->input('emp_id');
+        $res['dynamicFields']= $request->input('dynamicFields');
+        // echo "<pre>";
+        // print_r($res);exit;
         return is_mobile($type, "user/show_user_report", $res, "view");
 
     }
