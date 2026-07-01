@@ -106,13 +106,19 @@ class tblstudentController extends Controller
         }, $maxEnrollment);
 
         $new_enrollment_no = $maxEnrollment['0']['new_enrollment_no'];
-        $admission_year = DB::table(DB::raw("(SELECT ".$syear." AS year
+        /*$admission_year = DB::table(DB::raw("(SELECT ".$syear." AS year
             UNION ALL SELECT ".$syear - 1 ."
             UNION ALL SELECT ".$syear - 2 ."
             UNION ALL SELECT ".$syear - 3 ."
             UNION ALL SELECT ".$syear - 4 ."
             ) AS subquery"))
             ->select('year')
+            ->get();*/
+        $admission_year = DB::table('academic_year as a')
+            ->select('a.syear as year')
+            ->where('a.sub_institute_id', $sub_institute_id)
+            ->groupBy('a.syear')
+            ->orderByDesc('a.syear')
             ->get();
 
         $res['status_code'] = 1;
@@ -809,14 +815,20 @@ die; */
         if (count($getAnacdotals) > 0) {
 			$res['get_anacdotals'] = $getAnacdotals;
         }
-        $admission_year = DB::table(DB::raw("(SELECT ".$syear." AS year
+        /*$admission_year = DB::table(DB::raw("(SELECT ".$syear." AS year
         UNION ALL SELECT ".$syear - 1 ."
         UNION ALL SELECT ".$syear - 2 ."
         UNION ALL SELECT ".$syear - 3 ."
         UNION ALL SELECT ".$syear - 4 ."
         ) AS subquery"))
         ->select('year')
-        ->get();
+        ->get();*/
+        $admission_year = DB::table('academic_year as a')
+            ->select('a.syear as year')
+            ->where('a.sub_institute_id', $sub_institute_id)
+            ->groupBy('a.syear')
+            ->orderByDesc('a.syear')
+            ->get();
         
         $controller = new fees_collect_controller;
 
