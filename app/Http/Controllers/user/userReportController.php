@@ -73,6 +73,7 @@ class userReportController extends Controller
             ->pluck("name", "id");
 
         $header = $array = $tables = [];
+        $experienceSelected = false;
         $searchArr = ['_'];
         $replaceArr = [' '];
         if ($request->input('dynamicFields') == '') {
@@ -96,10 +97,17 @@ class userReportController extends Controller
                 ->where('user_type','staff')
                 ->first();
                 if(!empty($customDetails) && !in_array($value,["user_name"])){
-                    $array[] = $customDetails->table_name.".".$value." as ".str_ireplace(" ","_",$customDetails->field_label);
-                    $makeKey = strtolower(str_replace(" ","_",$customDetails->field_label));
-                    $header[$makeKey] = ucfirst(str_replace(['_'], [' '], str_replace($searchArr, $replaceArr, $customDetails->field_label)));
-                    $tables[] = $customDetails->table_name;
+                    if($customDetails->table_name == 'tbluser_experience_details' && $value == 'experience'){
+                        // "Experience" is shown as Teaching / Non-Teaching split columns (added below),
+                        // so skip the raw experience column here.
+                        $experienceSelected = true;
+                        $tables[] = $customDetails->table_name;
+                    }else{
+                        $array[] = $customDetails->table_name.".".$value." as ".str_ireplace(" ","_",$customDetails->field_label);
+                        $makeKey = strtolower(str_replace(" ","_",$customDetails->field_label));
+                        $header[$makeKey] = ucfirst(str_replace(['_'], [' '], str_replace($searchArr, $replaceArr, $customDetails->field_label)));
+                        $tables[] = $customDetails->table_name;
+                    }
                 }else{
                     $header[$value] = ucfirst($value1);
                 }
@@ -135,8 +143,15 @@ class userReportController extends Controller
             ->when(in_array('tbluser_experience_details', $tables), function($q) {
                 $q->leftJoin('tbluser_experience_details','tbluser_experience_details.user_id','=','tbluser.id');
             })
-            //->leftJoin('tbluser_past_educations','tbluser_past_educations.user_id','=','tbluser.id')
+            ->when($experienceSelected, function($q) use (&$header, &$array) {
+                $teaching_exp_subquery = DB::raw('(SELECT SUM(experience) FROM tbluser_experience_details WHERE user_id = tbluser.id AND teching_type = 1 AND sub_institute_id = tbluser.sub_institute_id) as teaching_experience');
+                $non_teaching_exp_subquery = DB::raw('(SELECT SUM(experience) FROM tbluser_experience_details WHERE user_id = tbluser.id AND teching_type = 2 AND sub_institute_id = tbluser.sub_institute_id) as non_teaching_experience');
+                $q->addSelect($teaching_exp_subquery, $non_teaching_exp_subquery);
+                $header['teaching_experience'] = 'Teaching';
+                $header['non_teaching_experience'] = 'Non-Teaching';
+            })
             ->where($extraSearchArray)
+            ->groupBy('tbluser.id')
             ->get();
             // echo "<pre>";print_r($header);exit;
         

@@ -965,7 +965,13 @@
                                                         <input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" value="@if(isset($experience_detail->leaving_date)){{$experience_detail->leaving_date}}@endif" autocomplete="off" data-new="1" onchange="validateDates(this)"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
-                                                        <input type="text" name="experience[]" value="@if(isset($experience_detail->experience)){{$experience_detail->experience}}@endif" class="form-control mb-0" data-new="1">
+                                                        @php
+                                                            $expMonths = isset($experience_detail->experience) ? (int) $experience_detail->experience : 0;
+                                                            $expYears  = intdiv($expMonths, 12);
+                                                            $expRemMonths = $expMonths % 12;
+                                                        @endphp
+                                                        <input type="hidden" name="experience[]" value="{{ $expMonths }}" data-new="1">
+                                                        <input type="text" class="form-control mb-0 experience-display" value="{{ $expYears }}yr {{ $expRemMonths }}month" readonly>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="remarks[]" value="@if(isset($experience_detail->remarks)){{$experience_detail->remarks}}@endif"
@@ -1010,7 +1016,8 @@
                                                         <input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" autocomplete="off" data-new="1" onchange="validateDates(this)"><span class="input-group-addon"><i class="icon-calender"></i></span>
                                                     </td>
                                                     <td>
-                                                        <input type="text" name="experience[]" class="form-control mb-0" data-new="1">
+                                                        <input type="hidden" name="experience[]" value="0" data-new="1">
+                                                        <input type="text" class="form-control mb-0 experience-display" value="0 years and 0 months" readonly>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="remarks[]" class="form-control mb-0" data-new="1">
@@ -2142,8 +2149,8 @@
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Designation Name</label><input type="text" name="designation_name[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Exp. Type</label> <select name="experience_type[]" id="experience_type" class="form-control mb-0" data-new="1"><option value="">N/A</option><option value="School Exp.">School Exp.</option><option value="Diploma Exp.">Diploma Exp.</option><option value="Degree Exp."></option><option value="Industrial Exp.">Industrial Exp.</option></select></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Joining Date</label><input type="text" class="form-control mydatepicker" name="joining_date[]" placeholder="dd/mm/yyyy" value="" autocomplete="off" data-new="1"/><span class="input-group-addon"><i class="icon-calender"></i></span></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Leaving Date</label><input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" value="" autocomplete="off" data-new="1"/><span class="input-group-addon"><i class="icon-calender"></i></span></div></div>';
-        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Experience</label><input type="text" name="experience[]" value="" class="form-control mb-0"/></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Leaving Date</label><input type="text" class="form-control mydatepicker" name="leaving_date[]" placeholder="dd/mm/yyyy" value="" autocomplete="off" data-new="1" onchange="validateDates(this)"/><span class="input-group-addon"><i class="icon-calender"></i></span></div></div>';
+        htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Experience</label><input type="hidden" name="experience[]" value="0" data-new="1"/><input type="text" class="form-control mb-0 experience-display" value="0 years and 0 months" readonly/></div></div>';
         htmlcontent += '<div class="col-md-2 my-2"><div class="form-group mb-0"><label for="control-label">Remarks</label><input type="text" name="remarks[]" value="" class="form-control mb-0"/></div></div>';
         htmlcontent += '<div class="col-md-1 mt-3"><a href="javascript:void(0);" onclick="removeNewRowWithChainExperience();" class="d-inline btn btn-danger"><i class="mdi mdi-minus"></i></a></div></div>';
 
@@ -2585,8 +2592,9 @@ htmlcontent += '</div></div>';
             months += 12;
         }
 
-        var experience = years + '.' + months; // e.g. 0.0, 0.1, 1.5 etc.
+        var experience = years * 12 + months; // total number of months
         $row.find('input[name="experience[]"]').val(experience);
+        $row.find('.experience-display').val(years + ' years and ' + months + ' months');
     }
 
     function validateDays(endDate){
