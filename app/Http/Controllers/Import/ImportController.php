@@ -391,6 +391,7 @@ class ImportController extends Controller
                     $student_enroll_data['syear'] = $prepareData['syear'] ?? session()->get('syear');
                     $student_enroll_data['start_date'] = $prepareData['start_date'] ?? date('Y-m-d');
                     $student_enroll_data['adhar'] = $prepareData['adhar'] ?? 0;
+                    $student_enroll_data['term_id'] = $prepareData['term_id'] ?? session()->get('term_id');
 
                     unset($prepareData['student_id'], $prepareData['grade_id'], $prepareData['standard_id'], $prepareData['section_id'], $prepareData['student_quota'], $prepareData['house_id'], $prepareData['syear'], $prepareData['start_date'], $prepareData['term_id'], $prepareData['adhar'], $prepareData['roll_no']);
                     $student_enroll_data['sub_institute_id'] = $prepareData['sub_institute_id'] = session()->get('sub_institute_id');
