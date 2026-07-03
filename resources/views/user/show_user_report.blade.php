@@ -117,6 +117,7 @@
                             <table id="example" class="table table-striped">
                                 <thead>
                                 <tr>
+                                    <th class="text-left">Sr.No.</th>
                                     @foreach($data['headers'] as $hkey => $header)
                                         @php 
                                         $joinVal = str_replace(' ','',$header);
@@ -135,11 +136,17 @@
                                 <tbody>
                                 @foreach($user_data as $key => $value)
                                     <tr>
+                                        <td> {{$key + 1}} </td>
                                         @foreach($data['headers'] as $hkey => $header)
-                                            @if($hkey == "birthdate")
-                                                <td> {{date('d-m-Y',strtotime($value->$hkey))}}</td>
-                                            @elseif($hkey == "teaching_type")
-                                                <td> {{ $value->$hkey == 1 ? 'Teaching' : ($value->$hkey == 2 ? 'Non Teaching' : $value->$hkey) }} </td>
+                                            @if($hkey == "dob" || $hkey == "doj" || $hkey == "dol")
+                                                <td> @if(!empty($value->$hkey) && $value->$hkey !== null){{ date('d/m/Y',strtotime($value->$hkey)) }}@endif</td>
+                                            @elseif($hkey == "teaching_experience" || $hkey == "non_teaching_experience" || $hkey == "experience")
+                                                 @php
+                                                     $expValue = (int) $value->$hkey;
+                                                     $years = intdiv($expValue, 12);
+                                                     $months = $expValue % 12;
+                                                 @endphp
+                                                 <td> {{$expValue ? $years . ' yr ' . $months . ' month' : '0 yr 0 month'}} </td>
                                             @else
                                                 <td> {{ is_array($value->$hkey) ? implode(', ', $value->$hkey) : $value->$hkey }} </td>
                                             @endif

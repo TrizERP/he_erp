@@ -170,9 +170,11 @@ class rollOverController extends Controller
         $to_standard = $request->input('to_standard');
         $to_division = $request->input('to_division');
         $type = $request->input('type');
-        $marking_period_id=session()->get('term_id');
         $created_by = session()->get('user_id');
         $created_ip = $_SERVER['REMOTE_ADDR'];
+
+        $marking_period_id = session()->get('term_id');
+        $next_marking_period_id = 3 - $marking_period_id;
 
         //START FOR ROLLOVER ALL DATA INCLUDING ALL STUDENTS
         if ($request->has('tables')) {
@@ -347,7 +349,10 @@ class rollOverController extends Controller
 
                 $get_all_student_data = DB::table('tblstudent_enrollment')
                     ->where('sub_institute_id', $sub_institute_id)
-                    ->where('syear', $from_current_syear)->whereNull('end_date')->get()->toArray();
+                    ->where('syear', $from_current_syear)
+                    ->where('term_id', $marking_period_id)
+                    //->whereNull('end_date')
+                    ->get()->toArray();
 
                 $students = json_decode(json_encode($get_all_student_data), true);
 
@@ -359,7 +364,10 @@ class rollOverController extends Controller
                         ->selectRaw('count(se.id) as total_student')
                         ->where('se.student_id', $student_id)
                         ->where('se.sub_institute_id', $sub_institute_id)
-                        ->where('se.syear', $to_next_syear)->whereNull('end_date')->get()->toArray();
+                        ->where('se.syear', $to_next_syear)
+                        ->where('se.term_id', $next_marking_period_id)
+                        //->whereNull('end_date')
+                        ->get()->toArray();
 
                     if ($check_student[0]->total_student > 0) {
                         $i++;
@@ -367,17 +375,18 @@ class rollOverController extends Controller
 
                     if ($check_student[0]->total_student == 0) {
                         // START UPDATE in tblstudent 
-                        DB::INSERT("INSERT INTO tblstudent_enrollment (syear,student_id,grade_id,standard_id,section_id,
-                                    student_quota,start_date,end_date,
-                                    enrollment_code,drop_code,drop_remarks,remarks,admission_fees,house_id,lc_number,adhar,sub_institute_id,created_on)
-                                    SELECT '".$to_next_syear."',se.student_id,st.next_grade_id,st.next_standard_id,se.section_id,se.student_quota,se.start_date,se.end_date,
-                                    se.enrollment_code,se.drop_code,
-                                    se.drop_remarks,se.remarks,se.admission_fees,se.house_id,se.lc_number,se.adhar,se.sub_institute_id,Now()
-                                    FROM tblstudent_enrollment se
-                                    INNER JOIN standard st ON st.id = se.standard_id AND st.sub_institute_id = se.sub_institute_id
-                                    WHERE se.student_id = '".$student_id."' AND se.syear = '".$from_current_syear."' 
-                                    AND se.sub_institute_id = '".$sub_institute_id."' ");
-                        // END UPDATE in tblstudent 
+DB::INSERT(
+"INSERT INTO tblstudent_enrollment (syear,student_id,grade_id,standard_id,section_id,student_quota,start_date,end_date,enrollment_code,drop_code,drop_remarks,term_id,remarks,admission_fees,house_id,lc_number,adhar,sub_institute_id,created_on)
+SELECT '".$to_next_syear."',se.student_id,st.next_grade_id,st.next_standard_id,se.section_id,se.student_quota,DATE_FORMAT(NOW(), '%Y-%m-%d'),se.end_date,se.enrollment_code,se.drop_code,se.drop_remarks,'".$next_marking_period_id."',se.remarks,se.admission_fees,se.house_id,se.lc_number,se.adhar,se.sub_institute_id,Now()
+FROM tblstudent_enrollment se
+INNER JOIN standard st ON st.id = se.standard_id AND st.sub_institute_id = se.sub_institute_id
+WHERE se.student_id = '".$student_id."' 
+AND se.syear = '".$from_current_syear."' 
+AND se.term_id = '".$marking_period_id."' 
+AND se.sub_institute_id = '".$sub_institute_id."'
+AND st.next_standard_id IS NOT NULL
+");
+// END UPDATE in tblstudent 
                     }
                     // END Check student is already exist in next year 
                 }
@@ -522,7 +531,9 @@ class rollOverController extends Controller
             $get_all_student_data = DB::table('tblstudent_enrollment')
                 ->where('syear', $from_current_syear)
                 ->where('sub_institute_id', $sub_institute_id)
-                ->whereNull('end_date')->get()->toArray();
+                ->where('term_id', $marking_period_id)
+                //->whereNull('end_date')
+                ->get()->toArray();
 
             $students = json_decode(json_encode($get_all_student_data), true);
             $i = 1;
@@ -535,7 +546,9 @@ class rollOverController extends Controller
                     ->where('se.student_id', $student_id)
                     ->where('se.syear', $to_next_syear)
                     ->where('se.sub_institute_id', $sub_institute_id)
-                    ->whereNull('se.end_date')->get()->toArray();
+                    ->where('se.term_id', $next_marking_period_id)
+                    //->whereNull('se.end_date')
+                    ->get()->toArray();
 
                 if ($check_student[0]->total_student > 0) {
                     $i++;
@@ -543,16 +556,17 @@ class rollOverController extends Controller
 
                 if ($check_student[0]->total_student == 0) {
                     // START UPDATE in tblstudent 
-                    DB::INSERT("INSERT INTO tblstudent_enrollment (syear,student_id,grade_id,standard_id,section_id,
-                                student_quota,start_date,end_date,
-                                enrollment_code,drop_code,drop_remarks,remarks,admission_fees,house_id,lc_number,adhar,sub_institute_id,created_on)
-                                SELECT '".$to_next_syear."',se.student_id,st.next_grade_id,st.next_standard_id,se.section_id,se.student_quota,se.start_date,se.end_date,
-                                se.enrollment_code,se.drop_code,
-                                se.drop_remarks,se.remarks,se.admission_fees,se.house_id,se.lc_number,se.adhar,se.sub_institute_id,Now()
-                                FROM tblstudent_enrollment se
-                                INNER JOIN standard st ON st.id = se.standard_id AND st.sub_institute_id = se.sub_institute_id
-                                WHERE se.student_id = '".$student_id."' AND se.syear = '".$from_current_syear."' 
-                                AND se.sub_institute_id = '".$sub_institute_id."' ");
+DB::INSERT(
+"INSERT INTO tblstudent_enrollment (syear,student_id,grade_id,standard_id,section_id,student_quota,start_date,end_date,enrollment_code,drop_code,drop_remarks,term_id,remarks,admission_fees,house_id,lc_number,adhar,sub_institute_id,created_on)
+SELECT '".$to_next_syear."',se.student_id,st.next_grade_id,st.next_standard_id,se.section_id,se.student_quota,DATE_FORMAT(NOW(), '%Y-%m-%d'),se.end_date,se.enrollment_code,se.drop_code,se.drop_remarks,'".$next_marking_period_id."',se.remarks,se.admission_fees,se.house_id,se.lc_number,se.adhar,se.sub_institute_id,Now()
+FROM tblstudent_enrollment se
+INNER JOIN standard st ON st.id = se.standard_id AND st.sub_institute_id = se.sub_institute_id
+WHERE se.student_id = '".$student_id."' 
+AND se.syear = '".$from_current_syear."' 
+AND se.term_id = '".$marking_period_id."' 
+AND se.sub_institute_id = '".$sub_institute_id."'
+AND st.next_standard_id IS NOT NULL
+");
                   
                     // END UPDATE in tblstudent 
                 }
