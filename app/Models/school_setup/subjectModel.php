@@ -16,7 +16,14 @@ class subjectModel extends Model
         'sub_institute_id',
         'status',
         'marking_period_id',
+        'standard_id',
+        'term_id',
         'created_at',
         'updated_at'
     ];
+
+    public function standard()
+    {
+        return $this->belongsTo(standardModel::class, 'standard_id');
+    }
 }

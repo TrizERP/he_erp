@@ -26,6 +26,7 @@
                             <thead>
                                 <tr>
                                     <th>Subject Name</th>
+                                    <th>Standard</th>
                                     <th>Subject Code</th>
                                     <th>Subject Type</th>
                                     <th>Short Name</th>
@@ -36,6 +37,7 @@
                                 @foreach($data['data'] as $key => $data)
                                 <tr>    
                                     <td>{{$data->subject_name}}</td>
+                                    <td>{{ $data->standard ? $data->standard->name : '-' }}</td>
                                     <td>{{$data->subject_code}}</td> 
                                     <td>@if($data->subject_type != "")
                                         {{$data->subject_type}}
@@ -211,6 +213,17 @@
                     <!-- subject  -->
                     <div class="col-md-12 form-group sectionsub d--none" style="display: none;">
                         <div class="row">                            
+                            <div class="col-md-3 form-group">
+                                <label>Standard <span class="text-danger">*</span></label>
+                                <select class="form-control" data-style="form-control" name="standard_id" id="standard_id" required>
+                                    <option value="">Select Standard</option>
+                                    @if(isset($standard_data))
+                                    @foreach($standard_data as $stdVal)
+                                    <option value="{{$stdVal->id}}">{{$stdVal->name}}</option>
+                                    @endforeach
+                                    @endif
+                                </select>
+                            </div>
                             <div class="col-md-3 form-group">
                                 <label>Subject Name</label>
                                 <input type="text" id='subject_name' name="subject_name" class="form-control" placeholder="Enter Subject Name">

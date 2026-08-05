@@ -37,6 +37,23 @@
                         @csrf
                         <div class="row">                            
                             <div class="col-md-3 form-group">
+                                <label>Standard <span class="text-danger">*</span></label>
+                                <select class="form-control" data-style="form-control" name="standard_id" id="standard_id" required>
+                                    <option value="">Select Standard</option>
+                                    @if(isset($standard_data))
+                                    @foreach($standard_data as $stdVal)
+                                    @php
+                                        $selected = '';
+                                        if(isset($data['standard_id']) && $data['standard_id'] == $stdVal->id){
+                                            $selected = 'selected';
+                                        }
+                                    @endphp
+                                    <option value="{{$stdVal->id}}" {{$selected}}>{{$stdVal->name}}</option>
+                                    @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-group">
                                 <label>Subject Name</label>
                                 <input type="text" id='subject_name' value="@if(isset($data['subject_name'])){{$data['subject_name']}}@endif" required name="subject_name" class="form-control">
                             </div>
