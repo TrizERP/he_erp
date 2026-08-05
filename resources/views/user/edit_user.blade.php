@@ -229,6 +229,10 @@
                                         <input type="text" value="@if(isset($data['pan_card'])){{ $data['pan_card'] }}@endif" id='pan_card' required name="pan_card" class="form-control">
                                     </div>
                                     <div class="col-md-4 form-group">
+                                        <label>EPFO UAN No.</label>
+                                        <input type="text" value="@if(isset($data['epfo_uan_no'])){{ $data['epfo_uan_no'] }}@endif" id='epfo_uan_no' required name="epfo_uan_no" class="form-control">
+                                    </div>
+                                    <div class="col-md-4 form-group">
                                         <label>Category</label>
                                         <select id='category' name="category" class="form-control">
                                             <option value="0">Select Category</option>
