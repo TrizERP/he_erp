@@ -27,28 +27,42 @@ class subject1Controller extends Controller {
     public function index(Request $request){
         $data = $this->getData($request);               
         $type = $request->input('type');
-        $grade = academic_sectionModel::where('sub_institute_id',$request->session()->get('sub_institute_id'))->get();
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+        $grade = academic_sectionModel::where('sub_institute_id',$sub_institute_id)->get();
+        $standard_data = standardModel::where('sub_institute_id',$sub_institute_id)->where('marking_period_id',$request->session()->get('term_id'))->get(['id','name','short_name']);
         $res['status_code'] = 1;
         $res['message'] = "SUCCESS";
         $res['data'] = $data;        
-        return is_mobile($type,'school_setup/show_subject',$res,"view")->with('grade',$grade);  
+        return is_mobile($type,'school_setup/show_subject',$res,"view")->with('grade',$grade)->with('standard_data',$standard_data);  
     }
 
     public function getData($request){
         $sub_institute_id = $request->session()->get('sub_institute_id');
-        $subject_data =  subjectModel::where(['sub_institute_id'=>$sub_institute_id])->get();        
+        $subject_data =  subjectModel::where(['sub_institute_id'=>$sub_institute_id, 'marking_period_id' => $request->session()->get('term_id')])->with('standard')->get();        
         return $subject_data;
     }
 
     public function create(){
-        return view('school_setup/add_subject');
+        $sub_institute_id = session()->get('sub_institute_id');
+        $standard_data = standardModel::where('sub_institute_id',$sub_institute_id)->where('marking_period_id',$request->session()->get('term_id'))->get(['id','name','short_name']);
+        return view('school_setup/add_subject')->with('standard_data',$standard_data);
     }
     public function store(Request $request){
         $sub_institute_id = $request->session()->get('sub_institute_id'); 
         $marking_period_id = $request->session()->get('term_id');
+        $standard_id = $request->get('standard_id');
+        
+        if(empty($standard_id)){
+            $res = array(
+                "status_code" => 0,
+                "message" => "Please select a Standard.",
+            );
+            $type = $request->input('type');
+            return is_mobile($type, "subject_master.index", $res, "redirect");
+        }
         
         //Check if Subject Already Exist or not
-        $exist = $this->check_exist($request->get('subject_name'),$sub_institute_id);       
+        $exist = $this->check_exist($request->get('subject_name'),$sub_institute_id,$standard_id);       
         if($exist == 0)
         {       
             $sub = new subjectModel([
@@ -57,11 +71,11 @@ class subject1Controller extends Controller {
                 'subject_code' => $request->get('subject_code'),
                 'short_name' => $request->get('short_name'),
                 'sub_institute_id' => $sub_institute_id,
+                'standard_id' => $standard_id,
                 'marking_period_id'=>session()->get('term_id') ?? null,
                 'status' => "1",            
             ]);
-                 
-            $sub->save();
+                  $sub->save();
             $res = array(
                 "status_code" => 1,
                 "message" => "Subject Added Successfully",
@@ -71,7 +85,7 @@ class subject1Controller extends Controller {
         {
             $res = array(
                 "status_code" => 0,
-                "message" => "Subject Already Exist",
+                "message" => "This subject already exists for the selected Standard.",
             );
         }
 
@@ -79,28 +93,57 @@ class subject1Controller extends Controller {
         return is_mobile($type, "subject_master.index", $res, "redirect");
     }
     
-    public function check_exist($subject_name,$sub_institute_id)
+    public function check_exist($subject_name,$sub_institute_id,$standard_id = null)
     {           
         $subject_name = strtoupper($subject_name);
         
-        $data = DB::select("SELECT count(*) as tot FROM subject WHERE sub_institute_id = '".$sub_institute_id."'
-        AND UPPER(subject_name) = '".$subject_name."'");
+        $query = "SELECT count(*) as tot FROM subject WHERE sub_institute_id = '".$sub_institute_id."'
+        AND UPPER(subject_name) = '".$subject_name."'";
+        if($standard_id !== null){
+            $query .= " AND standard_id = '".$standard_id."'";
+        }
+        $data = DB::select($query);
+        $total_count = $data[0]->tot;
+        return $total_count;
+    }
+
+    public function check_exist_update($subject_name,$sub_institute_id,$standard_id,$subject_id)
+    {           
+        $subject_name = strtoupper($subject_name);
+        
+        $query = "SELECT count(*) as tot FROM subject WHERE sub_institute_id = '".$sub_institute_id."'
+        AND UPPER(subject_name) = '".$subject_name."'
+        AND standard_id = '".$standard_id."'
+        AND id != '".$subject_id."'";
+        $data = DB::select($query);
         $total_count = $data[0]->tot;
         return $total_count;
     }
     
     public function edit(Request $request,$id){
         $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
         $sub_data = subjectModel::find($id)->toArray();
-        return is_mobile($type, "school_setup/add_subject", $sub_data, "view");
+        $standard_data = standardModel::where('sub_institute_id',$sub_institute_id)->where('marking_period_id',$request->session()->get('term_id'))->get(['id','name','short_name']);
+        return is_mobile($type, "school_setup/add_subject", $sub_data, "view")->with('standard_data',$standard_data);
 
     }
     public function update(Request $request,$id){
         ValidateInsertData('subject','update');        
         $sub_institute_id = $request->session()->get('sub_institute_id'); 
+        $standard_id = $request->get('standard_id');
 
-        //Check if Subject Already Exist or not
-        $exist = $this->check_exist($request->get('subject_name'),$sub_institute_id);       
+        if(empty($standard_id)){
+            $res = array(
+                "status_code" => 0,
+                "message" => "Please select a Standard.",
+            );
+            $type = $request->input('type');
+            return is_mobile($type, "subject_master.index", $res, "redirect");
+        }
+
+        //Check if Subject Already Exist for same Standard or not
+        $exist = $this->check_exist_update($request->get('subject_name'),$sub_institute_id,$standard_id,$id);       
         if($exist == 0)
         {               
             $data = array(
@@ -108,6 +151,7 @@ class subject1Controller extends Controller {
                 'subject_type' => $request->get('subject_type'),
                 'subject_code' => $request->get('subject_code'),
                 'short_name' => $request->get('short_name'),
+                'standard_id' => $standard_id,
                 'marking_period_id' =>session()->get('term_id') ?? null,                
                 'sub_institute_id' => $sub_institute_id,            
             );
@@ -121,7 +165,7 @@ class subject1Controller extends Controller {
         {
             $res = array(
                 "status_code" => 0,
-                "message" => "Subject Already Exist",
+                "message" => "This subject already exists for the selected Standard.",
             );
         }
         $type = $request->input('type');
@@ -245,10 +289,14 @@ class subject1Controller extends Controller {
         } 
   
         
-        // for subject
+         // for subject
         if($master == 4){
         // return back()->with('success','Subject');
-            $exist = $this->check_exist($request->get('subject_name'),$sub_institute_id);       
+            $standard_id = $request->get('standard_id');
+            if(empty($standard_id)){
+                return redirect()->back()->with('failed','Please select a Standard.');
+            }
+            $exist = $this->check_exist($request->get('subject_name'),$sub_institute_id,$standard_id);       
         if($exist == 0)
         {       
             $sub = new subjectModel([
@@ -257,16 +305,16 @@ class subject1Controller extends Controller {
                 'subject_code' => $request->get('subject_code'),
                 'short_name' => $request->get('short_name'),
                 'sub_institute_id' => $sub_institute_id,
+                'standard_id' => $standard_id,
                 'marking_period_id'=>$marking_period_id ?? null,
                 'status' => "1",            
             ]);
-                 
-            $sub->save();
+                  $sub->save();
             return redirect()->back()->with('success','Subject Added Successfully');
         }
         else
         {
-            return redirect()->back()->with('failed','Subject Already Exist');
+            return redirect()->back()->with('failed','This subject already exists for the selected Standard.');
 
         }
 

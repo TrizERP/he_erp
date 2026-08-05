@@ -310,6 +310,7 @@ Route::group(['prefix' => 'school_setup', 'middleware' => ['session', 'menu', 'l
     Route::get('ajax_StandardwiseSubject', [chapterController::class, 'StandardwiseSubject'])->name('ajax_StandardwiseSubject');
     Route::resource('topic_master', topicController::class);
     Route::resource('sub_std_map', sub_std_mapController::class);
+    Route::get('ajax_getSubjectsByStandard', [sub_std_mapController::class, 'ajax_getSubjectsByStandard'])->name('ajax_getSubjectsByStandard');
     Route::resource('period_master', periodController::class);
     Route::resource('change_password', changePasswordController::class);
     Route::resource('dashboard_setting', dashboardSettingController::class);

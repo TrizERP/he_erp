@@ -56,20 +56,14 @@ class sub_std_mapController extends Controller
     public function create(Request $request)
     {
         $sub_institute_id = $request->session()->get('sub_institute_id');
+        $term_id = $request->session()->get('term_id');
         $type = $request->input('type');
-        $marking_period_id=session()->get('term_id');
-        
-        $std_data = standardModel::where(['sub_institute_id' => $sub_institute_id])->select('id', 'name',
+
+        $std_data = standardModel::where(['sub_institute_id' => $sub_institute_id, 'marking_period_id' => $term_id])->select('id', 'name',
             'short_name')
-            // ->when($marking_period_id,function($query) use ($marking_period_id){
-            //     $query->where('marking_period_id',$marking_period_id);
-            // })
             ->get();
-        $sub_data = subjectModel::where(['sub_institute_id' => $sub_institute_id])->select('id', 'subject_name',
+        $sub_data = subjectModel::where(['sub_institute_id' => $sub_institute_id, 'marking_period_id' => $term_id])->select('id', 'subject_name',
             'subject_code')
-            // ->when($marking_period_id,function($query) use ($marking_period_id){
-            //     $query->where('marking_period_id',$marking_period_id);
-            // })
             ->get();
         $data['content_category'] = lmsContentCategoryModel::where('status', '1')
             ->where(function ($query) use ($sub_institute_id) {
@@ -87,6 +81,7 @@ class sub_std_mapController extends Controller
     {
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $standard_id = $request->get('standard_id');
+        $subject_id = $request->get('subject_id');
 
         $file_folder = $ext = $size = $newfilename = "";
         if ($request->hasFile('display_image')) {
@@ -99,39 +94,26 @@ class sub_std_mapController extends Controller
             //$img->move(public_path().'/lms_content_file/',$newfilename);
             $img->storeAs('public/SubStdMapping/', $newfilename);
         }
-        foreach ($standard_id as $key => $stdval) {
-            sub_std_mapModel::updateOrCreate(
-                [
-                    'standard_id' => $stdval,
-                    'subject_id'  => $request->get('subject_id'),
-                ],
-                [
-                    // dd($request->get('allow_content'));
-                    'standard_id'      => $stdval,
-                    'subject_id'       => $request->get('subject_id'),
-                    'display_name'     => $request->get('display_name'),
-                    'allow_grades'     => $request->get('allow_grades') != "" ? $request->get('allow_grades') : "",
-                    'elective_subject' => $request->get('elective_subject') != "" ? $request->get('elective_subject') : "",
-                    'allow_content'    => $request->get('allow_content') != "" ? $request->get('allow_content') : "",
-                    'subject_category' => $request->get('subject_category'),
-                    'display_image'    => $file_folder.'/'.$newfilename,
-                    'sub_institute_id' => $sub_institute_id,
-                    'sort_order'       => $request->get('sort_order'),
-                    'status'           => "1",
-                ]
-            );
+        sub_std_mapModel::updateOrCreate(
+            [
+                'standard_id' => $standard_id,
+                'subject_id'  => $subject_id,
+            ],
+            [
+                'standard_id'      => $standard_id,
+                'subject_id'       => $subject_id,
+                'display_name'     => $request->get('display_name'),
+                'allow_grades'     => $request->get('allow_grades') != "" ? $request->get('allow_grades') : "",
+                'elective_subject' => $request->get('elective_subject') != "" ? $request->get('elective_subject') : "",
+                'allow_content'    => $request->get('allow_content') != "" ? $request->get('allow_content') : "",
+                'subject_category' => $request->get('subject_category'),
+                'display_image'    => $file_folder.'/'.$newfilename,
+                'sub_institute_id' => $sub_institute_id,
+                'sort_order'       => $request->get('sort_order'),
+                'status'           => "1",
+            ]
+        );
 
-            // $insert_data[] = array(
-            //     'standard_id' => $stdval,
-            //     'subject_id' => $request->get('subject_id'),
-            //     'display_name' => $request->get('display_name'),
-            //     'allow_grades' => $request->get('allow_grades') != "" ? $request->get('allow_grades') : "" ,
-            //     'elective_subject' => $request->get('elective_subject') != "" ? $request->get('elective_subject') : "" ,
-            //     'sub_institute_id' => $sub_institute_id,
-            //     'status' => "1",            
-            // );  
-        }
-        //sub_std_mapModel::insert($insert_data);         
         $res = [
             "status_code" => 1,
             "message"     => "Subject-Standard Mapping Added Successfully",
@@ -145,12 +127,14 @@ class sub_std_mapController extends Controller
     public function edit(Request $request, $id)
     {
         $sub_institute_id = $request->session()->get('sub_institute_id');
+        $term_id = $request->session()->get('term_id');
         $type = $request->input('type');
         $mapped_data = sub_std_mapModel::find($id)->toArray();
-        $std_data = standardModel::where(['sub_institute_id' => $sub_institute_id])->select('id', 'name',
+        $std_data = standardModel::where(['sub_institute_id' => $sub_institute_id, 'marking_period_id' => $term_id])->select('id', 'name',
             'short_name')->get();
-        $sub_data = subjectModel::where(['sub_institute_id' => $sub_institute_id])->select('id', 'subject_name',
-            'subject_code')->get();
+        $standard_id = $mapped_data['standard_id'];
+        $sub_data = subjectModel::where(['sub_institute_id' => $sub_institute_id, 'marking_period_id' => $term_id, 'standard_id' => $standard_id])
+            ->select('id', 'subject_name', 'subject_code')->get();
         $data['content_category'] = lmsContentCategoryModel::where('status', '1')->get()->toArray();
         $data['std_data'] = $std_data;
         $data['sub_data'] = $sub_data;
@@ -165,8 +149,6 @@ class sub_std_mapController extends Controller
 
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $standard_id = $request->get('standard_id');
-        $finalStdId = $standard_id[0];
-        // sub_std_mapModel::where(["id" => $id])->delete();
 
         if ($request->hasFile('display_image')) {
             $img = $request->file('display_image');
@@ -179,14 +161,13 @@ class sub_std_mapController extends Controller
             $img->storeAs('public/SubStdMapping/', $newfilename);
 
             $data = [
-                'standard_id'      => $finalStdId,
+                'standard_id'      => $standard_id,
                 'subject_id'       => $request->get('subject_id'),
                 'display_name'     => $request->get('display_name'),
                 'allow_grades'     => $request->get('allow_grades') != "" ? $request->get('allow_grades') : "",
                 'allow_content'    => $request->get('allow_content') != "" ? $request->get('allow_content') : "",
                 'subject_category' => $request->get('subject_category'),
                 'elective_subject' => $request->get('elective_subject') != "" ? $request->get('elective_subject') : "",
-                'allow_content'    => $request->get('allow_content') != "" ? $request->get('allow_content') : "",
                 'display_image'    => $file_folder.'/'.$newfilename,
                 'sub_institute_id' => $sub_institute_id,
                 'add_content'      => $request->get('add_content'),
@@ -196,7 +177,7 @@ class sub_std_mapController extends Controller
             ];
         } else {
             $data = [
-                'standard_id'      => $finalStdId,
+                'standard_id'      => $standard_id,
                 'subject_id'       => $request->get('subject_id'),
                 'display_name'     => $request->get('display_name'),
                 'allow_grades'     => $request->get('allow_grades') != "" ? $request->get('allow_grades') : "",
@@ -253,5 +234,17 @@ class sub_std_mapController extends Controller
             ->get()->toArray();
 
         return $data[0]['total'];
+    }
+
+    function ajax_getSubjectsByStandard(Request $request)
+    {
+        $standard_id = $request->input("standard_id");
+        $sub_institute_id = $request->session()->get("sub_institute_id");
+
+        $subjects = subjectModel::where(['sub_institute_id' => $sub_institute_id, 'standard_id' => $standard_id])
+            ->select('id', 'subject_name', 'subject_code')
+            ->get();
+
+        return response()->json($subjects);
     }
 }
