@@ -398,7 +398,11 @@ AND st.next_standard_id IS NOT NULL
                 //             ->where('sub_institute_id', $sub_institute_id)
                 //             ->where('syear', $to_next_syear)->get()->toArray();
                 // if (count($check_advance_fees) == 0) {
-                $title = DB::table('fees_title')->where(['display_name'=>'Advance Fee','syear'=>$from_current_syear,'sub_institute_id'=>$sub_institute_id])->get()->toArray();
+                $title = DB::table('fees_title')
+                    ->where('syear', $from_current_syear)
+                    ->where('sub_institute_id', $sub_institute_id)
+                    ->whereRaw("LOWER(TRIM(display_name)) LIKE '%advance%fee%'")
+                    ->get()->toArray();
                 
                 if(isset($title) && count($title)>0 && !empty($title)){
 
@@ -459,7 +463,7 @@ AND st.next_standard_id IS NOT NULL
                                     'payment_mode'=>$fee->payment_mode,
                                     'bank_name'=>$fee->bank_name,
                                     'cheque_bank_name'=>$fee->bank_name,
-                                    'remark'=>$fee->remarks,
+                                    'remarks'=>$fee->remarks,
                                     'fees_discount'=>$fee->fees_discount,
                                     'fine'=>$fee->fine,
                                     'bank_branch'=>$fee->bank_branch,
