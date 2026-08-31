@@ -451,8 +451,8 @@ class studentReportController extends Controller
     {
         $marking_period_id = session()->get('term_id');
         
-        $extra_fp = " AND fp.syear = '" . $syear . "' AND fp.sub_institute_id = '" . $sub_institute_id . "' AND fp.is_deleted = 'N' ";
-        $extra_fo = " AND fo.syear = '" . $syear . "' AND fo.sub_institute_id = '" . $sub_institute_id . "' AND fo.is_deleted = 'N' ";
+        $extra_fp = " AND fp.sub_institute_id = '" . $sub_institute_id . "' AND fp.is_deleted = 'N' ";
+        $extra_fo = " AND fo.sub_institute_id = '" . $sub_institute_id . "' AND fo.is_deleted = 'N' ";
         
         // Add student filter
         $extra_fp .= " AND t.id = '" . $student_id . "'";
@@ -465,8 +465,8 @@ class studentReportController extends Controller
                 . 'fp.cheque_bank_name, fp.bank_branch, fp.cheque_no, fp.cheque_date, b.title as batch, sq.title as quota, fp.remarks, '
                 . 'IFNULL(fp.amount, 0) AS actual_amountpaid'))
                 ->from('tblstudent as t')
-                ->join('tblstudent_enrollment as te', function ($join) use($syear){
-                    $join->on('te.student_id', '=', 't.id')->where('te.syear',$syear);
+                ->join('tblstudent_enrollment as te', function ($join) {
+                    $join->on('te.student_id', '=', 't.id');
                 })
                 ->leftJoin('academic_section as g', 'g.id', '=', 'te.grade_id')
                 ->Join('standard as s',function($q) use($marking_period_id) {
@@ -482,7 +482,8 @@ class studentReportController extends Controller
                 })
                 ->join('fees_collect as fp', function($join) {
                     $join->on('fp.student_id', '=', 'te.student_id')
-                         ->on('fp.standard_id', '=', 'te.standard_id');
+                         ->on('fp.standard_id', '=', 'te.standard_id')
+                         ->on('fp.syear', '=', 'te.syear');
                 })
                 ->leftJoin('tbluser as u', 'fp.created_by', '=', 'u.id')
                 ->whereRaw("1=1 " . $extra_fp)
@@ -493,8 +494,8 @@ class studentReportController extends Controller
                         . DB::raw('CONCAT_WS(" ", u.first_name, u.last_name) AS user_name, fo.month_id AS term_id, fo.receiptdate AS receiptdate, fo.reciept_id AS receipt_no, fo.payment_mode AS payment_mode, '
                         . 'fo.bank_name as cheque_bank_name, fo.bank_branch, fo.cheque_dd_no as cheque_no, fo.cheque_dd_date AS cheque_date, b.title as batch, sq.title as quota, NULL as remarks, '
                         . 'IFNULL(fo.actual_amountpaid, 0) AS actual_amountpaid'))->from('tblstudent as t')
-                        ->join('tblstudent_enrollment as te', function ($join) use($syear){
-                            $join->on('te.student_id', '=', 't.id')->where('te.syear',$syear);
+                        ->join('tblstudent_enrollment as te', function ($join) {
+                            $join->on('te.student_id', '=', 't.id');
                         })
                         ->leftJoin('academic_section as g', 'g.id', '=', 'te.grade_id')
                         ->Join('standard as s',function($q) use($marking_period_id) {
@@ -508,7 +509,10 @@ class studentReportController extends Controller
                                 ->whereRaw('b.id = t.studentbatch')
                                 ->whereRaw('b.syear = te.syear');
                         })
-                        ->leftJoin('fees_paid_other as fo', 'fo.student_id', '=', 'te.student_id')
+                        ->leftJoin('fees_paid_other as fo', function ($join) {
+                            $join->on('fo.student_id', '=', 'te.student_id')
+                                 ->on('fo.syear', '=', 'te.syear');
+                        })
                         ->leftJoin('tbluser as u', 'fo.created_by', '=', 'u.id')
                         ->whereRaw("1=1 " . $extra_fo);
                 });
