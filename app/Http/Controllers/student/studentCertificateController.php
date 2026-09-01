@@ -109,8 +109,7 @@ class studentCertificateController extends Controller
             $certificate_no_result = DB::table('certificate_history as c')
                 ->selectRaw('(IFNULL(MAX(cast(c.certificate_number AS UNSIGNED)),0) + 1) AS certificate_no')
                 ->where('c.sub_institute_id', $sub_institute_id)
-                ->where('certificate_type', $template)
-                ->where('syear', $syear)->get()->toArray();
+                ->where('syear', $syear)->get()->toArray();//->where('certificate_type', $template)
             $certificate_no = $certificate_no_result[0]->certificate_no;
             $certificate_no1 = $certificate_no + $i;
             $i++;
@@ -492,8 +491,7 @@ class studentCertificateController extends Controller
             $certificate_no_result = DB::table('certificate_history as c')
                 ->selectRaw('(IFNULL(MAX(cast(c.certificate_number AS UNSIGNED)),0) + 1) AS certificate_no')
                 ->where('c.sub_institute_id', $sub_institute_id)
-                ->where('certificate_type', $template)
-                ->where('syear', $syear)->get()->toArray();
+                ->where('syear', $syear)->get()->toArray();//->where('certificate_type', $template)
 
             $certificate_no = $certificate_no_result[0]->certificate_no;
             
