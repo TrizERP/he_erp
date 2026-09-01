@@ -126,7 +126,7 @@ class rollOverController extends Controller
         $table_array_check['timetable'] = $timetable[0]->total_data;
         $table_array_check['transport_map_student'] = $transport_map_student[0]->total_data;
         $table_array_check['tblstudent_enrollment'] = $current_year_students[0]->old_year_students.'/'.$next_year_students[0]->new_year_students.'/'.$remaining_rollover_students;
-        $table_array_check['advance_fees'] = $advance_fees[0]->total_data;
+        $table_array_check['advance_fees'] = 0;//$advance_fees[0]->total_data;
 
         $to_academic_sections = academic_sectionModel::where(['sub_institute_id' => $sub_institute_id])
         // ->when($marking_period_id,function($query) use ($marking_period_id){
@@ -392,8 +392,11 @@ AND st.next_standard_id IS NOT NULL
                 }
             }
             //END ROLLOVER ALL STUDENT DATA 
-            if($request->has('tables')=='fees_breackoff' && $request->has('tables')=='advance_fees')
-            {
+            
+            // START ADVANCE FEES ROLLOVER
+            if($request->has('tables')=='advance_fees')
+            {   //$request->has('tables')=='fees_breackoff' && 
+
                 //   $check_advance_fees = DB::table('fees_collect')
                 //             ->where('sub_institute_id', $sub_institute_id)
                 //             ->where('syear', $to_next_syear)->get()->toArray();
@@ -409,25 +412,16 @@ AND st.next_standard_id IS NOT NULL
                 $advance_fees = "SELECT fb.*,fb.student_id, se.standard_id, SUM(fb.actual_amountpaid) AS sum_amount
                  FROM fees_paid_other fb
                  LEFT JOIN tblstudent_enrollment se ON fb.student_id = se.student_id
-                 WHERE fb.".$title[0]->other_fee_id." !=0 AND fb.is_deleted ='N' AND fb.syear = '".$from_current_syear."'
-                 AND fb.sub_institute_id = '".$sub_institute_id."'
-                 AND se.syear = '".$to_next_syear."'
+                 WHERE fb.".$title[0]->other_fee_id." !=0 AND fb.is_deleted ='N' AND fb.syear = '".$from_current_syear."' AND fb.sub_institute_id = '".$sub_institute_id."'
+                 AND se.syear = '".$to_next_syear."' AND se.term_id = '".$next_marking_period_id."'
                  AND se.sub_institute_id = '".$sub_institute_id."'
-                 GROUP BY fb.student_id, se.standard_id";
+                 GROUP BY fb.student_id, se.standard_id";//AND se.student_id = 237930
+
                 $advance_fees_arr = DB::select($advance_fees);
 
-                               // echo "<br> advance_fees  "; echo "<pre>";print_r($advance_fees_arr);exit;
+                // echo "<br> advance_fees  "; echo "<pre>";print_r($advance_fees_arr);exit;
                 $divided_advance_fees = [];
                 $paid_off = [];
-
-                    // Retrieve fees titles with amounts
-                $query = "SELECT ft.id, ft.fees_title, fb.amount,ft.syear,fb.month_id,fb.standard_id,fb.grade_id,fb.section_id,se.student_id,se.standard_id
-                            FROM fees_title ft
-                            INNER JOIN tblstudent_enrollment se on se.syear = '".$to_next_syear."' AND se.sub_institute_id = '".$sub_institute_id."'
-                            INNER JOIN fees_breackoff fb ON se.standard_id = fb.standard_id  AND  fb.syear = '".$to_next_syear."' AND fb.sub_institute_id = '".$sub_institute_id."' 
-                            WHERE ft.syear = '".$to_next_syear."'
-                            AND ft.sub_institute_id = '".$sub_institute_id."' group by fb.month_id order by fb.id";
-                $fees_titles = DB::select($query);
 
                 // echo "<pre>";print_r($month);exit;
                 $sum_amt=0;
@@ -439,6 +433,16 @@ AND st.next_standard_id IS NOT NULL
                         $remainingAmount = $totalAmount;
                         $allocatedAmount = 0;
                         $i = 4;
+
+                        // Retrieve fees titles with amounts
+                        $query = "SELECT ft.id, ft.fees_title, fb.amount,ft.syear,fb.month_id,se.student_id,se.grade_id,se.standard_id,se.section_id
+                                    FROM fees_title ft
+                                    INNER JOIN tblstudent_enrollment se on se.syear = '".$to_next_syear."' AND se.sub_institute_id = '".$sub_institute_id."'
+                                    INNER JOIN fees_breackoff fb ON se.standard_id = fb.standard_id  AND  fb.syear = '".$to_next_syear."' AND fb.sub_institute_id = '".$sub_institute_id."' 
+                                    WHERE ft.syear = '".$to_next_syear."' AND se.student_id='".$studentId."' AND se.term_id = '".$next_marking_period_id."' AND ft.sub_institute_id = '".$sub_institute_id."'
+                                    group by fb.month_id order by fb.id";
+                        $fees_titles = DB::select($query);
+
                         foreach ($fees_titles as $key=>$title) {
                             $feesTitle = $title->fees_title;
                             $amount = $title->amount;
@@ -490,29 +494,30 @@ AND st.next_standard_id IS NOT NULL
                     $config_get = DB::table('fees_config_master')->where(['sub_institute_id'=>$sub_institute_id])->first();
                     $config_check = DB::table('fees_config_master')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$to_next_syear])->get();
                     if(count($config_check) > 0){
-                    $config_insert = DB::table('fees_config_master')->insert([
-                    "late_fees_amount"=>$config_get->late_fees_amount,
-                    "send_sms"=>$config_get->send_sms,
-                    "send_email"=>$config_get->send_email,
-                    "fees_receipt_template"=>$config_get->fees_receipt_template,
-                    "fees_bank_challan_template"=>$config_get->fees_bank_challan_template,
-                    "fees_receipt_note"=>$config_get->fees_receipt_note,
-                    "institute_name"=>$config_get->institute_name,
-                    "pan_no"=>$config_get->pan_no,
-                    "account_to_be_credited"=>$config_get->account_to_be_credited,
-                    "cms_client_code"=>$config_get->cms_client_code,
-                    "auto_head_counting"=>$config_get->auto_head_counting,
-                    "nach_account_type"=>$config_get->nach_account_type,
-                    "nach_registration_charge"=>$config_get->nach_registration_charge,
-                    "nach_transaction_charge"=>$config_get->nach_transaction_charge,
-                    "nach_failed_charge"=>$config_get->nach_failed_charge,
-                    "bank_logo"=>$config_get->bank_logo,
-                    "syear"=>$to_next_syear,
-                    "sub_institute_id"=>$sub_institute_id,
-                    ]);
-                }
+                        $config_insert = DB::table('fees_config_master')->insert([
+                        "late_fees_amount"=>$config_get->late_fees_amount,
+                        "send_sms"=>$config_get->send_sms,
+                        "send_email"=>$config_get->send_email,
+                        "fees_receipt_template"=>$config_get->fees_receipt_template,
+                        "fees_bank_challan_template"=>$config_get->fees_bank_challan_template,
+                        "fees_receipt_note"=>$config_get->fees_receipt_note,
+                        "institute_name"=>$config_get->institute_name,
+                        "pan_no"=>$config_get->pan_no,
+                        "account_to_be_credited"=>$config_get->account_to_be_credited,
+                        "cms_client_code"=>$config_get->cms_client_code,
+                        "auto_head_counting"=>$config_get->auto_head_counting,
+                        "nach_account_type"=>$config_get->nach_account_type,
+                        "nach_registration_charge"=>$config_get->nach_registration_charge,
+                        "nach_transaction_charge"=>$config_get->nach_transaction_charge,
+                        "nach_failed_charge"=>$config_get->nach_failed_charge,
+                        "bank_logo"=>$config_get->bank_logo,
+                        "syear"=>$to_next_syear,
+                        "sub_institute_id"=>$sub_institute_id,
+                        ]);
+                    }
                 }
             }
+            //END ADVANCE FEES ROLLOVER
             // exit;
             if ($i > 1) {
                 $res['status'] = "0";
@@ -585,7 +590,7 @@ AND st.next_standard_id IS NOT NULL
             }
             return is_mobile($type, "rollover.index", $res, "redirect");
         }
-        // for semisterwise rollover start 22-01-2025
+        // for semesterwise rollover start 22-01-2025
         else
         {
             $get_all_student_data = DB::table('tblstudent_enrollment')
@@ -630,14 +635,14 @@ AND st.next_standard_id IS NOT NULL
             }
             if ($i > 1) {
                 $res['status'] = "0";
-                $res['message'] = $i." students is already exist in semister.";
+                $res['message'] = $i." students is already exist in semester.";
             } else {
                 $res['status'] = "1";
                 $res['message'] = "Student Data Rollover Successfully.";
             }
             return is_mobile($type, "rollover.index", $res, "redirect");
         }
-        // for semisterwise rollover end 22-01-2025
+        // for semesterwise rollover end 22-01-2025
 
         //END FOR ROLLOVER ONLY ALL STUDENT DATA         
 
