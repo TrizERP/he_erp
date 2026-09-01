@@ -566,7 +566,8 @@ class tblstudentController extends Controller
                 'subject.subject_code')
                 ->join('subject', 'subject.id', '=', 'sub_std_map.subject_id')
                 ->where([
-                    'sub_std_map.sub_institute_id' => $sub_institute_id, 'standard_id' => $std_id,
+                    'sub_std_map.sub_institute_id' => $sub_institute_id,
+                    'sub_std_map.standard_id' => $std_id,
                     'elective_subject'             => 'Yes',
                 ])
                 ->get()->toArray();
