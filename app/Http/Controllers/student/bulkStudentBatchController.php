@@ -140,6 +140,7 @@ class bulkStudentBatchController extends Controller
         $extraSearchArray['tblstudent_enrollment.sub_institute_id'] = $sub_institute_id;
         $extraSearchArray['tblstudent_enrollment.syear'] = $syear;
         $extraSearchArray['tblstudent.status'] = 1;
+
         if ($grade_id != '') {
             $extraSearchArray['tblstudent_enrollment.grade_id'] = $grade_id;
         }
@@ -150,7 +151,7 @@ class bulkStudentBatchController extends Controller
             $extraSearchArray['tblstudent_enrollment.section_id'] = $division_id;
         }
 
-        $extraRaw = " 1 = 1 ";
+        $extraRaw = " tblstudent_enrollment.end_date is NULL ";
 
         if ($user_profile_name == 'Student') {
             $extraRaw .= " AND tblstudent.id = '".$user_id."' ";
