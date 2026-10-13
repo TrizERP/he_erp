@@ -1,0 +1,283 @@
+<?php
+
+namespace App\Http\Controllers\fees\deposit_refund;
+
+use App\Http\Controllers\Controller;
+use App\Models\fees\deposit_refund\depositRefundModel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use function App\Helpers\is_mobile;
+
+class depositRefundReportController extends Controller
+{
+    /**
+     * Total deposit money the institute is holding today, standard/semester wise.
+     */
+    public function depositInHand(Request $request)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+        $syear = $request->session()->get('syear');
+
+        $collected = DB::table('fees_collect as fc')
+            ->join('tblstudent as s', 's.id', '=', 'fc.student_id')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->whereRaw('se.student_id = s.id');
+            })
+            ->join('standard as st', 'st.id', '=', 'se.standard_id')
+            ->selectRaw('st.id as standard_id, st.name as standard_name, SUM(fc.deposit) as collected')
+            ->where('fc.sub_institute_id', $sub_institute_id)
+            ->where('fc.is_deleted', 'N')
+            ->where('se.syear', $syear)
+            ->whereNull('se.end_date')
+            ->groupBy('st.id', 'st.name')
+            ->get()->keyBy('standard_id');
+
+        $returned = DB::table('deposit_refund as dr')
+            ->selectRaw('dr.standard_id, SUM(dr.final_refund_amount) as returned')
+            ->where('dr.sub_institute_id', $sub_institute_id)
+            ->where('dr.status', depositRefundModel::STATUS_PAID)
+            ->groupBy('dr.standard_id')
+            ->get()->keyBy('standard_id');
+
+        $data = [];
+        $totalInHand = 0;
+        foreach ($collected as $standardId => $row) {
+            $returnedAmt = (float)($returned[$standardId]->returned ?? 0);
+            $inHand = (float)$row->collected - $returnedAmt;
+            $data[] = [
+                'standard_name' => $row->standard_name,
+                'collected'     => $row->collected,
+                'returned'      => $returnedAmt,
+                'in_hand'       => $inHand,
+            ];
+            $totalInHand += $inHand;
+        }
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['data'] = $data;
+        $res['total_in_hand'] = $totalInHand;
+
+        return is_mobile($type, "fees/deposit_refund/reports/deposit_in_hand", $res, "view");
+    }
+
+    /**
+     * All refunds given in a chosen period, with who approved each one.
+     */
+    public function refundsGiven(Request $request)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+        $from_date = $request->input('from_date');
+        $to_date = $request->input('to_date');
+
+        $query = DB::table('deposit_refund as dr')
+            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tbluser as ah', 'ah.id', '=', 'dr.accounts_head_by')
+            ->leftJoin('tbluser as pr', 'pr.id', '=', 'dr.principal_by')
+            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
+                concat_ws(' ',ah.first_name,ah.last_name) as accounts_head_name,
+                concat_ws(' ',pr.first_name,pr.last_name) as principal_name")
+            ->where('dr.sub_institute_id', $sub_institute_id)
+            ->where('dr.status', depositRefundModel::STATUS_PAID);
+
+        if ($from_date != '') {
+            $query->whereDate('dr.paid_date', '>=', $from_date);
+        }
+        if ($to_date != '') {
+            $query->whereDate('dr.paid_date', '<=', $to_date);
+        }
+
+        $data = $query->orderByDesc('dr.paid_date')->get()->toArray();
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['data'] = $data;
+        $res['from_date'] = $from_date;
+        $res['to_date'] = $to_date;
+        $res['total_refunded'] = array_sum(array_column($data, 'final_refund_amount'));
+
+        return is_mobile($type, "fees/deposit_refund/reports/refunds_given", $res, "view");
+    }
+
+    /**
+     * Refunds waiting for someone's approval, with how many days they have been waiting.
+     */
+    public function pendingApprovals(Request $request)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+
+        $data = DB::table('deposit_refund as dr')
+            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->join('deposit_refund_status_master as sm', 'sm.id', '=', 'dr.status')
+            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
+                sm.title as status_title,
+                DATEDIFF(NOW(), COALESCE(dr.accounts_head_date, dr.requested_date)) as days_pending")
+            ->where('dr.sub_institute_id', $sub_institute_id)
+            ->whereIn('dr.status', [
+                depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
+                depositRefundModel::STATUS_PENDING_PRINCIPAL,
+            ])
+            ->orderByDesc('days_pending')
+            ->get()->toArray();
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['data'] = $data;
+
+        return is_mobile($type, "fees/deposit_refund/reports/pending_approvals", $res, "view");
+    }
+
+    /**
+     * Students who have left but have not collected their deposit.
+     */
+    public function unclaimedDeposits(Request $request)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+
+        $leftStudents = DB::table('tblstudent_enrollment as se')
+            ->join('tblstudent as s', 's.id', '=', 'se.student_id')
+            ->selectRaw("s.id as student_id, concat_ws(' ',s.first_name,s.last_name) as student_name,
+                s.enrollment_no, s.mobile, MAX(se.end_date) as left_on")
+            ->where('s.sub_institute_id', $sub_institute_id)
+            ->whereNotNull('se.end_date')
+            ->groupBy('s.id', 's.first_name', 's.last_name', 's.enrollment_no', 's.mobile')
+            ->get();
+
+        $data = [];
+        foreach ($leftStudents as $student) {
+            $collected = (float)DB::table('fees_collect')
+                ->where('student_id', $student->student_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('is_deleted', 'N')
+                ->sum('deposit');
+
+            if ($collected <= 0) {
+                continue;
+            }
+
+            $returned = (float)depositRefundModel::where('student_id', $student->student_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('status', depositRefundModel::STATUS_PAID)
+                ->sum('final_refund_amount');
+
+            $balance = $collected - $returned;
+
+            if ($balance > 0) {
+                $data[] = [
+                    'student_name'  => $student->student_name,
+                    'enrollment_no' => $student->enrollment_no,
+                    'mobile'        => $student->mobile,
+                    'left_on'       => $student->left_on,
+                    'collected'     => $collected,
+                    'returned'      => $returned,
+                    'balance'       => $balance,
+                ];
+            }
+        }
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['data'] = $data;
+        $res['total_unclaimed'] = array_sum(array_column($data, 'balance'));
+
+        return is_mobile($type, "fees/deposit_refund/reports/unclaimed_deposits", $res, "view");
+    }
+
+    /**
+     * One-page statement for a single student, which can be handed to the parent.
+     */
+    public function studentStatement(Request $request, $student_id)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+
+        $student = DB::table('tblstudent')
+            ->selectRaw("concat_ws(' ',first_name,middle_name,last_name) as name, enrollment_no, mobile")
+            ->where('id', $student_id)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->first();
+
+        if (!$student) {
+            $res['status_code'] = 0;
+            $res['message'] = "Student not found.";
+
+            return is_mobile($type, "deposit_refund.index", $res, "redirect");
+        }
+
+        $receipts = DB::table('fees_collect')
+            ->selectRaw("receipt_no, receiptdate, deposit")
+            ->where('student_id', $student_id)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->where('is_deleted', 'N')
+            ->where('deposit', '>', 0)
+            ->orderBy('receiptdate')
+            ->get();
+
+        $refunds = depositRefundModel::where('student_id', $student_id)
+            ->where('sub_institute_id', $sub_institute_id)
+            ->where('status', depositRefundModel::STATUS_PAID)
+            ->orderBy('paid_date')
+            ->get();
+
+        $collected = (float)$receipts->sum('deposit');
+        $returned = (float)$refunds->sum('final_refund_amount');
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['student'] = $student;
+        $res['receipts'] = $receipts;
+        $res['refunds'] = $refunds;
+        $res['collected'] = $collected;
+        $res['returned'] = $returned;
+        $res['balance'] = $collected - $returned;
+
+        return is_mobile($type, "fees/deposit_refund/reports/student_statement", $res, "view");
+    }
+
+    /**
+     * How much the institute has recovered through deductions.
+     */
+    public function deductionsMade(Request $request)
+    {
+        $type = $request->input('type');
+        $sub_institute_id = $request->session()->get('sub_institute_id');
+        $from_date = $request->input('from_date');
+        $to_date = $request->input('to_date');
+
+        $query = DB::table('deposit_refund_deduction as drd')
+            ->join('deposit_refund as dr', 'dr.id', '=', 'drd.deposit_refund_id')
+            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->selectRaw("drd.title, drd.amount, drd.remarks, dr.voucher_no, dr.paid_date,
+                concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no")
+            ->where('dr.sub_institute_id', $sub_institute_id)
+            ->where('dr.status', depositRefundModel::STATUS_PAID);
+
+        if ($from_date != '') {
+            $query->whereDate('dr.paid_date', '>=', $from_date);
+        }
+        if ($to_date != '') {
+            $query->whereDate('dr.paid_date', '<=', $to_date);
+        }
+
+        $data = $query->orderByDesc('dr.paid_date')->get()->toArray();
+
+        $byTitle = [];
+        foreach ($data as $row) {
+            $byTitle[$row->title] = ($byTitle[$row->title] ?? 0) + (float)$row->amount;
+        }
+
+        $res['status_code'] = 1;
+        $res['message'] = "Success";
+        $res['data'] = $data;
+        $res['by_title'] = $byTitle;
+        $res['from_date'] = $from_date;
+        $res['to_date'] = $to_date;
+        $res['total_deductions'] = array_sum(array_column($data, 'amount'));
+
+        return is_mobile($type, "fees/deposit_refund/reports/deductions_made", $res, "view");
+    }
+}
