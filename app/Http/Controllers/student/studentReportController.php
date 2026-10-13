@@ -374,8 +374,11 @@ class studentReportController extends Controller
         
         // get start date att
        
+        // get result/exam marks information
+        $resultInfo = $this->getStudentResultData($student_id, $sub_institute_id);
+
         // echo "<pre>";print_r($otherFeesDetails);exit;
-        $enrollNo = $rollNo = $studentImg = '-'; 
+        $enrollNo = $rollNo = $studentImg = '-';
 
         $personalDatas = $parentData = $academicData = [];
 
@@ -435,7 +438,73 @@ class studentReportController extends Controller
         $res['feesDetails'] = $feesData;
         $res['cancelFeesCollect'] =$cancelFeesCollect;
         $res['otherFeesDetails'] =$otherFeesDetails;
+        $res['resultInfo'] = $resultInfo;
         return is_mobile($type, "student/show_student_report_model", $res, "view");
+    }
+
+    /**
+     * Build the student's exam-wise result information (all academic years/semesters)
+     * grouped under Academic Year -> Semester, with percentage/grade/status computed
+     * the same way as the existing result modules (result_create_exam/result_marks).
+     */
+    private function getStudentResultData($student_id, $sub_institute_id)
+    {
+        $marks = DB::table('result_marks as rm')
+            ->join('result_create_exam as rce', function ($join) use ($sub_institute_id) {
+                $join->on('rce.id', '=', 'rm.exam_id')
+                    ->where('rce.sub_institute_id', $sub_institute_id);
+            })
+            ->join('result_exam_master as rem', 'rem.Id', '=', 'rce.exam_id')
+            ->leftJoin('subject as sub', 'sub.id', '=', 'rce.subject_id')
+            ->leftJoin('standard as std', 'std.id', '=', 'rce.standard_id')
+            ->leftJoin('academic_year as ay', function ($join) use ($sub_institute_id) {
+                $join->on('ay.term_id', '=', 'rce.term_id')
+                    ->on('ay.syear', '=', 'rce.syear')
+                    ->where('ay.sub_institute_id', $sub_institute_id);
+            })
+            ->selectRaw("rce.syear, rce.standard_id, std.name as semester_name,
+                COALESCE(ay.title, CONCAT(rce.syear,'-',rce.syear+1)) as academic_year,
+                rem.ExamTitle as exam_name,
+                COALESCE(sub.subject_name, MIN(rce.title)) as subject_name,
+                SUM(rce.points) as total_marks,
+                SUM(rm.points) as obtained_marks,
+                MAX(rm.is_absent) as is_absent")
+            ->where('rm.student_id', $student_id)
+            ->where('rm.sub_institute_id', $sub_institute_id)
+            ->groupBy('rce.syear', 'rce.standard_id', 'rce.exam_id', 'rce.subject_id', 'std.name', 'ay.title', 'rem.ExamTitle', 'sub.subject_name')
+            ->orderByDesc('rce.syear')
+            ->orderBy('rce.standard_id')
+            ->orderBy('subject_name')
+            ->get();
+
+        if ($marks->isEmpty()) {
+            return [];
+        }
+
+        $result = [];
+        $srNo = 1;
+        foreach ($marks as $row) {
+            $isAbsent = !empty($row->is_absent) && $row->is_absent != '-';
+            $total = (float) $row->total_marks;
+            $obtained = (float) $row->obtained_marks;
+            $percentage = ($total > 0 && !$isAbsent) ? round(($obtained / $total) * 100, 2) : null;
+
+            $status = $isAbsent ? $row->is_absent : (($percentage !== null && $percentage >= 33) ? 'Pass' : 'Fail');
+
+            $result[] = [
+                'sr_no' => $srNo++,
+                'academic_year' => $row->academic_year,
+                'semester' => $row->semester_name,
+                'exam_name' => $row->exam_name,
+                'subject_name' => $row->subject_name,
+                'total_marks' => $row->total_marks,
+                'obtained_marks' => $isAbsent ? $row->is_absent : $row->obtained_marks,
+                'percentage' => $percentage !== null ? $percentage . '%' : '-',
+                'status' => $status,
+            ];
+        }
+
+        return $result;
     }
 
     /**
