@@ -91,6 +91,37 @@
                 </table>
             </div>
             <!-- academic detail table end  -->
+            <!-- result information table start  -->
+            @if(!empty($data['resultInfo']))
+            <div class="personalData" style="padding:20px 30px;">
+                <h3><b>RESULT INFORMATION</b></h3>
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <th><b>Sr No.</b></th>
+                        <th><b>Semester</b></th>
+                        <th><b>Exam Name</b></th>
+                        <th><b>Subject Name</b></th>
+                        <th><b>Total Marks</b></th>
+                        <th><b>Obtained Marks</b></th>
+                        <th><b>Percentage</b></th>
+                        <th><b>Result Status</b></th>
+                    </tr>
+                    @foreach($data['resultInfo'] as $value)
+                    <tr>
+                        <td><b>{{$value['sr_no']}}<b></td>
+                        <td><b>{{$value['semester']}}<b></td>
+                        <td><b>{{$value['exam_name']}}<b></td>
+                        <td><b>{{$value['subject_name']}}<b></td>
+                        <td><b>{{$value['total_marks']}}<b></td>
+                        <td><b>{{$value['obtained_marks']}}<b></td>
+                        <td><b>{{$value['percentage']}}<b></td>
+                        <td><b>{{$value['status']}}<b></td>
+                    </tr>
+                    @endforeach
+                </table>
+            </div>
+            @endif
+            <!-- result information table end  -->
             <!-- past education table start  -->
             @if(!empty($data['pastEducation']))
             <div class="personalData" style="padding:20px 30px;">

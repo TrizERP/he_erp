@@ -7,6 +7,10 @@ use App\Http\Controllers\fees\cheque_cash\cheque_cash_controller;
 use App\Http\Controllers\fees\college_fees_collect\college_fees_collect_controller;
 use App\Http\Controllers\fees\fees_breackoff\fees_breackoff_controller;
 use App\Http\Controllers\fees\cheque_reconciliation\ChequeReconciliationController;
+use App\Http\Controllers\fees\deposit_refund\depositRefundController;
+use App\Http\Controllers\fees\deposit_refund\depositRefundApprovalController;
+use App\Http\Controllers\fees\deposit_refund\depositRefundPaymentController;
+use App\Http\Controllers\fees\deposit_refund\depositRefundReportController;
 use App\Http\Controllers\fees\fees_cancel\feesCancelController;
 use App\Http\Controllers\fees\fees_cancel\feesRefundController;
 use App\Http\Controllers\fees\fees_circular\feesCircularController;
@@ -153,11 +157,48 @@ Route::get('payphi', function ($id = null) {
     });
 
     Route::resource('fees_refund', feesRefundController::class);
-    
+
     Route::controller(feesRefundController::class)->group(function () {
         Route::post('fees/fees_refund', 'showFees')->name('show_fees');
         Route::post('fees/save_fees_refund', 'saveFeesRefund')->name('save_fees_refund');
-    
+
+    });
+
+    // Deposit Refund module - clerk search + deposit account + refund request
+    Route::controller(depositRefundController::class)->group(function () {
+        Route::get('deposit_refund', 'index')->name('deposit_refund.index');
+        Route::post('deposit_refund/search', 'searchStudents')->name('deposit_refund_search');
+        Route::get('deposit_refund/account/{student_id}', 'depositAccount')->name('deposit_refund_account');
+        Route::get('deposit_refund/create/{student_id}', 'create')->name('deposit_refund_create');
+        Route::post('deposit_refund/store', 'store')->name('deposit_refund_store');
+        Route::get('deposit_refund_my_requests', 'myRequests')->name('deposit_refund_my_requests.index');
+        Route::post('deposit_refund/resubmit/{id}', 'resubmit')->name('deposit_refund_resubmit');
+        Route::post('deposit_refund/cancel/{id}', 'cancel')->name('deposit_refund_cancel');
+    });
+
+    // Deposit Refund module - Accounts Head + Principal approval queues
+    Route::controller(depositRefundApprovalController::class)->group(function () {
+        Route::get('deposit_refund_accounts_head', 'accountsHeadQueue')->name('deposit_refund_accounts_head.index');
+        Route::post('deposit_refund_accounts_head/action/{id}', 'accountsHeadAction')->name('deposit_refund_accounts_head_action');
+        Route::get('deposit_refund_principal', 'principalQueue')->name('deposit_refund_principal.index');
+        Route::post('deposit_refund_principal/action/{id}', 'principalAction')->name('deposit_refund_principal_action');
+    });
+
+    // Deposit Refund module - cashier payment + voucher
+    Route::controller(depositRefundPaymentController::class)->group(function () {
+        Route::get('deposit_refund_payment', 'queue')->name('deposit_refund_payment.index');
+        Route::post('deposit_refund_payment/pay/{id}', 'pay')->name('deposit_refund_pay');
+        Route::get('deposit_refund_payment/voucher/{id}', 'printVoucher')->name('deposit_refund_print_voucher');
+    });
+
+    // Deposit Refund module - reports
+    Route::controller(depositRefundReportController::class)->group(function () {
+        Route::get('deposit_refund_report/deposit_in_hand', 'depositInHand')->name('deposit_refund_report_deposit_in_hand');
+        Route::get('deposit_refund_report/refunds_given', 'refundsGiven')->name('deposit_refund_report_refunds_given');
+        Route::get('deposit_refund_report/pending_approvals', 'pendingApprovals')->name('deposit_refund_report_pending_approvals');
+        Route::get('deposit_refund_report/unclaimed_deposits', 'unclaimedDeposits')->name('deposit_refund_report_unclaimed_deposits');
+        Route::get('deposit_refund_report/student_statement/{student_id}', 'studentStatement')->name('deposit_refund_report_student_statement');
+        Route::get('deposit_refund_report/deductions_made', 'deductionsMade')->name('deposit_refund_report_deductions_made');
     });
 
 
