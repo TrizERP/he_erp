@@ -212,7 +212,7 @@ class dashboardController extends Controller
                     ->join("division as d", function ($join) {
                         $join->whereRaw("ts.section_id = d.id");
                     })
-                    ->selectRaw("CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name) as student_name, st.name as standard_name, d.name as division_name, DATE_FORMAT(s.dob, '%d-%m-%Y') as dob")
+                    ->selectRaw("s.id as student_id, CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name) as student_name, st.name as standard_name, d.name as division_name, DATE_FORMAT(s.dob, '%d-%m-%Y') as dob")
                     ->where("s.sub_institute_id", "=", $sub_institute_id)
                     ->whereNull("ts.end_date")
                     ->whereRaw("DATE_FORMAT(s.dob, '%m-%d') >= DATE_FORMAT(NOW(), '%m-%d') and DATE_FORMAT(s.dob, '%m-%d') <= DATE_FORMAT((NOW() + INTERVAL +7 DAY), '%m-%d')")
@@ -223,7 +223,7 @@ class dashboardController extends Controller
                     ->join("tbluserprofilemaster as tu", function ($join) use ($syear) {
                         $join->whereRaw("s.user_profile_id = tu.id");
                     })
-                    ->selectRaw("CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) as teacher_name,tu.name as designation,s.mobile as contact_number, DATE_FORMAT(s.birthdate, '%d-%m-%Y') AS birthdate")
+                    ->selectRaw("s.id as user_id, CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) as teacher_name,tu.name as designation,s.mobile as contact_number, DATE_FORMAT(s.birthdate, '%d-%m-%Y') AS birthdate")
                     ->where("s.sub_institute_id", "=", $sub_institute_id)
                     ->where("s.status", "!=", 0)
                     ->whereRaw("DATE_FORMAT(s.birthdate,'%m-%d') >= DATE_FORMAT(NOW(), '%m-%d') and DATE_FORMAT(s.birthdate, '%m-%d') <= DATE_FORMAT((NOW() + INTERVAL +7 DAY), '%m-%d')")
@@ -2351,6 +2351,125 @@ class dashboardController extends Controller
         }
     }
 
+
+    /**
+     * Dashboard drill-down: active users grouped by branch (department).
+     */
+    public function userBranches(Request $request)
+    {
+        if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile())) {
+            return response()->json(['status_code' => 0, 'message' => 'Unauthorized'], 403);
+        }
+        $sub_institute_id = session()->get('sub_institute_id');
+
+        $branches = DB::table('tbluser as u')
+            ->leftJoin('hrms_departments as d', function ($join) {
+                $join->on('d.id', '=', 'u.department_id')
+                    ->on('d.sub_institute_id', '=', 'u.sub_institute_id');
+            })
+            ->selectRaw("IFNULL(d.id, 0) as id, IFNULL(d.department, 'Unassigned') as name, COUNT(u.id) as total")
+            ->where('u.sub_institute_id', $sub_institute_id)
+            ->where('u.status', 1)
+            ->groupBy('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(['status_code' => 1, 'data' => $branches]);
+    }
+
+    /**
+     * Dashboard drill-down: active users of one branch (branch_id 0 = unassigned).
+     */
+    public function branchUsers(Request $request)
+    {
+        if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile())) {
+            return response()->json(['status_code' => 0, 'message' => 'Unauthorized'], 403);
+        }
+        $sub_institute_id = session()->get('sub_institute_id');
+        $branch_id = (int)$request->input('branch_id', 0);
+
+        $query = DB::table('tbluser as u')
+            ->leftJoin('tbluserprofilemaster as p', 'p.id', '=', 'u.user_profile_id')
+            ->selectRaw("u.id, CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) as name, IFNULL(p.name, '') as c1, IFNULL(u.mobile, '') as c2, IFNULL(u.email, '') as c3")
+            ->where('u.sub_institute_id', $sub_institute_id)
+            ->where('u.status', 1);
+
+        if ($branch_id > 0) {
+            $query->where('u.department_id', $branch_id);
+        } else {
+            $query->where(function ($q) {
+                $q->whereNull('u.department_id')->orWhere('u.department_id', 0)
+                    ->orWhereNotIn('u.department_id', function ($sub) {
+                        $sub->select('id')->from('hrms_departments')
+                            ->where('sub_institute_id', session()->get('sub_institute_id'));
+                    });
+            });
+        }
+
+        $users = $query->orderBy('u.first_name')->get()->map(function ($u) {
+            $u->url = route('add_user.edit', $u->id);
+            return $u;
+        });
+
+        return response()->json(['status_code' => 1, 'data' => $users]);
+    }
+
+    /**
+     * Dashboard drill-down: current students grouped by standard.
+     */
+    public function studentStandards(Request $request)
+    {
+        if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile())) {
+            return response()->json(['status_code' => 0, 'message' => 'Unauthorized'], 403);
+        }
+        $rows = $this->activeStudentsQuery()
+            ->selectRaw('s.id as id, s.name as name, COUNT(ts.id) as total')
+            ->groupBy('s.id', 's.name')
+            ->orderBy('s.sort_order')->orderBy('s.name')
+            ->get();
+
+        return response()->json(['status_code' => 1, 'data' => $rows]);
+    }
+
+    /**
+     * Dashboard drill-down: current students of one standard.
+     */
+    public function standardStudents(Request $request)
+    {
+        if (!in_array(session()->get('user_profile_name'), Helpers::adminProfile())) {
+            return response()->json(['status_code' => 0, 'message' => 'Unauthorized'], 403);
+        }
+        $rows = $this->activeStudentsQuery()
+            ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
+            ->where('s.id', (int)$request->input('standard_id'))
+            ->selectRaw("ts.id as sid, CONCAT_WS(' ', ts.first_name, ts.middle_name, ts.last_name) as name, IFNULL(dv.name, '') as c1, IFNULL(ts.enrollment_no, '') as c2, IFNULL(ts.mobile, '') as c3")
+            ->orderBy('ts.first_name')
+            ->get()->map(function ($r) {
+                $r->url = route('studentProfileData', ['student_id' => $r->sid]);
+                return $r;
+            });
+
+        return response()->json(['status_code' => 1, 'data' => $rows]);
+    }
+
+    /** Same student set as the dashboard "Total Students" count. */
+    private function activeStudentsQuery()
+    {
+        $sub_institute_id = session()->get('sub_institute_id');
+
+        return DB::table('tblstudent as ts')
+            ->join('tblstudent_enrollment as se', function ($join) use ($sub_institute_id) {
+                $join->on('se.student_id', '=', 'ts.id')->where('se.sub_institute_id', '=', $sub_institute_id);
+            })
+            ->join('standard as s', function ($join) use ($sub_institute_id) {
+                $join->on('s.id', '=', 'se.standard_id')
+                    ->where('s.sub_institute_id', '=', $sub_institute_id)
+                    ->where('s.marking_period_id', '=', session()->get('term_id'));
+            })
+            ->where('ts.sub_institute_id', $sub_institute_id)
+            ->where('se.syear', session()->get('syear'))
+            ->whereNull('se.end_date');
+    }
 
     public function siteMap(Request $request)
     {

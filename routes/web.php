@@ -242,7 +242,11 @@ Route::any('/knowledge-base', [dashboardController::class, 'knowledge_base'])->n
 Route::any('/knowledge-base-detail/{id}/{title}', [dashboardController::class, 'knowledge_base_detail'])->name('knowledge_base_detail')->middleware('session', 'menu');
 
 Route::get('dashboard', [dashboardController::class, 'index'])->name('dashboard')->middleware('session', 'menu', 'logRoute','check_permissions');
-// add by uma 
+Route::get('dashboard/user-branches', [dashboardController::class, 'userBranches'])->name('dashboard.userBranches')->middleware('session');
+Route::get('dashboard/branch-users', [dashboardController::class, 'branchUsers'])->name('dashboard.branchUsers')->middleware('session');
+Route::get('dashboard/student-standards', [dashboardController::class, 'studentStandards'])->name('dashboard.studentStandards')->middleware('session');
+Route::get('dashboard/standard-students', [dashboardController::class, 'standardStudents'])->name('dashboard.standardStudents')->middleware('session');
+// add by uma
 Route::resource('norm-clature', normClatureController::class);
 // Route::resource('add-institute-details', institute_detail::class);
 
