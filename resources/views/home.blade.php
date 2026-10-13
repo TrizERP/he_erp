@@ -125,7 +125,7 @@
             <div class="row">
                 <div class="col-md-3">
                     @if(isset($data['totalStudent']))
-                    <div class="card">
+                    <div class="card drill-trigger" data-tab="students" style="cursor:pointer;" title="Click to view students">
                         <div class="text-center card-body">
                             <div class=" text-center">
                                 <h3>{{$data['totalStudent']}}</h3>
@@ -172,7 +172,7 @@
                 </div>
                 <div class="col-md-3">
                     @if(isset($data['totalUser']))
-                    <div class="card">
+                    <div class="card drill-trigger" data-tab="users" style="cursor:pointer;" title="Click to view branch-wise users">
                         <div class="text-center card-body">
                             <div class=" text-center">
                                 <h3>{{$data['totalUser']}}</h3>
@@ -187,6 +187,65 @@
                 </div>
             </div>
         </div>
+
+        @if(isset($data['totalUser']) || isset($data['totalStudent']))
+        <style>
+        .dd-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+        .dd-top .card-title{margin:0}
+        .dd-block input.dd-search{width:170px;height:34px;padding:4px 12px;font-size:13px}
+        .dd-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;align-items:start;max-height:480px;overflow-y:auto;padding:2px}
+        .dd-item{border:1px solid rgba(0,0,0,.09);border-radius:6px;background:#fff;overflow:hidden;transition:box-shadow .25s,border-color .25s}
+        .dd-item.open{grid-column:1/-1;border-color:#ffc107;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+        .dd-item-head{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;user-select:none;transition:background .2s}
+        .dd-item-head:hover{background:rgba(255,193,7,.12)}
+        .dd-item-name{flex:1;min-width:0;font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dd-count{background:rgba(0,0,0,.06);border-radius:10px;padding:0 9px;font-size:12px;font-weight:600;white-space:nowrap}
+        .dd-arrow{display:inline-block;font-size:11px;transition:transform .3s ease;color:#6c757d}
+        .dd-item.open .dd-arrow{transform:rotate(90deg)}
+        .dd-item-body{display:none;border-top:1px solid rgba(0,0,0,.06);background:#fafafa;padding:8px}
+        .dd-sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}
+        .dd-sub{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:5px;padding:6px 10px;min-width:0;transition:background .2s,border-color .2s}
+        .dd-sub:hover{background:rgba(255,193,7,.12);border-color:#ffc107}
+        .dd-sub a{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dd-sub small{display:block;color:#6c757d;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dd-msg{grid-column:1/-1;padding:12px;text-align:center;color:#6c757d}
+        .dd-fade{animation:ddFade .35s ease both}
+        @keyframes ddFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+        .drill-trigger{transition:transform .25s,box-shadow .25s}
+        .drill-trigger:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.12)}
+        @media (prefers-reduced-motion:reduce){.dd-fade{animation:none}.dd-item-head,.dd-arrow{transition:none}}
+        </style>
+        <div class="container-fluid mb-2" id="drillPanel">
+            <div class="row">
+                @if(isset($data['totalUser']))
+                <div class="col-md-12 col-lg-6 col-sm-12 mb-4">
+                    <div class="card h-100 dd-block" id="drillBlockUsers" data-tab="users">
+                        <div class="card-body">
+                            <div class="dd-top">
+                                <h3 class="card-title">Total Users (Branch wise)</h3>
+                                <input type="text" class="form-control dd-search" placeholder="Search...">
+                            </div>
+                            <div class="dd-list"></div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                @if(isset($data['totalStudent']))
+                <div class="col-md-12 col-lg-6 col-sm-12 mb-4">
+                    <div class="card h-100 dd-block" id="drillBlockStudents" data-tab="students">
+                        <div class="card-body">
+                            <div class="dd-top">
+                                <h3 class="card-title">Students (Standard wise)</h3>
+                                <input type="text" class="form-control dd-search" placeholder="Search...">
+                            </div>
+                            <div class="dd-list"></div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
 
         <div class="container-fluid mb-2">
             <div class="row">
@@ -439,7 +498,7 @@
                                     @if(count($data['teacherBirthdays']) > 0)
                                        @foreach($data['teacherBirthdays'] as $key => $value)
                                         <tr>
-                                            <td><span>{{$value->teacher_name}}</span> </td>
+                                            <td><span><a href="{{ route('add_user.edit', $value->user_id) }}">{{$value->teacher_name}}</a></span> </td>
                                             <td><span>{{$value->designation}}</span></td>
                                             <td><span>{{$value->contact_number}}</span></td>
                                             <td><span>{{$value->birthdate}}</span></td>
@@ -472,8 +531,8 @@
                                     @if(count($data['studentBirthdays']) > 0)
                                         @foreach($data['studentBirthdays'] as $key => $value)
                                         <tr>
-                                            <td><span>{{$value->student_name}}</span> </td>
-                                            <td><span>{{$value->standard_name}} - {{$value->division_name}}</span></td>
+                                            <td><span><a href="{{ route('studentProfileData', ['student_id' => $value->student_id]) }}">{{$value->student_name}}</a></span> </td>
+                                            <td><span>{{$value->standard_name}} -{{$value->division_name}}</span></td>
                                             <td><span>{{$value->dob}}</span></td>
                                         </tr>
                                         @endforeach
@@ -568,6 +627,72 @@
     </div>    
 </div>
 @include('includes.footerJs')
+@if(isset($data['totalUser']) || isset($data['totalStudent']))
+<script type="text/javascript">
+$(document).ready(function () {
+    var cfg = {
+        users:    {list: "{{ route('dashboard.userBranches') }}",     items: "{{ route('dashboard.branchUsers') }}",       param: 'branch_id',   unit: 'users'},
+        students: {list: "{{ route('dashboard.studentStandards') }}", items: "{{ route('dashboard.standardStudents') }}", param: 'standard_id', unit: 'students'}
+    };
+
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html().replace(/"/g, '&quot;'); }
+
+    function initBlock($block) {
+        var t = $block.data('tab'), $list = $block.find('.dd-list'), $search = $block.find('.dd-search');
+
+        $list.html('<div class="dd-msg">Loading...</div>');
+        $.getJSON(cfg[t].list).done(function (res) {
+            if (!res.data || !res.data.length) { return $list.html('<div class="dd-msg">No Records</div>'); }
+            var h = '';
+            $.each(res.data, function (i, r) {
+                h += '<div class="dd-item dd-fade" style="animation-delay:' + Math.min(i * 35, 400) + 'ms" data-id="' + r.id + '">' +
+                    '<div class="dd-item-head"><span class="dd-arrow">&#9656;</span>' +
+                    '<span class="dd-item-name" title="' + esc(r.name) + '">' + esc(r.name) + '</span>' +
+                    '<span class="dd-count">' + r.total + ' ' + cfg[t].unit + '</span></div>' +
+                    '<div class="dd-item-body"></div></div>';
+            });
+            $list.html(h);
+        }).fail(function () { $list.html('<div class="dd-msg">Unable to load data</div>'); });
+
+        $list.on('click', '.dd-item-head', function () {
+            var $item = $(this).closest('.dd-item'), $body = $item.find('.dd-item-body');
+            if ($item.hasClass('open')) {
+                $body.stop(true, true).slideUp(250);
+                return $item.removeClass('open');
+            }
+            $item.addClass('open');
+            if ($body.data('loaded')) { return $body.stop(true, true).slideDown(300); }
+            $body.html('<div class="dd-msg">Loading...</div>').slideDown(300);
+            var q = {}; q[cfg[t].param] = $item.data('id');
+            $.getJSON(cfg[t].items, q).done(function (res) {
+                if (!res.data || !res.data.length) { return $body.html('<div class="dd-msg">No Records</div>'); }
+                var h = '<div class="dd-sub-grid">';
+                $.each(res.data, function (i, u) {
+                    var meta = $.map($.grep([u.c1, u.c2, u.c3], function (x) { return x; }), esc).join(' &middot; ');
+                    h += '<div class="dd-sub" title="' + esc(u.name) + '"><a href="' + esc(u.url) + '">' + esc(u.name) + '</a><small>' + meta + '</small></div>';
+                });
+                $body.html(h + '</div>').data('loaded', true);
+            }).fail(function () { $body.html('<div class="dd-msg">Unable to load data</div>'); });
+        });
+
+        $search.on('input', function () {
+            var q = $.trim($(this).val()).toLowerCase();
+            $list.find('.dd-item').each(function () {
+                var $i = $(this), hit = $i.find('.dd-item-name').text().toLowerCase().indexOf(q) > -1 ||
+                    $i.find('.dd-sub').filter(function () { return $(this).text().toLowerCase().indexOf(q) > -1; }).length > 0;
+                $i.toggle(hit);
+            });
+        });
+    }
+
+    $('.dd-block').each(function () { initBlock($(this)); });
+    $('.drill-trigger').on('click', function () {
+        var $b = $('.dd-block[data-tab="' + $(this).data('tab') + '"]');
+        $('html, body').animate({scrollTop: $b.offset().top - 80}, 450);
+    });
+});
+</script>
+@endif
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/sunburst.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
