@@ -16,6 +16,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+
+        // Placement: stop accepting applications once a drive's registration deadline passes.
+        $schedule->command('placement:close-registrations')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('placement:send-reminders')->hourly()->withoutOverlapping();
     }
 
     /**
