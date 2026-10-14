@@ -1,0 +1,42 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('placement_resume_review', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('sub_institute_id')->index();
+            $table->unsignedBigInteger('student_id')->index();
+            $table->unsignedBigInteger('profile_id')->nullable();
+            $table->string('status', 12)->default('requested'); // requested|reviewed
+            $table->text('request_note')->nullable();
+            $table->text('feedback')->nullable();
+            $table->unsignedBigInteger('reviewer_id')->nullable();
+            $table->dateTime('requested_at');
+            $table->dateTime('reviewed_at')->nullable();
+            $table->index(['sub_institute_id', 'status'], 'placement_review_status');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('placement_resume_review');
+    }
+};

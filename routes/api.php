@@ -24,6 +24,24 @@ Route::post('whats-comming-app',function (Request $request) {
 Route::post('update-message',[\App\Http\Controllers\WhatsappController::class,'updateDeliveryStatus']);
 Route::post('incoming-message',[\App\Http\Controllers\WhatsappController::class,'incomingMessage']);
 
+// Placement module: student endpoints for the mobile app (JWT, same as the apiController routes).
+Route::controller(\App\Http\Controllers\api\PlacementApiController::class)->prefix('placement')->group(function () {
+    Route::post('dashboard', 'dashboard');
+    Route::post('profile', 'profile');
+    Route::post('profile_update', 'updateProfile');
+    Route::post('register', 'register');
+    Route::post('opt_out', 'optOut');
+    Route::post('drives', 'drives');
+    Route::post('apply', 'apply');
+    Route::post('applications', 'applications');
+    Route::post('withdraw', 'withdraw');
+    Route::post('rounds', 'rounds');
+    Route::post('offers', 'offers');
+    Route::post('offer_respond', 'respondOffer');
+    Route::post('notices', 'notices');
+    Route::post('training', 'training');
+});
+
 Route::controller(apiController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('check_otp', 'check_otp');
