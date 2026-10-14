@@ -229,12 +229,17 @@ class admissionFormController extends Controller
 
         admissionEnquiryModel::where(['id' => $id, 'sub_institute_id' => $sub_institute_id])->update($editdata);
 
+        // The enquiry must belong to this institute before any form row is written for it.
+        if (! admissionEnquiryModel::where(['id' => $id, 'sub_institute_id' => $sub_institute_id])->exists()) {
+            abort(404);
+        }
+
         $data = $request->except([
             '_method', '_token','token','user_id', 'submit', 'type', 'first_name', 'middle_name', 'last_name', 'mobile', 'email','syear',
             'date_of_birth', 'age', 'address', 'previous_school_name', 'previous_standard', 'source_of_enquiry',
         ]); //,'remarks','followup_date'
 
-        $checkForm = admissionFormModel::where(['enquiry_id' => $id])->get()->toArray();
+        $checkForm = admissionFormModel::where(['enquiry_id' => $id, 'sub_institute_id' => $sub_institute_id])->get()->toArray();
 
         if ($sub_institute_id != 74 && $sub_institute_id != 181)//for LancerArmy school & Millennium Surat
         {
@@ -244,7 +249,7 @@ class admissionFormController extends Controller
                 $data['created_on'] = date('Y-m-d H:i:s');
                 $data['sub_institute_id'] = $sub_institute_id;
 
-                admissionFormModel::where(['enquiry_id' => $id])->update($data);
+                admissionFormModel::where(['enquiry_id' => $id, 'sub_institute_id' => $sub_institute_id])->update($data);
             } else {
                 $data['enquiry_id'] = $id;
                 $data['created_by'] = $user_id;
@@ -253,6 +258,7 @@ class admissionFormController extends Controller
 
                 admissionFormModel::insert($data);
             }
+            \App\Services\Admission\WorkflowService::markLegacyRegistered((int) $sub_institute_id, (int) $id);
 
             $res['status_code'] = "1";
             $res['message'] = "Added successfully";
@@ -538,7 +544,7 @@ class admissionFormController extends Controller
                 $data['created_on'] = date('Y-m-d H:i:s');
                 $data['sub_institute_id'] = $sub_institute_id;
 
-                admissionFormModel::where(['enquiry_id' => $id])->update($data);
+                admissionFormModel::where(['enquiry_id' => $id, 'sub_institute_id' => $sub_institute_id])->update($data);
 
             } else {
                 $data['enquiry_id'] = $id;
@@ -548,6 +554,7 @@ class admissionFormController extends Controller
 
                 admissionFormModel::insert($data);
             }
+            \App\Services\Admission\WorkflowService::markLegacyRegistered((int) $sub_institute_id, (int) $id);
 
             if ($sub_institute_id == 181) // For Millennium Surat
             {

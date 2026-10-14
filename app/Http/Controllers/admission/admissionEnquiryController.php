@@ -308,6 +308,16 @@ class admissionEnquiryController extends Controller
         $data = $request->except([
             '_method', '_token','token','submit', 'type', 'receipt_id', 'receipt_html', 'hidden_std_id', 'original_fees_bf','user_id'
         ]);
+        // Configurable duplicate warning (Admission Settings). Not applied to the public web form, which cannot acknowledge it.
+        if ($type != "webForm") {
+            $duplicateWarning = app(\App\Services\Admission\DuplicateInquiryService::class)->warning((int) $sub_institute_id, $data, $syear ? (int) $syear : null);
+            if ($duplicateWarning) {
+                $res['status_code'] = "0";
+                $res['message'] = $duplicateWarning;
+
+                return is_mobile($type, "admission_enquiry.index", $res);
+            }
+        }
         // get student Enquiry
         $enquiryNo = $this->get_enquiry_no($sub_institute_id, $syear);;
 
@@ -633,7 +643,7 @@ class admissionEnquiryController extends Controller
             $sub_institute_id = $request->get('sub_institute_id');
             $syear = $request->get('syear');            
         }
-        $editData = admissionEnquiryModel::where(['id' => $id])->get()->toArray();
+        $editData = admissionEnquiryModel::where(['id' => $id, 'sub_institute_id' => $sub_institute_id])->get()->toArray();
 
         $category = castModel::get()->toArray();
 
@@ -703,7 +713,7 @@ class admissionEnquiryController extends Controller
         $data['created_on'] = date('Y-m-d H:i:s');
         $data['sub_institute_id'] = $sub_institute_id;
 
-        admissionEnquiryModel::where(['id' => $id])->update($data);
+        admissionEnquiryModel::where(['id' => $id, 'sub_institute_id' => $sub_institute_id])->update($data);
 
         $res['status_code'] = "1";
         $res['message'] = "Updated successfully";
@@ -735,7 +745,7 @@ class admissionEnquiryController extends Controller
             $sub_institute_id = $request->get('sub_institute_id');
             $syear = $request->get('syear');            
         }
-        admissionEnquiryModel::where(["id" => $id])->delete();
+        admissionEnquiryModel::where(["id" => $id, "sub_institute_id" => $sub_institute_id])->delete();
         $res['status_code'] = "1";
         $res['message'] = "Deleted successfully";
 
@@ -788,35 +798,14 @@ class admissionEnquiryController extends Controller
 
     public function ajax_getFeesBreakoff(Request $request)
     {
-        $syear = session()->get('syear');
-        $sub_institute_id = session()->get('sub_institute_id');
+        // Same rule as before (General quota, month 4202), now shared with the admission workflow fee view.
         $standard_id = $request->get('standard_id');
 
-        $total_breakoff = 0;
-        if (isset($standard_id) && $standard_id != '') {
-            $FeesBreakoff_Data = DB::table('fees_breackoff as fb')
-                ->join('standard as s', function ($join) {
-                    $join->whereRaw('s.id = fb.standard_id AND s.grade_id = fb.grade_id AND s.sub_institute_id = fb.sub_institute_id');
-                })->join('student_quota as sq', function ($join) {
-                    $join->whereRaw('sq.id = fb.quota AND sq.sub_institute_id = fb.sub_institute_id');
-                })
-                ->selectRaw('SUM(amount) as total_breakoff,sq.title,fb.quota')
-                ->where('fb.standard_id', $standard_id)
-                ->where('fb.sub_institute_id', $sub_institute_id)
-                ->where('fb.syear', $syear)
-                ->where('fb.admission_year', $syear)
-                ->where('s.id', $standard_id)
-                ->where('fb.month_id', 'like', '%4202%')
-                ->where('sq.title', 'like', '%General%')
-                ->groupBy('fb.quota')->get()->toArray();
-
-            if (count($FeesBreakoff_Data) > 0) {
-                $total_breakoff = $FeesBreakoff_Data[0]->total_breakoff;
-            }
-        }
-
-        return $total_breakoff;
-
+        return app(\App\Services\Admission\FeeService::class)->demand(
+            (int) session()->get('sub_institute_id'),
+            (int) session()->get('syear'),
+            $standard_id !== null && $standard_id !== '' ? (int) $standard_id : null
+        );
     }
 
     public function ajax_listCalendarData(Request $request)
