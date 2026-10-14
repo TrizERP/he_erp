@@ -7,6 +7,14 @@ use App\Http\Controllers\admission\admissionRegistrationController;
 use App\Http\Controllers\admission\admissionReportController;
 use App\Http\Controllers\admission\onlineAdmissionConfirmController;
 use App\Http\Controllers\admission\admissionStatusController;
+use App\Http\Controllers\admission\AdmissionApplicationController;
+use App\Http\Controllers\admission\AdmissionConfirmController;
+use App\Http\Controllers\admission\AdmissionDashboardController;
+use App\Http\Controllers\admission\AdmissionDocumentController;
+use App\Http\Controllers\admission\AdmissionFeeController;
+use App\Http\Controllers\admission\AdmissionOfferController;
+use App\Http\Controllers\admission\AdmissionProcessReportController;
+use App\Http\Controllers\admission\AdmissionSettingController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -63,3 +71,73 @@ Route::get('admission_details', [admissionEnquiryController::class, 'admissionDa
 
 // admission tracking
 Route::resource('admission_status', admissionStatusController::class);
+
+
+/*
+ | Admission workflow (review, documents, eligibility, selection, offers, fees, confirmation, reports, settings).
+ | Extends the legacy admission module above; it adds workflow state keyed by admission_enquiry.id.
+ |
+ | Layers: session (logged in) -> menu -> logRoute -> check_permissions (menu rights for menu-linked screens)
+ | -> admission.role (route-level capability check; ERP admins always pass). Every record-level action is
+ | additionally scoped to the session sub_institute_id inside the services.
+ | Menu rows in tblmenumaster link to the *.index route names (see AdmissionMenuSeeder).
+ */
+Route::group(['prefix' => 'admission/process', 'middleware' => ['session', 'menu', 'logRoute', 'check_permissions']], static function () {
+    $view = 'admission.role:view';
+    $docs = 'admission.role:manage,documents,decide'; // academic documents: not for fee-only users
+
+    // Dashboard + drill-down
+    Route::get('dashboard', [AdmissionDashboardController::class, 'index'])->name('admission.dashboard.index')->middleware($view);
+    Route::get('dashboard/{metric}', [AdmissionDashboardController::class, 'drill'])->name('admission.dashboard.drill')->middleware($view);
+
+    // Lists (all backed by the same scoped query)
+    Route::get('applications', [AdmissionApplicationController::class, 'index'])->name('admission.review.index')->middleware($view);
+    Route::get('merit', [AdmissionApplicationController::class, 'merit'])->name('admission.merit.index')->middleware('admission.role:decide,manage');
+    Route::get('confirmation', [AdmissionApplicationController::class, 'confirmList'])->name('admission.confirm.index')->middleware('admission.role:confirm,manage');
+    Route::get('admitted', [AdmissionApplicationController::class, 'admitted'])->name('admission.admitted.index')->middleware($view);
+
+    // Application workspace + its actions
+    Route::prefix('applications/{enquiry}')->whereNumber('enquiry')->group(function () use ($view) {
+        Route::get('/', [AdmissionApplicationController::class, 'show'])->name('admission.review.show')->middleware($view);
+        Route::post('convert', [AdmissionApplicationController::class, 'convert'])->name('admission.process.convert')->middleware('admission.role:manage');
+        Route::post('submit', [AdmissionApplicationController::class, 'submit'])->name('admission.process.submit')->middleware('admission.role:manage');
+        Route::post('reopen', [AdmissionApplicationController::class, 'reopen'])->name('admission.process.reopen')->middleware('admission.role:manage');
+        Route::post('inquiry-status', [AdmissionApplicationController::class, 'inquiryStatus'])->name('admission.process.inquiry_status')->middleware('admission.role:manage');
+        Route::post('eligibility/evaluate', [AdmissionApplicationController::class, 'evaluateEligibility'])->name('admission.process.eligibility_run')->middleware('admission.role:manage');
+        Route::post('eligibility/override', [AdmissionApplicationController::class, 'overrideEligibility'])->name('admission.process.eligibility_override')->middleware('admission.role:override');
+        Route::post('selection', [AdmissionApplicationController::class, 'decideSelection'])->name('admission.process.selection')->middleware('admission.role:decide');
+        Route::post('documents', [AdmissionDocumentController::class, 'upload'])->name('admission.process.document_upload')->middleware('admission.role:manage');
+        Route::post('offer', [AdmissionOfferController::class, 'issue'])->name('admission.process.offer_issue')->middleware('admission.role:offer');
+        Route::get('receipt/{kind}', [AdmissionFeeController::class, 'receipt'])->name('admission.process.receipt')->middleware('admission.role:fees,manage');
+        Route::post('fee/waive', [AdmissionFeeController::class, 'waive'])->name('admission.process.fee_waive')->middleware('admission.role:waive');
+        Route::post('confirm', [AdmissionConfirmController::class, 'confirm'])->name('admission.process.confirm')->middleware('admission.role:confirm');
+        Route::post('confirmation-status', [AdmissionConfirmController::class, 'status'])->name('admission.process.confirmation_status')->middleware('admission.role:confirm');
+    });
+
+    // Documents
+    Route::get('documents', [AdmissionDocumentController::class, 'index'])->name('admission.documents.index')->middleware($docs);
+    Route::get('documents/{document}/download', [AdmissionDocumentController::class, 'download'])->name('admission.process.document_download')->middleware($docs)->whereNumber('document');
+    Route::post('documents/{document}/verify', [AdmissionDocumentController::class, 'verify'])->name('admission.process.document_verify')->middleware('admission.role:documents')->whereNumber('document');
+    Route::post('documents/{document}/reject', [AdmissionDocumentController::class, 'reject'])->name('admission.process.document_reject')->middleware('admission.role:documents')->whereNumber('document');
+
+    // Offers
+    Route::get('offers', [AdmissionOfferController::class, 'index'])->name('admission.offers.index')->middleware($view);
+    Route::post('offers/{offer}/respond', [AdmissionOfferController::class, 'respond'])->name('admission.process.offer_respond')->middleware('admission.role:offer')->whereNumber('offer');
+    Route::post('offers/{offer}/withdraw', [AdmissionOfferController::class, 'withdraw'])->name('admission.process.offer_withdraw')->middleware('admission.role:offer')->whereNumber('offer');
+
+    // Fees
+    Route::get('fees', [AdmissionFeeController::class, 'index'])->name('admission.fees.index')->middleware('admission.role:fees');
+
+    // Reports
+    Route::get('reports', [AdmissionProcessReportController::class, 'index'])->name('admission.reports.index')->middleware($view);
+    Route::get('reports/{type}/export', [AdmissionProcessReportController::class, 'export'])->name('admission.process.report_export')->middleware($view);
+
+    // Settings (admin only)
+    Route::get('settings', [AdmissionSettingController::class, 'index'])->name('admission.settings.index')->middleware('admission.role:settings');
+    Route::post('settings', [AdmissionSettingController::class, 'save'])->name('admission.process.settings_save')->middleware('admission.role:settings');
+    Route::post('settings/requirements', [AdmissionSettingController::class, 'storeRequirement'])->name('admission.process.requirement_add')->middleware('admission.role:settings');
+    Route::put('settings/requirements/{requirement}', [AdmissionSettingController::class, 'updateRequirement'])->name('admission.process.requirement_edit')->middleware('admission.role:settings')->whereNumber('requirement');
+    Route::delete('settings/requirements/{requirement}', [AdmissionSettingController::class, 'destroyRequirement'])->name('admission.process.requirement_remove')->middleware('admission.role:settings')->whereNumber('requirement');
+    Route::post('settings/rules', [AdmissionSettingController::class, 'storeRule'])->name('admission.process.rule_add')->middleware('admission.role:settings');
+    Route::delete('settings/rules/{rule}', [AdmissionSettingController::class, 'destroyRule'])->name('admission.process.rule_remove')->middleware('admission.role:settings')->whereNumber('rule');
+});

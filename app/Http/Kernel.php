@@ -71,6 +71,7 @@ class Kernel extends HttpKernel
         'mastersetup_menu'=>\App\Http\Middleware\MasterSetupMenuMiddleware::class,
         'logRoute'=>\App\Http\Middleware\LogRouteMiddleware::class,
         'placement.role' => \App\Http\Middleware\PlacementRole::class,
+        'admission.role' => \App\Http\Middleware\AdmissionRole::class,
         'jwt' => \GenTux\Jwt\Http\JwtMiddleware::class,
         'check_permissions' =>\App\Http\Middleware\checkPermission::class,
     ];
