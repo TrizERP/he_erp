@@ -452,6 +452,8 @@ class studentAttendanceController extends Controller
         $subject = $request->input('subject');
         $batch = $request->input('batch_sel');
         $lecture_type = $request->input('lecture_type');
+        // Optional professor filter: empty = everyone (the report behaves exactly as before)
+        $professor = ctype_digit((string) $request->input('professor')) ? (int) $request->input('professor') : null;
         /*$batch="";
         if($request->has('batch_sel')){
             $batchs = DB::table('batch')->where(['sub_institute_id'=>$sub_institute_id,'syear'=>$syear,'standard_id'=>$standard_id,'division_id'=>$division_id])->get()->toArray();
@@ -513,7 +515,9 @@ class studentAttendanceController extends Controller
             ->where('ap.section_id', $division_id)
             ->where('ap.subject_id', $subject)
             ->where('ap.attendance_for', $lecture_type)
-            ->where('ap.term_id', $term_id);
+            ->where('ap.term_id', $term_id)
+            // with a professor chosen, only the lectures that professor took appear as columns
+            ->when($professor, fn ($q) => $q->where('ap.teacher_id', $professor));
         
             // Batch / optional subject conditions
         if ($optSubject) {
@@ -628,6 +632,11 @@ class studentAttendanceController extends Controller
         $res['lecture_type'] = $lecture_type;
         $res['subject'] = $subject;
         $res['batch'] = $batch;
+        $res['professor'] = $professor;
+        $res['professor_name'] = $professor
+            ? DB::table('tbluser')->where('id', $professor)->where('sub_institute_id', $sub_institute_id)
+                ->selectRaw("TRIM(CONCAT_WS(' ', first_name, middle_name, last_name)) as name")->value('name')
+            : null;
 
         return is_mobile($type, "student/monthwise_attendance_report", $res, "view");
     }

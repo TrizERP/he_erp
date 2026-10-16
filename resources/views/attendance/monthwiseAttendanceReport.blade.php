@@ -61,6 +61,13 @@
                         </select>
                     </div>
 
+                    <div class="col-md-3 form-group">
+                        <label>Professor <small class="text-muted">(optional)</small></label>
+                        <select name="professor" id="professor" class="form-control">
+                            <option value="">All Professors</option>
+                        </select>
+                    </div>
+
                     @if (isset($data['batch_id']) && !empty($data['batchs']))
                         <div class="col-md-3 form-group" id="batch_div">
                             <label>Select Batch</label>
@@ -100,6 +107,11 @@
                 <div class="academic-year" style="text-align:center; font-size:15px; font-weight:600; margin-top:15px; font-family:Arial, Helvetica, sans-serif;">
                     Academic Year : {{ $syear }} - {{ $nextYear }}
                 </div>
+                @if (!empty($data['professor_name']))
+                    <div style="text-align:center; font-size:15px; font-weight:600; margin-top:4px; font-family:Arial, Helvetica, sans-serif;">
+                        Professor : {{ $data['professor_name'] }}
+                    </div>
+                @endif
 
                 <h1 class="report-title" style="text-align:center; font-size:20px; font-weight:700; text-transform:uppercase; margin-top:5px; margin-bottom:15px; font-family:Arial, Helvetica, sans-serif;">
                     Subject Month to Month Report
@@ -324,10 +336,31 @@ $(document).ready(function() {
         ]
     });
 
+    // ✅ Professor dropdown: professors who took attendance for the chosen subject (optional filter)
+    function loadProfessors(selectedProfessor) {
+        var subject = $('#subject').val();
+        var $prof = $('#professor');
+        $prof.html('<option value="">All Professors</option>');
+        if (!subject) { return; }
+        $.ajax({
+            url: "{{ route('month_to_month_report_professors') }}",
+            data: { standard_id: $('#standard').val(), division_id: $('#division').val(), subject_id: subject },
+            success: function (list) {
+                (list || []).forEach(function (p) {
+                    $prof.append($('<option></option>').val(p.id).text(p.name));
+                });
+                if (selectedProfessor) { $prof.val(String(selectedProfessor)); }
+            }
+        });
+    }
+
+    $('#subject').on('change', function () { loadProfessors(); });
+
     // ✅ Load subjects dynamically
     function loadSubjects(selectedStandard, selectedDivision, callback) {
         var path = "{{ route('getSubjectList') }}";
         $('#subject').html('<option value=\"\">Select Subject</option>');
+        $('#professor').html('<option value="">All Professors</option>');
         $.ajax({
             url: path,
             data: { standard_id: selectedStandard, division_id: selectedDivision },
@@ -348,6 +381,7 @@ $(document).ready(function() {
     @if(isset($data['subject']))
         loadSubjects('{{ $standard_id }}', '{{ $division_id }}', function() {
             $("#subject").val('{{ $data['subject'] }}');
+            loadProfessors('{{ $data['professor'] ?? '' }}');   // keep the chosen professor after Search
         });
     @endif
 
