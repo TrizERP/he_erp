@@ -499,6 +499,8 @@ Route::group(['prefix' => 'attendance', 'middleware' => ['session', 'menu', 'log
     Route::resource('students_attendance', attendanceController::class);
     Route::resource('semwise_report', attendanceReportController::class);
     Route::resource('semwise_report_v1', attendanceReportv1Controller::class);
+    // professor dropdown of the month-to-month report (AJAX); must stay above the resource so "professors" is not read as an {id}
+    Route::get('month_to_month_report_professors', [monthwiseAttendanceReportController::class, 'professors'])->name('month_to_month_report_professors');
     Route::resource('month_to_month_report', monthwiseAttendanceReportController::class);
     Route::resource('subject_detail_attendance_report', subjectDetailAttendanceController::class);
 });

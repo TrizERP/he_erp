@@ -9,7 +9,28 @@ use function App\Helpers\is_mobile;
 
 class monthwiseAttendanceReportController extends Controller
 {
-    //
+    /**
+     * AJAX for the optional "Professor" filter: the professors who actually took attendance for the chosen
+     * subject in this standard / division (attendance_student.teacher_id = the user who marked it).
+     * Scoped to the logged-in institute and academic year. Returned as a list so the order is kept.
+     */
+    public function professors(Request $request)
+    {
+        $professors = DB::table('attendance_student as ats')
+            ->join('tbluser as u', 'u.id', '=', 'ats.teacher_id')
+            ->where('ats.sub_institute_id', session()->get('sub_institute_id'))
+            ->where('ats.syear', session()->get('syear'))
+            ->where('ats.standard_id', (int) $request->get('standard_id'))
+            ->where('ats.section_id', (int) $request->get('division_id'))
+            ->where('ats.subject_id', (int) $request->get('subject_id'))
+            ->groupBy('u.id', 'u.first_name', 'u.middle_name', 'u.last_name')
+            ->selectRaw("u.id, TRIM(CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name)) as name")
+            ->orderBy('u.first_name')->orderBy('u.last_name')
+            ->get();
+
+        return response()->json($professors);
+    }
+
     public function index(Request $request){
         $type = $request->get('type');
         $sub_institute_id = session()->get('sub_institute_id');
@@ -19,6 +40,8 @@ class monthwiseAttendanceReportController extends Controller
         $standard = $request->get('standard');
         $division = $request->get('division');
         $subject = $request->get('subject');
+        // Optional professor filter: empty = everyone (the report behaves exactly as before)
+        $professor = ctype_digit((string) $request->get('professor')) ? (int) $request->get('professor') : null;
         $batch = $request->get('batch');
         $from_date = $request->get('from_month');
         $to_date = $request->get('to_month');
@@ -69,6 +92,7 @@ class monthwiseAttendanceReportController extends Controller
                 ->where('se.standard_id',$standard)
                 ->where('se.section_id',$division)
                 ->where('ats.subject_id',$subject)
+                ->when($professor, fn($q) => $q->where('ats.teacher_id', $professor))
                 ->orderBy('s.enrollment_no')
                 ->get()
                 ->groupBy(['student_id','month_num']);
@@ -126,6 +150,8 @@ class monthwiseAttendanceReportController extends Controller
                     ->where('standard_id',$standard)
                     ->where('section_id',$division)
                     ->where('subject_id',$subject)
+                    // with a professor chosen, the column totals are that professor's lectures only
+                    ->when($professor, fn($q) => $q->where('teacher_id', $professor))
                     ->whereBetween('attendance_date',[
                         date('Y-m-d',strtotime($from_date)),
                         date('Y-m-d',strtotime($to_date))
@@ -150,6 +176,11 @@ class monthwiseAttendanceReportController extends Controller
         $res['standard_id'] = $request->standard;
         $res['division_id'] = $request->division;
         $res['subject'] = $request->subject;
+        $res['professor'] = $professor;
+        $res['professor_name'] = $professor
+            ? DB::table('tbluser')->where('id', $professor)->where('sub_institute_id', $sub_institute_id)
+                ->selectRaw("TRIM(CONCAT_WS(' ', first_name, middle_name, last_name)) as name")->value('name')
+            : null;
         $res['lecture_type'] = $request->lecture_type;
         //echo "<pre>";
         //print_r($res);
