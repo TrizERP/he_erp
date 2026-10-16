@@ -403,15 +403,15 @@
 										<td>Remarks</td>
 										<td></td>
 										<td>
-											<input type="text" class="form-control" name="remarks" id="remarks" autocomplete="off">
+											<input type="text" class="form-control" name="remarks" id="remarks" autocomplete="off" value="{{ $data['fees_waiver']->remarks ?? '' }}">
 										</td>
 									</tr>
 									<tr>
 										<td></td>
-										<td>{{ App\Helpers\get_string('discount')}}</td>
+										<td>Fees Waiver</td>
 										<td></td>
 										<td>
-											<input type='number' min="0" id='totalDis' name='totalDis' value='0' class='form-control directdiscount'>
+											<input type='number' min="0" id='totalDis' name='totalDis' value='{{ isset($data['fees_waiver']) ? min((float) $data['fees_waiver']->amount, (float) ($total_amt ?? 0)) : 0 }}' class='form-control directdiscount' readonly>
 										</td>
 									</tr>
 									@php 
