@@ -897,6 +897,16 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
         }
         // end 2024-08-28
 
+        // the waiver is used up once a receipt carrying it is generated
+        if ((float) $request->input('totalDis', 0) > 0) {
+            DB::table('fees_waiver')
+                ->where([
+                    'sub_institute_id' => session()->get('sub_institute_id'),
+                    'syear' => session()->get('syear'),
+                    'student_id' => $request->input('student_id', $request->input('stu_id')),
+                ])->whereNull('applied_at')->update(['applied_at' => now()]);
+        }
+
         // echo "<pre>";print_r($res);exit;
         $res['standard_id'] = $request->standard_id;
         return is_mobile($type, "fees/fees_collect/receipt_view", $res, "view");
@@ -2895,6 +2905,10 @@ uksort($other_bk_off_month_head_wise, function($a, $b) {
          $res = $this->getBk($request, $id,$request->std);
          // echo "<pre>";print_r($res);exit;
          $res['bank_data'] = bankmasterModel::orderBy('bank_name', 'asc')->get()->toArray();
+         // pending (not yet applied) fees waiver of the student, shown read-only on the collect page
+         $res['fees_waiver'] = DB::table('fees_waiver')
+             ->where(['sub_institute_id' => $sub_institute_id, 'syear' => $syear, 'student_id' => $id])
+             ->whereNull('applied_at')->where('amount', '>', 0)->first();
          // 18-01-2025 start get term 1 selected
          $res['header_month'] = DB::table('fees_month_header')
          ->where('sub_institute_id', $sub_institute_id)

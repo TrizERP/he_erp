@@ -59,6 +59,7 @@ use App\Http\Controllers\fees\fees_month_header\feesMonthHeadercontroller;
 use App\Http\Controllers\fees\fees_report\studentBreakoffReportController;
 use App\Http\Controllers\fees\fees_cancel\feesRefundReportController;
 
+use App\Http\Controllers\fees\fees_waiver\fees_waiver_controller;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'fees', 'middleware' => ['session', 'menu', 'logRoute','check_permissions']], function () {
@@ -107,6 +108,7 @@ Route::group(['prefix' => 'fees', 'middleware' => ['session', 'menu', 'logRoute'
     Route::resource('fees_breackoff', fees_breackoff_controller::class);
     Route::resource('bank_master', bank_master_controller::class);
     Route::resource('fees_collect', fees_collect_controller::class);
+    Route::resource('fees_waiver', fees_waiver_controller::class)->only(['index', 'store']);
     Route::resource('college_fees_collect', college_fees_collect_controller::class);
     Route::resource('online_fees', online_fees_settigs_controller::class);
     Route::resource('online_fees_split', online_fees_split_controller::class);
