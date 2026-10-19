@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->time('end_time')->nullable();
             $table->string('venue', 255)->nullable();
             $table->decimal('max_score', 7, 2)->nullable();
-            $table->json('standard_ids')->nullable(); // batch assignment: courses whose registered students attend
+            $table->longText('standard_ids')->nullable(); // batch assignment: courses whose registered students attend
             $table->text('description')->nullable();
             $table->string('status', 15)->default('scheduled'); // scheduled|completed|cancelled
             $table->index(['sub_institute_id', 'training_type'], 'placement_training_type');

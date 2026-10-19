@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('title', 200);
             $table->text('body');
             $table->string('audience', 15)->default('registered'); // all|registered|verified
-            $table->json('standard_ids')->nullable(); // empty = every course
+            $table->longText('standard_ids')->nullable(); // empty = every course
             $table->dateTime('publish_at')->nullable();
             $table->dateTime('expires_at')->nullable();
             $table->tinyInteger('is_pinned')->default(0);

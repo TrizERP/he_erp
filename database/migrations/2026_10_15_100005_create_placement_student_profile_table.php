@@ -23,10 +23,10 @@ return new class extends Migration {
             $table->decimal('twelfth_percent', 5, 2)->nullable();
             $table->unsignedInteger('active_backlogs')->default(0);
             $table->unsignedSmallInteger('passing_year')->nullable();
-            $table->json('projects')->nullable();
-            $table->json('certifications')->nullable();
-            $table->json('achievements')->nullable();
-            $table->json('preferences')->nullable(); // preferred locations / job types
+            $table->longText('projects')->nullable();
+            $table->longText('certifications')->nullable();
+            $table->longText('achievements')->nullable();
+            $table->longText('preferences')->nullable(); // preferred locations / job types
             $table->string('resume_file', 255)->nullable();
             $table->string('linkedin_url', 255)->nullable();
             $table->string('github_url', 255)->nullable();
