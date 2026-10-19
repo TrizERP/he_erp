@@ -8,4 +8,8 @@ class PlacementCompanyCommunication extends PlacementModel
 
     protected $casts = ['communicated_at' => 'datetime'];
 
+    public function company()
+    {
+        return $this->belongsTo(PlacementCompany::class, 'company_id');
+    }
 }
