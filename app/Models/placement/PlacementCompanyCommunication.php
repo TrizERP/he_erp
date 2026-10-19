@@ -6,7 +6,7 @@ class PlacementCompanyCommunication extends PlacementModel
 {
     protected $table = 'placement_company_communication';
 
-    protected $casts = ['communicated_at' => 'datetime'];
+    protected $casts = ['communicated_at' => 'datetime', 'follow_up_date' => 'date'];
 
     public function company()
     {
