@@ -9,12 +9,16 @@ use Illuminate\Support\Facades\DB;
  * Default placement masters and notification templates for every institute. Idempotent.
  *
  *   php artisan db:seed --class=PlacementMasterSeeder
+ *   PLACEMENT_DEMO_INSTITUTE=133 php artisan db:seed --class=PlacementMasterSeeder   (one institute only)
  */
 class PlacementMasterSeeder extends Seeder
 {
     public function run()
     {
-        $institutes = DB::table('school_setup')->pluck('Id');
+        // PLACEMENT_DEMO_INSTITUTE=<id> limits it to one institute; without it every institute gets the defaults
+        $institutes = DB::table('school_setup')
+            ->when((int) env('PLACEMENT_DEMO_INSTITUTE'), fn ($q, $id) => $q->where('Id', $id))
+            ->pluck('Id');
 
         foreach ($institutes as $instituteId) {
             foreach ($this->masters() as $type => $rows) {
