@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('role_id')->nullable();
             $table->unsignedBigInteger('student_id');
             $table->tinyInteger('is_eligible')->default(0);
-            $table->json('reasons')->nullable(); // why not eligible
+            $table->longText('reasons')->nullable(); // why not eligible
             $table->dateTime('computed_at');
             $table->unique(['drive_id', 'role_id', 'student_id'], 'placement_eligible_unique');
             $table->index(['student_id', 'is_eligible'], 'placement_eligible_student');

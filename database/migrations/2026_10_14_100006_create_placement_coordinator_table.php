@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('sub_institute_id')->index();
             $table->unsignedBigInteger('user_id')->index(); // tbluser.id
             $table->string('role', 30)->default('faculty'); // faculty|student
-            $table->json('standard_ids')->nullable(); // standards (courses) this coordinator manages
+            $table->longText('standard_ids')->nullable(); // standards (courses) this coordinator manages
             $table->tinyInteger('status')->default(1);
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();

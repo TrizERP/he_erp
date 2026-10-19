@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->decimal('min_10th_percent', 5, 2)->nullable();
             $table->decimal('min_12th_percent', 5, 2)->nullable();
             $table->unsignedInteger('max_active_backlogs')->nullable();
-            $table->json('standard_ids')->nullable(); // allowed courses (standard.id)
+            $table->longText('standard_ids')->nullable(); // allowed courses (standard.id)
             $table->unsignedSmallInteger('passing_year')->nullable();
             $table->string('gender', 20)->nullable();
             $table->text('notes')->nullable();

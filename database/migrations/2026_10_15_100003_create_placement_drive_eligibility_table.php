@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->decimal('min_10th_percent', 5, 2)->nullable();
             $table->decimal('min_12th_percent', 5, 2)->nullable();
             $table->unsignedInteger('max_active_backlogs')->nullable();
-            $table->json('standard_ids')->nullable();
+            $table->longText('standard_ids')->nullable();
             $table->unsignedSmallInteger('passing_year')->nullable();
             $table->string('gender', 20)->nullable();
             $table->unsignedBigInteger('created_by')->nullable();

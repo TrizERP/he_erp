@@ -20,8 +20,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->string('action', 40);
             $table->text('reason')->nullable(); // mandatory for overrides
-            $table->json('old_values')->nullable();
-            $table->json('new_values')->nullable();
+            $table->longText('old_values')->nullable();
+            $table->longText('new_values')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->timestamp('created_at')->useCurrent();
