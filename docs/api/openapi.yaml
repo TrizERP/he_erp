@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: HE ERP V1 API (Next.js frontend)
+  version: 0.1.0
+  description: |
+    Additive JSON API for the Next.js frontend. Every response uses the envelope
+    `{ success, message, data, meta:{page,per_page,total}|null, errors|null }`.
+    Auth: `Authorization: Bearer <token>` from POST /auth/login.
+    Context headers (optional, validated against what the user may access):
+    `X-Institute-Id`, `X-Academic-Year`, `X-Term-Id`.
+servers:
+  - url: http://localhost:8000/api/v1
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+  parameters:
+    InstituteId: { name: X-Institute-Id, in: header, schema: { type: integer }, description: Institute to work in (client admins may switch) }
+    AcademicYear: { name: X-Academic-Year, in: header, schema: { type: string }, description: syear; defaults to the year containing today }
+    TermId: { name: X-Term-Id, in: header, schema: { type: integer } }
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data: { nullable: true }
+        meta: { type: object, nullable: true, properties: { page: { type: integer }, per_page: { type: integer }, total: { type: integer } } }
+        errors: { type: object, nullable: true, additionalProperties: { type: array, items: { type: string } } }
+    Permissions:
+      type: object
+      properties: { view: { type: boolean }, add: { type: boolean }, edit: { type: boolean }, delete: { type: boolean } }
+    MenuNode:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        link: { type: string, nullable: true, description: Laravel route name (tblmenumaster.link) }
+        path: { type: string, nullable: true, description: Blade URL path of that route, e.g. /fees/fees_collect }
+        icon: { type: string, nullable: true }
+        level: { type: integer, enum: [1, 2, 3] }
+        sort_order: { type: integer }
+        permissions: { $ref: '#/components/schemas/Permissions' }
+        children: { type: array, items: { $ref: '#/components/schemas/MenuNode' } }
+paths:
+  /auth/login:
+    post:
+      summary: Login (tbluser, then tblstudent as in the Blade login)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email, password], properties: { email: { type: string }, password: { type: string } } }
+      responses:
+        '200': { description: "data: token, user, context, institutes, academic_years, terms, menu" }
+        '401': { description: Invalid User Id And Password }
+        '403': { description: No institute / Academic Term Date Expired / Please Contact Administrator For ERP Rights }
+        '422': { description: Validation failed (errors keyed by field) }
+  /auth/logout:
+    post: { summary: Logout (stateless token; client discards it), security: [{ bearer: [] }], responses: { '200': { description: ok } } }
+  /auth/me:
+    get:
+      summary: Current user, resolved context, institutes, academic years, terms and menu tree
+      security: [{ bearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InstituteId'
+        - $ref: '#/components/parameters/AcademicYear'
+        - $ref: '#/components/parameters/TermId'
+      responses:
+        '200': { description: ok }
+        '401': { description: Unauthenticated / expired token }
+        '403': { description: Institute not allowed for this user }
+  /auth/menu:
+    get:
+      summary: Sidebar tree (3 levels) with per-node permissions; individual rights override group rights
+      security: [{ bearer: [] }]
+      responses:
+        '200':
+          description: data is an array of MenuNode
+          content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { $ref: '#/components/schemas/MenuNode' } } } } } }
+  /dashboard:
+    get:
+      summary: Dashboard headline counters for the current institute / year (more widgets in later iterations)
+      security: [{ bearer: [] }]
+      responses: { '200': { description: "data.counters: [{key,label,value}]" } }
