@@ -260,8 +260,9 @@ abstract class ApiV1TestCase extends TestCase
         $menu = ['status' => 1, 'sort_order' => 0, 'link' => null, 'icon' => null, 'sub_institute_id' => '1,2', 'client_id' => '9', 'menu_type' => 'MASTER'];
         DB::table('tblmenumaster')->insert($menu + ['id' => 37, 'name' => 'Institute (Master)', 'level' => 1, 'parent_menu_id' => 0]);
         DB::table('tblmenumaster')->insert(['link' => 'subject_master.index'] + $menu + ['id' => 138, 'name' => 'Create Subject', 'level' => 2, 'parent_menu_id' => 37]);
-        foreach ([38 => 'std_div_map.index', 40 => 'sub_std_map.index', 43 => 'period_master.index', 44 => 'batch_master.index', 332 => 'division_capacity_master.index'] as $menuId => $link) {
-            DB::table('tblmenumaster')->insert(['link' => $link] + $menu + ['id' => $menuId, 'name' => $link, 'level' => 2, 'parent_menu_id' => 37]);
+        $screens = [38 => ['std_div_map.index', 'Semester Division Mapping'], 40 => ['sub_std_map.index', 'Subject Semester Mapping'], 43 => ['period_master.index', 'Create Periods'], 44 => ['batch_master.index', 'Create Batch'], 332 => ['division_capacity_master.index', 'Division Planner']];
+        foreach ($screens as $menuId => [$link, $name]) {
+            DB::table('tblmenumaster')->insert(['link' => $link] + $menu + ['id' => $menuId, 'name' => $name, 'level' => 2, 'parent_menu_id' => 37]);
         }
         $rights = fn ($profile, $inst, $v, $a, $e, $d) => ['profile_id' => $profile, 'menu_id' => 138, 'sub_institute_id' => $inst, 'can_view' => $v, 'can_add' => $a, 'can_edit' => $e, 'can_delete' => $d];
         $rows = [];
