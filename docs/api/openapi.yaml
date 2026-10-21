@@ -79,6 +79,10 @@ paths:
           content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { $ref: '#/components/schemas/MenuNode' } } } } } }
   /dashboard:
     get:
-      summary: Dashboard headline counters for the current institute / year (more widgets in later iterations)
+      summary: Dashboard counters and academic-year progress for the current institute / year (more widgets in later iterations)
       security: [{ bearer: [] }]
-      responses: { '200': { description: "data.counters: [{key,label,value}]" } }
+      responses:
+        '200':
+          description: |
+            data.counters: [{key,label,value,hint}] for students (current-year enrolments), staff, classes (current term);
+            data.academic_year: {syear,start_date,end_date,progress 0-100,days_left} or null

@@ -59,6 +59,11 @@ class AuthAndMenuTest extends TestCase
             $t->date('start_date');
             $t->date('end_date');
         });
+        Schema::create('standard', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('sub_institute_id');
+            $t->integer('marking_period_id')->nullable();
+        });
         Schema::create('tbluserprofilemaster', function (Blueprint $t) {
             $t->increments('id');
             $t->string('name');
@@ -110,6 +115,7 @@ class AuthAndMenuTest extends TestCase
                 ['sub_institute_id' => $i, 'syear' => $y - 1, 'term_id' => 2, 'start_date' => ($y - 1).'-01-01', 'end_date' => ($y - 1).'-12-31'],
             ]);
         }
+        DB::table('standard')->insert([['sub_institute_id' => 1, 'marking_period_id' => 1], ['sub_institute_id' => 1, 'marking_period_id' => 1], ['sub_institute_id' => 1, 'marking_period_id' => 2], ['sub_institute_id' => 2, 'marking_period_id' => 1]]);
         DB::table('tbluserprofilemaster')->insert([['id' => 1, 'name' => 'Admin'], ['id' => 2, 'name' => 'Super Admin'], ['id' => 3, 'name' => 'Student']]);
         DB::table('tbluser')->insert([
             ['id' => 10, 'email' => 'admin@x.test', 'password' => 'pw1', 'first_name' => 'Ada', 'last_name' => 'Min', 'status' => '1', 'user_profile_id' => 1, 'sub_institute_id' => 1, 'client_id' => 9, 'is_admin' => 0],
@@ -247,6 +253,17 @@ class AuthAndMenuTest extends TestCase
         $t = $this->tokenFor('admin@x.test', 'pw1');
         $c = collect($this->authed($t)->getJson('/api/v1/dashboard')->assertOk()->json('data.counters'))->pluck('value', 'key');
         $this->assertSame(1, $c['students']); // the ended enrollment is excluded
+        $this->assertSame(2, $c['classes']);  // only this institute's classes of the current term
+    }
+
+    public function test_dashboard_reports_academic_year_progress(): void
+    {
+        $t = $this->tokenFor('admin@x.test', 'pw1');
+        $ay = $this->authed($t)->getJson('/api/v1/dashboard')->assertOk()->json('data.academic_year');
+        $this->assertSame(date('Y').'-01-01', $ay['start_date']);
+        $this->assertGreaterThanOrEqual(0, $ay['progress']);
+        $this->assertLessThanOrEqual(100, $ay['progress']);
+        $this->assertGreaterThanOrEqual(0, $ay['days_left']);
     }
 
     public function test_unknown_v1_route_and_server_errors_use_envelope(): void
