@@ -24,6 +24,20 @@ class SchoolSetupMastersTest extends ApiV1TestCase
         $this->assertSame([], $me->json('data.menu'));                           // MASTER menus are not sidebar entries
     }
 
+    public function test_access_list_covers_screens_even_when_the_parent_heading_is_not_granted(): void
+    {
+        // teacher has rights on "Create Subject" only (no row for its heading), so the setup tree is empty ...
+        $me = $this->as(11)->getJson('/api/v1/auth/me')->assertOk();
+        $this->assertSame([], $me->json('data.setup_menu'));
+        // ... but the screen itself is reachable, view only, exactly as the Blade rights check would allow
+        $entry = collect($me->json('data.access'))->firstWhere('path', '/school_setup/subject_master');
+        $this->assertSame(['view' => true, 'add' => false, 'edit' => false, 'delete' => false], $entry['permissions']);
+
+        $admin = collect($this->as(10)->getJson('/api/v1/auth/me')->json('data.access'))->firstWhere('path', '/school_setup/subject_master');
+        $this->assertTrue($admin['permissions']['delete']);
+        $this->assertSame([], $this->as(13)->getJson('/api/v1/auth/me')->json('data.access'));            // no rights rows
+    }
+
     public function test_labels_use_default_strings_overridden_by_the_institute(): void
     {
         DB::table('app_language')->insert([

@@ -59,7 +59,7 @@ paths:
     post: { summary: Logout (stateless token; client discards it), security: [{ bearer: [] }], responses: { '200': { description: ok } } }
   /auth/me:
     get:
-      summary: Current user, resolved context, institutes, academic years, terms, menu tree and setup_menu (MASTER-type screens)
+      summary: Current user, resolved context, institutes, academic years, terms, menu tree and setup_menu (MASTER-type screens) and access (flat list of screens with rights, independent of parent headings)
       security: [{ bearer: [] }]
       parameters:
         - $ref: '#/components/parameters/InstituteId'

@@ -89,6 +89,38 @@ class MenuService
         return $build(0, 1);
     }
 
+    /**
+     * Flat list of every screen the user has rights on (path => rights), regardless of whether its parent heading is
+     * visible. Mirrors the Blade check_permissions middleware, which looks only at the rights of the menu entry
+     * belonging to the route being opened.
+     *
+     * @return array<int, array{path:string,link:string,name:string,permissions:array}>
+     */
+    public function accessList(array $principal, array $context): array
+    {
+        $perms = $this->permissions($principal);
+        if (strcasecmp((string) $context['user_profile_name'], 'admin') === 0) {
+            foreach ([37, 41, 42] as $id) {
+                $perms[$id] ??= ['view' => true, 'add' => false, 'edit' => false, 'delete' => false];
+            }
+        }
+        $clientAdmin = $context['is_client_admin'];
+        $scopeId = $clientAdmin ? (string) $context['client_id'] : (string) $context['institute_id'];
+        $scopeCol = $clientAdmin ? 'client_id' : 'sub_institute_id';
+
+        $out = [];
+        foreach (DB::table('tblmenumaster')->where('status', 1)->whereNotNull('link')->where('link', '!=', '')
+            ->whereIn('id', array_keys($perms))->get() as $m) {
+            $scope = array_map('trim', explode(',', (string) $m->{$scopeCol}));
+            $path = $this->pathFor($m->link);
+            if ($path && in_array($scopeId, $scope, true)) {
+                $out[] = ['path' => $path, 'link' => $m->link, 'name' => $m->name, 'permissions' => $perms[(int) $m->id]];
+            }
+        }
+
+        return $out;
+    }
+
     /** Blade URL path for a menu link (links are Laravel route names), or null for headings / unknown routes. */
     private function pathFor(?string $link): ?string
     {
