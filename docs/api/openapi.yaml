@@ -59,7 +59,7 @@ paths:
     post: { summary: Logout (stateless token; client discards it), security: [{ bearer: [] }], responses: { '200': { description: ok } } }
   /auth/me:
     get:
-      summary: Current user, resolved context, institutes, academic years, terms and menu tree
+      summary: Current user, resolved context, institutes, academic years, terms, menu tree and setup_menu (MASTER-type screens)
       security: [{ bearer: [] }]
       parameters:
         - $ref: '#/components/parameters/InstituteId'
@@ -86,3 +86,23 @@ paths:
           description: |
             data.counters: [{key,label,value,hint}] for students (current-year enrolments), staff, classes (current term);
             data.academic_year: {syear,start_date,end_date,progress 0-100,days_left} or null
+  /labels:
+    get:
+      summary: UI wording for the current institute (default strings overridden by the institute's active rows)
+      security: [{ bearer: [] }]
+      responses: { '200': { description: "data: { standard: Semester, division: Division, ... }" } }
+  /school-setup/academic-sections:
+    get: { summary: List academic sections (Academy), security: [{ bearer: [] }], description: "Right: view on subject_master.index. Query: page, per_page, search, sort", responses: { '200': { description: paginated } } }
+    post: { summary: Create an academic section (title unique per institute), security: [{ bearer: [] }], description: "Right: add. Body: title*, short_name, sort_order, shift, medium", responses: { '201': { description: created }, '422': { description: validation or duplicate } } }
+  /school-setup/standards:
+    get: { summary: List standards (current term; filters[grade_id]; filters[all_terms]=1), security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: Create a standard in the current term, security: [{ bearer: [] }], description: "Body: name*, grade_id, short_name, sort_order, medium, course_duration, next_grade_id, next_standard_id", responses: { '201': { description: created } } }
+  /school-setup/divisions:
+    get: { summary: List divisions, security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: Create a division (name unique per institute), security: [{ bearer: [] }], responses: { '201': { description: created }, '422': { description: Division Already Exists } } }
+  /school-setup/subjects:
+    get: { summary: List subjects (current term; filters[standard_id]), security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: Create a subject (name unique per standard, case-insensitive), security: [{ bearer: [] }], description: "Body: standard_id*, subject_name*, subject_code, short_name, major", responses: { '201': { description: created }, '422': { description: validation or duplicate } } }
+  /school-setup/subjects/{id}:
+    put: { summary: Update a subject (right edit), security: [{ bearer: [] }], responses: { '200': { description: updated }, '404': { description: not in this institute } } }
+    delete: { summary: Delete a subject (right delete), security: [{ bearer: [] }], responses: { '200': { description: deleted } } }

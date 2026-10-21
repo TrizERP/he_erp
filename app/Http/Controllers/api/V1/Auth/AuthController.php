@@ -86,6 +86,7 @@ class AuthController extends BaseApiController
                 'term_id' => $r->term_id, 'title' => $r->title ?? null,
             ])->values()->all(),
             'menu' => $this->menus->tree($principal, $context),
+            'setup_menu' => $this->menus->setupTree($principal, $context),
         ];
     }
 }

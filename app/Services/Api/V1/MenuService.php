@@ -34,19 +34,39 @@ class MenuService
         return $out;
     }
 
+    /** Sidebar tree (everything except MASTER menus). */
     public function tree(array $principal, array $context): array
     {
+        return $this->buildTree($principal, $context, false);
+    }
+
+    /**
+     * Setup tree: the MASTER-type menus (school setup, fees master, exam master...). The Blade app shows these on its
+     * setup pages; for the Admin profile it also grants menu ids 37, 41 and 42 on top of the rights rows.
+     */
+    public function setupTree(array $principal, array $context): array
+    {
+        return $this->buildTree($principal, $context, true);
+    }
+
+    private function buildTree(array $principal, array $context, bool $master): array
+    {
         $perms = $this->permissions($principal);
+        if ($master && strcasecmp((string) $context['user_profile_name'], 'admin') === 0) {
+            foreach ([37, 41, 42] as $id) {
+                $perms[$id] ??= ['view' => true, 'add' => false, 'edit' => false, 'delete' => false];
+            }
+        }
         $clientAdmin = $context['is_client_admin'];
         $scopeId = $clientAdmin ? (string) $context['client_id'] : (string) $context['institute_id'];
         $scopeCol = $clientAdmin ? 'client_id' : 'sub_institute_id';
 
         $rows = DB::table('tblmenumaster')->where('status', 1)->whereIn('level', [1, 2, 3])
             ->whereIn('id', array_keys($perms))->orderBy('sort_order')->get()
-            ->filter(function ($m) use ($scopeCol, $scopeId) {
+            ->filter(function ($m) use ($scopeCol, $scopeId, $master) {
                 $scope = array_map('trim', explode(',', (string) $m->{$scopeCol}));
 
-                return in_array($scopeId, $scope, true) && ($m->menu_type ?? null) !== 'MASTER';
+                return in_array($scopeId, $scope, true) && ((($m->menu_type ?? null) === 'MASTER') === $master);
             });
 
         $byParent = $rows->groupBy(fn ($m) => (int) $m->parent_menu_id);
