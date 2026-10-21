@@ -106,3 +106,41 @@ paths:
   /school-setup/subjects/{id}:
     put: { summary: Update a subject (right edit), security: [{ bearer: [] }], responses: { '200': { description: updated }, '404': { description: not in this institute } } }
     delete: { summary: Delete a subject (right delete), security: [{ bearer: [] }], responses: { '200': { description: deleted } } }
+  /lookups/standards: { get: { summary: "Standards for dropdowns (current term; all_terms=1; grade_id)", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /lookups/divisions: { get: { summary: "Divisions; with standard_id only those mapped to it", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /lookups/subjects: { get: { summary: "Subjects (standard_id, all_terms)", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /lookups/academic-sections: { get: { summary: "Academic sections (grades)", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /lookups/academic-years: { get: { summary: "academic_year rows (terms) of the current year", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /lookups/content-categories: { get: { summary: "LMS content categories", security: [{ bearer: [] }], responses: { '200': { description: array } } } }
+  /school-setup/std-div-map:
+    get: { summary: "Standards, divisions and the current mapping (right view on std_div_map.index)", security: [{ bearer: [] }], responses: { '200': { description: "{standards, divisions, mapping: {standard_id: [division_id]}}" } } }
+    post: { summary: "Replace the whole mapping (right add). Body {mapping: {standard_id: [division_id]}}", security: [{ bearer: [] }], responses: { '200': { description: saved }, '422': { description: unknown ids } } }
+  /school-setup/sub-std-maps:
+    get: { summary: "List subject-standard mappings (filters[standard_id], search, sort)", security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: "Update-or-create on (standard, subject); multipart with optional display_image", security: [{ bearer: [] }], responses: { '201': { description: saved }, '422': { description: validation } } }
+  /school-setup/sub-std-maps/{id}:
+    get: { summary: "One mapping", security: [{ bearer: [] }], responses: { '200': { description: ok } } }
+    put: { summary: "Update (send POST with _method=PUT when uploading an image)", security: [{ bearer: [] }], responses: { '200': { description: updated } } }
+    delete: { summary: "Delete; 409 when chapters depend on it", security: [{ bearer: [] }], responses: { '200': { description: deleted }, '409': { description: "You cannot delete Mapping.Mapping is having dependencies in Other Module" } } }
+  /school-setup/batches:
+    get: { summary: "Batch groups (standard + division) with titles, current year", security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: "Add titles to a group {standard_id, division_id, titles[]}; existing titles skipped", security: [{ bearer: [] }], responses: { '201': { description: "{created, skipped}" }, '422': { description: "Batch Already Exist" } } }
+  /school-setup/batches/group:
+    get: { summary: "Batches of one group (?standard_id&division_id)", security: [{ bearer: [] }], responses: { '200': { description: ok } } }
+    put: { summary: "{standard_id, division_id, new[], edit{id:title}}", security: [{ bearer: [] }], responses: { '200': { description: updated } } }
+    delete: { summary: "Delete every batch of the group", security: [{ bearer: [] }], responses: { '200': { description: deleted } } }
+  /school-setup/batches/{id}:
+    delete: { summary: "Delete one batch", security: [{ bearer: [] }], responses: { '200': { description: deleted } } }
+  /school-setup/division-planner:
+    get: { summary: "Division planner rows for the current year", security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: "Create {grade_id, standard_id, division_id, capacity, sem_start_date, sem_end_date (Y-m-d)}", security: [{ bearer: [] }], responses: { '201': { description: created } } }
+  /school-setup/division-planner/{id}:
+    put: { summary: "Update", security: [{ bearer: [] }], responses: { '200': { description: updated } } }
+    delete: { summary: "Delete", security: [{ bearer: [] }], responses: { '200': { description: deleted } } }
+  /school-setup/periods:
+    get: { summary: "Periods with their distinct start/end times", security: [{ bearer: [] }], responses: { '200': { description: paginated } } }
+    post: { summary: "Create {title, short_name, sort_order, academic_section_id, academic_year_id, used_for_attendance, groups:[{standard_ids[], start_time, end_time}]}", security: [{ bearer: [] }], responses: { '201': { description: created }, '422': { description: "Period Already Exist / validation" } } }
+  /school-setup/periods/{id}:
+    get: { summary: "One period with its timing groups", security: [{ bearer: [] }], responses: { '200': { description: ok } } }
+    put: { summary: "Update; groups replace the previous timing rows", security: [{ bearer: [] }], responses: { '200': { description: updated } } }
+    delete: { summary: "Delete the period and its timing rows", security: [{ bearer: [] }], responses: { '200': { description: deleted } } }

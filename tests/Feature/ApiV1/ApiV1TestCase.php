@@ -134,6 +134,93 @@ abstract class ApiV1TestCase extends TestCase
             $t->string('status')->nullable();
             $t->timestamps();
         });
+        Schema::create('std_div_map', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('standard_id');
+            $t->integer('division_id');
+            $t->integer('sub_institute_id');
+            $t->timestamps();
+        });
+        Schema::create('sub_std_map', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('subject_id');
+            $t->integer('standard_id');
+            foreach (['allow_grades', 'elective_subject', 'display_name', 'add_content', 'allow_content', 'subject_category', 'display_image', 'status'] as $col) {
+                $t->string($col)->nullable();
+            }
+            $t->integer('sort_order')->nullable();
+            $t->integer('sub_institute_id');
+            $t->timestamps();
+        });
+        Schema::create('chapter_master', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('syear')->nullable();
+            $t->integer('sub_institute_id');
+            $t->integer('grade_id')->nullable();
+            $t->integer('standard_id')->nullable();
+            $t->integer('subject_id')->nullable();
+            $t->string('chapter_name')->nullable();
+        });
+        Schema::create('lms_content_category', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('category_name');
+            $t->integer('sub_institute_id')->default(0);
+            $t->string('status')->default('1');
+        });
+        Schema::create('batch', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('title');
+            $t->integer('standard_id');
+            $t->integer('division_id');
+            $t->integer('sub_institute_id');
+            $t->integer('syear')->nullable();
+            $t->integer('rollover_id')->nullable();
+            $t->integer('marking_period_id')->nullable();
+            $t->timestamps();
+        });
+        Schema::create('division_capacity_master', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('syear')->nullable();
+            $t->integer('sub_institute_id');
+            $t->integer('grade_id');
+            $t->integer('standard_id');
+            $t->integer('division_id');
+            $t->string('capacity')->nullable();
+            $t->date('sem_start_date')->nullable();
+            $t->date('sem_end_date')->nullable();
+            $t->dateTime('created_on')->nullable();
+            $t->integer('created_by')->nullable();
+            $t->string('created_ip')->nullable();
+            $t->integer('updated_by')->nullable();
+            $t->dateTime('updated_on')->nullable();
+        });
+        Schema::create('period', function (Blueprint $t) {
+            $t->increments('id');
+            foreach (['title', 'short_name', 'used_for_attendance', 'status'] as $col) {
+                $t->string($col)->nullable();
+            }
+            $t->integer('sort_order')->nullable();
+            $t->time('start_time')->nullable();
+            $t->time('end_time')->nullable();
+            $t->string('length')->nullable();
+            $t->integer('academic_section_id')->nullable();
+            $t->integer('academic_year_id')->nullable();
+            $t->integer('sub_institute_id');
+            $t->integer('marking_period_id')->nullable();
+            $t->timestamps();
+        });
+        Schema::create('period_details', function (Blueprint $t) {
+            $t->increments('id');
+            $t->integer('period_id');
+            $t->integer('standard_id');
+            $t->time('start_time')->nullable();
+            $t->time('end_time')->nullable();
+            $t->string('length')->nullable();
+            $t->integer('sub_institute_id');
+            $t->integer('created_by')->nullable();
+            $t->integer('updated_by')->nullable();
+            $t->timestamps();
+        });
         Schema::create('app_language', function (Blueprint $t) {
             $t->increments('id');
             $t->integer('menu_id')->nullable();
@@ -173,12 +260,17 @@ abstract class ApiV1TestCase extends TestCase
         $menu = ['status' => 1, 'sort_order' => 0, 'link' => null, 'icon' => null, 'sub_institute_id' => '1,2', 'client_id' => '9', 'menu_type' => 'MASTER'];
         DB::table('tblmenumaster')->insert($menu + ['id' => 37, 'name' => 'Institute (Master)', 'level' => 1, 'parent_menu_id' => 0]);
         DB::table('tblmenumaster')->insert(['link' => 'subject_master.index'] + $menu + ['id' => 138, 'name' => 'Create Subject', 'level' => 2, 'parent_menu_id' => 37]);
+        foreach ([38 => 'std_div_map.index', 40 => 'sub_std_map.index', 43 => 'period_master.index', 44 => 'batch_master.index', 332 => 'division_capacity_master.index'] as $menuId => $link) {
+            DB::table('tblmenumaster')->insert(['link' => $link] + $menu + ['id' => $menuId, 'name' => $link, 'level' => 2, 'parent_menu_id' => 37]);
+        }
         $rights = fn ($profile, $inst, $v, $a, $e, $d) => ['profile_id' => $profile, 'menu_id' => 138, 'sub_institute_id' => $inst, 'can_view' => $v, 'can_add' => $a, 'can_edit' => $e, 'can_delete' => $d];
-        DB::table('tblgroupwise_rights')->insert([
-            $rights(1, 1, 1, 1, 1, 1), // admin of institute 1: everything
-            $rights(2, 1, 1, 0, 0, 0), // teacher: view only
-            $rights(1, 2, 1, 1, 1, 1), // admin of institute 2
-        ]);
+        $rows = [];
+        foreach ([138, 38, 40, 43, 44, 332] as $menuId) {
+            foreach ([$rights(1, 1, 1, 1, 1, 1), $rights(2, 1, 1, 0, 0, 0), $rights(1, 2, 1, 1, 1, 1)] as $r) { // admin 1: all, teacher: view only, admin 2: all
+                $rows[] = ['menu_id' => $menuId] + $r;
+            }
+        }
+        DB::table('tblgroupwise_rights')->insert($rows);
     }
 
     /** Standards for the current term (1) of institute 1: ids 1 and 2; one for term 2 (id 3); one for institute 2 (id 4). */

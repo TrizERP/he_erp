@@ -17,7 +17,7 @@ class SchoolSetupMastersTest extends ApiV1TestCase
         $setup = $me->json('data.setup_menu');
 
         $this->assertSame(['Institute (Master)'], array_column($setup, 'name')); // heading granted to Admin (menu id 37)
-        $screen = $setup[0]['children'][0];
+        $screen = collect($setup[0]['children'])->firstWhere('name', 'Create Subject');
         $this->assertSame('Create Subject', $screen['name']);
         $this->assertSame('/school_setup/subject_master', $screen['path']);        // same path as the Blade route
         $this->assertSame(['view' => true, 'add' => true, 'edit' => true, 'delete' => true], $screen['permissions']);
