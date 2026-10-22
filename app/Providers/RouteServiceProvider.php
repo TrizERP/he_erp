@@ -110,6 +110,8 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapInternshipApiRoutes();
 
         $this->mapPlacementRoutes();
+
+        $this->mapPbasRoutes();
     }
 
     /**
@@ -303,6 +305,13 @@ class RouteServiceProvider extends ServiceProvider
         Route::namespace($this->namespace)
             ->middleware('web')
             ->group(base_path('routes/placement.php'));
+    }
+
+    protected function mapPbasRoutes()
+    {
+        Route::namespace($this->namespace)
+            ->middleware('web')
+            ->group(base_path('routes/pbas.php'));
     }
     /**
      * Configure the rate limiters for the application.
