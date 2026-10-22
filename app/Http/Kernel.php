@@ -72,6 +72,7 @@ class Kernel extends HttpKernel
         'logRoute'=>\App\Http\Middleware\LogRouteMiddleware::class,
         'placement.role' => \App\Http\Middleware\PlacementRole::class,
         'admission.role' => \App\Http\Middleware\AdmissionRole::class,
+        'pbas.role' => \App\Http\Middleware\PbasRole::class,
         'jwt' => \GenTux\Jwt\Http\JwtMiddleware::class,
         'check_permissions' =>\App\Http\Middleware\checkPermission::class,
     ];
