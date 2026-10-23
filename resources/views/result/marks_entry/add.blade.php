@@ -156,7 +156,7 @@
                                             @foreach ($data['exam_dd'] as $exam_id => $exam_name)
                                                 @php
                                                     if (
-                                                        in_array($student_data[$exam_id]['is_absent'], [
+                                                        in_array($student_data[$exam_id]['is_absent'] ?? null, [
                                                             'AB',
                                                             'N.A.',
                                                             'EX',
@@ -188,7 +188,7 @@
                                             @php
                                                 $exam_id = $data['exam'];
                                                 if (
-                                                    in_array($student_data[$exam_id]['is_absent'], ['AB', 'N.A.', 'EX'])
+                                                    in_array($student_data[$exam_id]['is_absent'] ?? null, ['AB', 'N.A.', 'EX'])
                                                 ) {
                                                     $points = isset($student_data[$exam_id]['is_absent'])
                                                         ? $student_data[$exam_id]['is_absent']
