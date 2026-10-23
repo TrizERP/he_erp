@@ -315,13 +315,6 @@ class marks_entry_controller extends Controller
         // ✅ Continue with your normal mapping logic
         foreach ($student_data as $student) {
             $student_id = (int)($student['student_id'] ?? $student['id']);
-            $responce_arr['stu_data'][$student_id] = [];
-            $responce_arr['stu_data'][$student_id]['enrollment_no'] = $student['enrollment_no'];
-            $responce_arr['stu_data'][$student_id]['name'] =
-                $student['first_name'] . ' ' .
-                $student['middle_name'] . ' ' .
-                $student['last_name'];
-
             // ✅ Check if student has elective subject
             $has_elective = DB::table("sub_std_map as sm")
                 ->where([
@@ -344,6 +337,13 @@ class marks_entry_controller extends Controller
                     continue;
                 }
             }
+
+            $responce_arr['stu_data'][$student_id] = [];
+            $responce_arr['stu_data'][$student_id]['enrollment_no'] = $student['enrollment_no'];
+            $responce_arr['stu_data'][$student_id]['name'] =
+                $student['first_name'] . ' ' .
+                $student['middle_name'] . ' ' .
+                $student['last_name'];
 
             // ✅ Map exam results
             foreach ($exam_creations as $exam) {
