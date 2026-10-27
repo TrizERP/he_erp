@@ -102,8 +102,8 @@
                                                     <table width="100%" border="0" id="fees_head">
                                                         <tr class="spaceUnder">
                                                             <th>Particular</th>
-                                                            <th>Amount</th>
                                                             <th>Collection Amount</th>
+                                                            <th>Refund Amount</th>
                                                         </tr>
                                                         <?php
                                                         $total_amount = 0;
@@ -137,7 +137,7 @@
                                                             <td>Total</td>
                                                             <td>{{$total_amount}}</td>
                                                             <td>
-                                                            <!-- <input type="number" min=0 max={{$total_amount}} value={{$total_amount}} name='total_amt' id="total_amt" class='form-control' readonly>   -->
+                                                                <strong id="refund_total">{{$total_amount}}</strong>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -253,9 +253,11 @@
         }
 
         function calculate_total(amount) {
-
-            // var total_amount = amount + total_amount;
-            // $("#total_amt").val(total_amount);
+            var total = 0;
+            $("input[name^='refund_amount[']").each(function () {
+                total += parseFloat($(this).val()) || 0;
+            });
+            $("#refund_total").text(total);
         }
 
     </script>
