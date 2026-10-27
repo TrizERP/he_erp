@@ -45,6 +45,7 @@ trait Helpers
             'Administrative Officer',
             'Office Superintendent',
             'Sr.Clerk',
+            'Jr.Clerk',
         ];
     }
 }
