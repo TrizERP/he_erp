@@ -48,6 +48,7 @@ class fees_waiver_report_controller extends Controller
                 }
             })
             ->leftJoin('division as d', 'd.id', '=', 'se.section_id')
+            ->leftJoin('student_quota as sq', 'sq.id', '=', 'se.student_quota')
             ->leftJoin('tbluser as u', 'u.id', '=', 'fw.created_by')
             ->where('fw.sub_institute_id', $sub_institute_id)
             ->where('fw.syear', $syear)
@@ -62,38 +63,39 @@ class fees_waiver_report_controller extends Controller
             })
             ->when($status === 'pending', fn ($q) => $q->whereNull('fw.applied_at'))
             ->when($status === 'applied', fn ($q) => $q->whereNotNull('fw.applied_at'))
-            ->when($request->filled('from_date'), fn ($q) => $q->whereDate('fw.updated_at', '>=', $request->from_date))
-            ->when($request->filled('to_date'), fn ($q) => $q->whereDate('fw.updated_at', '<=', $request->to_date))
+            ->when($request->filled('from_date'), fn ($q) => $q->whereDate('fw.created_at', '>=', $request->from_date))
+            ->when($request->filled('to_date'), fn ($q) => $q->whereDate('fw.created_at', '<=', $request->to_date))
             // one line per student: the enrollment of the selected term (or the latest one when no term is chosen)
             ->when($termId, fn ($q) => $q->whereNotNull('s.id'), function ($q) use ($syear) {
                 $q->whereRaw('(se.id is null or se.id = (select max(se2.id) from tblstudent_enrollment se2
                     where se2.student_id = ts.id and se2.sub_institute_id = ts.sub_institute_id and se2.syear = ?))', [$syear]);
             })
             ->selectRaw("fw.id, ts.enrollment_no, ts.first_name, ts.middle_name, ts.last_name, s.name as standard_name,
-                d.name as division_name, fw.amount, fw.remarks, fw.applied_at, fw.updated_at,
+                d.name as division_name, fw.amount, fw.remarks, fw.applied_at, fw.created_at, sq.title as quota_name,
                 CONCAT_WS(' ', u.first_name, u.last_name) as created_by_name")
-            ->orderBy('fw.updated_at', 'desc')
+            ->orderBy('fw.created_at', 'desc')
             ->get();
     }
 
     protected function csv($rows)
     {
         $out = fopen('php://temp', 'r+');
-        fputcsv($out, ['Sr', 'Enrollment No', 'Student', 'Class', 'Fees Waiver', 'Remarks', 'Status', 'Updated By', 'Updated On']);
+        fputcsv($out, ['Sr', 'Enrollment No', 'Student', 'Semester', 'Student Quota', 'Fees Waiver', 'Remarks', 'Applied Date', 'Created By', 'Created At']);
         foreach ($rows as $i => $r) {
             fputcsv($out, [
                 $i + 1,
                 $r->enrollment_no,
                 trim($r->first_name.' '.$r->middle_name.' '.$r->last_name),
                 trim($r->standard_name.' '.$r->division_name),
+                $r->quota_name,
                 $r->amount,
                 $r->remarks,
-                $r->applied_at ? 'Applied' : 'Pending',
+                $r->applied_at ? date('d-m-Y', strtotime($r->applied_at)) : '',
                 $r->created_by_name,
-                date('d-m-Y', strtotime($r->updated_at)),
+                $r->created_at ? date('d-m-Y h:i A', strtotime($r->created_at)) : '',
             ]);
         }
-        fputcsv($out, ['', '', '', 'Total', $rows->sum('amount')]);
+        fputcsv($out, ['', '', '', '', 'Total', $rows->sum('amount')]);
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
