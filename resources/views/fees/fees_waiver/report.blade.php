@@ -44,12 +44,13 @@
                             <th>#</th>
                             <th>Enrollment No</th>
                             <th>Student</th>
-                            <th>Class</th>
+                            <th>Semester</th>
+                            <th>Student Quota</th>
                             <th class="text-right">Fees Waiver</th>
                             <th>Remarks</th>
-                            <th>Status</th>
-                            <th>Updated By</th>
-                            <th>Updated On</th>
+                            <th>Applied Date</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,26 +60,21 @@
                             <td>{{ $r->enrollment_no }}</td>
                             <td>{{ trim($r->first_name.' '.$r->middle_name.' '.$r->last_name) }}</td>
                             <td>{{ $r->standard_name }} {{ $r->division_name }}</td>
+                            <td>{{ $r->quota_name }}</td>
                             <td class="text-right">{{ number_format($r->amount, 2) }}</td>
                             <td>{{ $r->remarks }}</td>
-                            <td>
-                                @if($r->applied_at)
-                                    <span class="label label-success">Applied {{ \Carbon\Carbon::parse($r->applied_at)->format('d-m-Y') }}</span>
-                                @else
-                                    <span class="label label-warning">Pending</span>
-                                @endif
-                            </td>
+                            <td>{{ $r->applied_at ? \Carbon\Carbon::parse($r->applied_at)->format('d-m-Y') : '-' }}</td>
                             <td>{{ $r->created_by_name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($r->updated_at)->format('d-m-Y') }}</td>
+                            <td>{{ $r->created_at ? \Carbon\Carbon::parse($r->created_at)->format('d-m-Y h:i A') : '' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="text-center">No fees waiver found</td></tr>
+                        <tr><td colspan="10" class="text-center">No fees waiver found</td></tr>
                     @endforelse
                     </tbody>
                     @if(count($data['rows']))
                     <tfoot>
                         <tr>
-                            <th colspan="4" class="text-right">Total</th>
+                            <th colspan="5" class="text-right">Total</th>
                             <th class="text-right">{{ number_format($data['total'], 2) }}</th>
                             <th colspan="4"></th>
                         </tr>
