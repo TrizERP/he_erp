@@ -58,10 +58,10 @@
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td>{{ $r->enrollment_no }}</td>
-                            <td>{{ trim($r->first_name.' '.$r->middle_name.' '.$r->last_name) }}</td>
+                            <td>{{ trim($r->last_name.' '.$r->first_name.' '.$r->middle_name) }}</td>
                             <td>{{ $r->standard_name }} {{ $r->division_name }}</td>
                             <td>{{ $r->quota_name }}</td>
-                            <td class="text-right">{{ number_format($r->amount, 2) }}</td>
+                            <td class="text-right">{{ preg_replace('/\.00$/', '', number_format($r->amount, 2)) }}</td>
                             <td>{{ $r->remarks }}</td>
                             <td>{{ $r->applied_at ? \Carbon\Carbon::parse($r->applied_at)->format('d-m-Y') : '-' }}</td>
                             <td>{{ $r->created_by_name }}</td>
@@ -75,7 +75,7 @@
                     <tfoot>
                         <tr>
                             <th colspan="5" class="text-right">Total</th>
-                            <th class="text-right">{{ number_format($data['total'], 2) }}</th>
+                            <th class="text-right">{{ preg_replace('/\.00$/', '', number_format($data['total'], 2)) }}</th>
                             <th colspan="4"></th>
                         </tr>
                     </tfoot>
