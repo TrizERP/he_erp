@@ -85,7 +85,7 @@ class fees_waiver_report_controller extends Controller
             fputcsv($out, [
                 $i + 1,
                 $r->enrollment_no,
-                trim($r->first_name.' '.$r->middle_name.' '.$r->last_name),
+                trim($r->last_name.' '.$r->first_name.' '.$r->middle_name),
                 trim($r->standard_name.' '.$r->division_name),
                 $r->quota_name,
                 $r->amount,
