@@ -186,6 +186,11 @@ class depositRefundController extends Controller
         $res['ledger'] = $ledger;
         $res['history'] = $history;
         $res['has_active_request'] = $hasActiveRequest;
+        if ($isLegacy && $legacyId) {
+            $res['legacy_data'] = DB::table('deposite_lagacy_students')->where('id', $legacyId)->first();
+        } else {
+            $res['legacy_data'] = null;
+        }
 
         return is_mobile($type, "fees/deposit_refund/deposit_account", $res, "view");
     }

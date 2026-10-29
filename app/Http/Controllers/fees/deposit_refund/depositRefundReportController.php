@@ -111,8 +111,11 @@ class depositRefundReportController extends Controller
     {
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
+        $from_date = $request->input('from_date');
+        $to_date = $request->input('to_date');
+        $approval_status = $request->input('approval_status');
 
-        $data = DB::table('deposit_refund as dr')
+        $query = DB::table('deposit_refund as dr')
             ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
             ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->join('deposit_refund_status_master as sm', 'sm.id', '=', 'dr.status')
@@ -125,13 +128,35 @@ class depositRefundReportController extends Controller
             ->whereIn('dr.status', [
                 depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_PENDING_PRINCIPAL,
-            ])
-            ->orderByDesc('days_pending')
-            ->get()->toArray();
+                depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT,
+            ]);
+
+        if ($approval_status != '') {
+            if ($approval_status == 'pending') {
+                $query->whereIn('dr.status', [
+                    depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
+                    depositRefundModel::STATUS_PENDING_PRINCIPAL,
+                ]);
+            } elseif ($approval_status == 'approved') {
+                $query->where('dr.status', depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT);
+            }
+        }
+
+        if ($from_date != '') {
+            $query->whereDate('dr.requested_date', '>=', $from_date);
+        }
+        if ($to_date != '') {
+            $query->whereDate('dr.requested_date', '<=', $to_date);
+        }
+
+        $data = $query->orderByDesc('days_pending')->get()->toArray();
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
         $res['data'] = $data;
+        $res['from_date'] = $from_date;
+        $res['to_date'] = $to_date;
+        $res['approval_status'] = $approval_status;
 
         return is_mobile($type, "fees/deposit_refund/reports/pending_approvals", $res, "view");
     }

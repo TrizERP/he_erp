@@ -28,7 +28,6 @@
                         <tr><td>Student Name</td><td>{{ $stu['name'] }}</td></tr>
                         <tr><td>Gr.No.</td><td>{{ $stu['enrollment_no'] }}</td></tr>
                         <tr><td>Standard/Division</td><td>{{ $stu['stddiv'] }}</td></tr>
-                        <tr><td>Father Name</td><td>{{ $stu['father_name'] }}</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -39,6 +38,39 @@
                     </table>
                 </div>
             </div>
+            @if(isset($data['legacy_data']) && $data['legacy_data'])
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5 style="margin-left:15px;">Deposit Details</h5>
+                        <table class="table table-striped">
+                            <tr>
+                                <td>Receipt No</td>
+                                <td>{{ $data['legacy_data']->reciept_no ?? '-' }}</td>
+                                <td>Received Date</td>
+                                <td>{{ $data['legacy_data']->received_date ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td>Payment Mode</td>
+                                <td>{{ $data['legacy_data']->payment_mode ?? '-' }}</td>
+                                <td>Bank Name</td>
+                                <td>{{ $data['legacy_data']->bank_name ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td>Bank Branch</td>
+                                <td>{{ $data['legacy_data']->bank_branch ?? '-' }}</td>
+                                <td>Cheque/DD No</td>
+                                <td>{{ $data['legacy_data']->cheque_dd_no ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cheque/DD Date</td>
+                                <td>{{ $data['legacy_data']->cheque_dd_date ?? '-' }}</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            @endif
             <div class="col-md-12 text-center mt-3">
                 <a href="{{ route('deposit_refund_report_student_statement', $stu['student_id']) }}" class="btn btn-outline-secondary" target="_blank">
                     Print Student Statement
