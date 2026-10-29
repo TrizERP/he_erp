@@ -184,8 +184,10 @@ Route::get('payphi', function ($id = null) {
     Route::controller(depositRefundApprovalController::class)->group(function () {
         Route::get('deposit_refund_accounts_head', 'accountsHeadQueue')->name('deposit_refund_accounts_head.index');
         Route::post('deposit_refund_accounts_head/action/{id}', 'accountsHeadAction')->name('deposit_refund_accounts_head_action');
+        Route::post('deposit_refund_accounts_head/bulk_action', 'accountsHeadAction')->name('deposit_refund_accounts_head_bulk_action');
         Route::get('deposit_refund_principal', 'principalQueue')->name('deposit_refund_principal.index');
         Route::post('deposit_refund_principal/action/{id}', 'principalAction')->name('deposit_refund_principal_action');
+        Route::post('deposit_refund_principal/bulk_action', 'principalAction')->name('deposit_refund_principal_bulk_action');
     });
 
     // Deposit Refund module - cashier payment + voucher

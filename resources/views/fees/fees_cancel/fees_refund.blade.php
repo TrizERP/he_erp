@@ -68,6 +68,14 @@
                                     <input type="text" id="enrollment_no" name="enrollment_no"
                                            value="{{$enrollment_no}}" class="form-control">
                                 </div>
+                                <div class="col-md-4 form-group">
+                                    <label>First Name</label>
+                                    <input type="text" id="first_name" name="first_name" class="form-control" value="{{ isset($data['first_name']) ? $data['first_name'] : '' }}">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                    <label>Last Name</label>
+                                    <input type="text" id="last_name" name="last_name" class="form-control" value="{{ isset($data['last_name']) ? $data['last_name'] : '' }}">
+                                </div>
 <!--
                                 <div class="col-md-4 form-group">
                                     <label>From Date</label>

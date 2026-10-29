@@ -60,7 +60,7 @@ class depositRefundController extends Controller
         $extraSearchArray['tblstudent_enrollment.syear'] = $syear;
         $extraSearchArray['tblstudent.sub_institute_id'] = $sub_institute_id;
 
-        $studentData = tblstudentModel::selectRaw("tblstudent.id,CONCAT_WS(' ',tblstudent.first_name,tblstudent.middle_name,tblstudent.last_name) AS student_name,
+        $studentData = tblstudentModel::selectRaw("tblstudent.id,CONCAT_WS(' ',tblstudent.last_name,tblstudent.first_name,tblstudent.middle_name) AS student_name,
             academic_section.title as grade,standard.name as standard_name,division.name as division_name,tblstudent.enrollment_no,tblstudent.mobile")
             ->join('tblstudent_enrollment', 'tblstudent.id', '=', 'tblstudent_enrollment.student_id')
             ->join('academic_section', 'academic_section.id', '=', 'tblstudent_enrollment.grade_id')
@@ -77,16 +77,49 @@ class depositRefundController extends Controller
             ->get()
             ->toArray();
 
-        if (count($studentData) == 0) {
+        if (count($studentData) > 0) {
+            $res['status_code'] = 1;
+            $res['message'] = "Success";
+            $res['student_data'] = $studentData;
+            $res['grade_id'] = $grade;
+            $res['standard_id'] = $standard;
+            $res['division_id'] = $division;
+            $res['enrollment_no'] = $enrollment_no;
+
+            return is_mobile($type, "fees/deposit_refund/index", $res, "view");
+        }
+
+        // If not found in ERP, search in legacy students table
+        $legacyQuery = DB::table('deposite_lagacy_students');
+        if ($enrollment_no != '') {
+            $legacyQuery->where('enrollment_no', $enrollment_no);
+        }
+
+        $legacyData = $legacyQuery->get()->toArray();
+
+        if (count($legacyData) == 0) {
             $res['status_code'] = 0;
             $res['message'] = "No student found, please check your search panel.";
 
             return is_mobile($type, "deposit_refund.index", $res, "redirect");
         }
 
+        $legacyStudentData = [];
+        foreach ($legacyData as $key => $legacy) {
+            $legacyStudentData[] = [
+                'id' => 'legacy_' . $legacy->id,
+                'student_name' => $legacy->student_name,
+                'enrollment_no' => $legacy->enrollment_no,
+                'standard_name' => $legacy->semester,
+                'division_name' => $legacy->student_quota,
+                'is_legacy' => true,
+                'legacy_id' => $legacy->id,
+            ];
+        }
+
         $res['status_code'] = 1;
         $res['message'] = "Success";
-        $res['student_data'] = $studentData;
+        $res['student_data'] = $legacyStudentData;
         $res['grade_id'] = $grade;
         $res['standard_id'] = $standard;
         $res['division_id'] = $division;
@@ -104,6 +137,15 @@ class depositRefundController extends Controller
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        $legacyId = null;
+        $actualStudentId = $student_id;
+
+        if ($isLegacy) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+            $actualStudentId = null;
+        }
+
         $stuData = $this->getStudentSnapshot($student_id, $syear, $sub_institute_id);
 
         if (!$stuData) {
@@ -115,20 +157,28 @@ class depositRefundController extends Controller
 
         $ledger = $this->getDepositLedger($student_id, $sub_institute_id);
 
-        $history = depositRefundModel::where([
-            'student_id'        => $student_id,
-            'sub_institute_id'  => $sub_institute_id,
-        ])->orderByDesc('id')->get()->toArray();
+        $historyQuery = depositRefundModel::where('sub_institute_id', $sub_institute_id);
+        if ($isLegacy && $legacyId) {
+            $historyQuery->where('legacy_student_id', $legacyId);
+        } else {
+            $historyQuery->where('student_id', $student_id);
+        }
+        $history = $historyQuery->orderByDesc('id')->get()->toArray();
 
-        $hasActiveRequest = depositRefundModel::where('student_id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
+        $hasActiveQuery = depositRefundModel::where('sub_institute_id', $sub_institute_id)
             ->whereIn('status', [
                 depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_RETURNED_BY_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_PENDING_PRINCIPAL,
                 depositRefundModel::STATUS_RETURNED_BY_PRINCIPAL,
                 depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT,
-            ])->exists();
+            ]);
+        if ($isLegacy && $legacyId) {
+            $hasActiveQuery->where('legacy_student_id', $legacyId);
+        } else {
+            $hasActiveQuery->where('student_id', $student_id);
+        }
+        $hasActiveRequest = $hasActiveQuery->exists();
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
@@ -149,6 +199,13 @@ class depositRefundController extends Controller
         $syear = $request->session()->get('syear');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        $legacyId = null;
+
+        if ($isLegacy) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+        }
+
         $stuData = $this->getStudentSnapshot($student_id, $syear, $sub_institute_id);
 
         if (!$stuData) {
@@ -167,15 +224,20 @@ class depositRefundController extends Controller
             return is_mobile($type, "deposit_refund.index", $res, "redirect");
         }
 
-        $hasActiveRequest = depositRefundModel::where('student_id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
+        $hasActiveQuery = depositRefundModel::where('sub_institute_id', $sub_institute_id)
             ->whereIn('status', [
                 depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_RETURNED_BY_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_PENDING_PRINCIPAL,
                 depositRefundModel::STATUS_RETURNED_BY_PRINCIPAL,
                 depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT,
-            ])->exists();
+            ]);
+        if ($isLegacy && $legacyId) {
+            $hasActiveQuery->where('legacy_student_id', $legacyId);
+        } else {
+            $hasActiveQuery->where('student_id', $student_id);
+        }
+        $hasActiveRequest = $hasActiveQuery->exists();
 
         if ($hasActiveRequest) {
             $res['status_code'] = 0;
@@ -218,6 +280,16 @@ class depositRefundController extends Controller
         $ifsc_code = $request->input('ifsc_code');
         $clerk_remarks = $request->input('clerk_remarks');
 
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        $legacyId = null;
+        $actualStudentId = null;
+
+        if ($isLegacy) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+        } else {
+            $actualStudentId = $student_id;
+        }
+
         $deduction_titles = (array)$request->input('deduction_title', []);
         $deduction_amounts = (array)$request->input('deduction_amount', []);
         $deduction_remarks = (array)$request->input('deduction_remarks', []);
@@ -252,15 +324,20 @@ class depositRefundController extends Controller
             return is_mobile($type, "deposit_refund.index", $res, "redirect");
         }
 
-        $hasActiveRequest = depositRefundModel::where('student_id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
+        $hasActiveQuery = depositRefundModel::where('sub_institute_id', $sub_institute_id)
             ->whereIn('status', [
                 depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_RETURNED_BY_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_PENDING_PRINCIPAL,
                 depositRefundModel::STATUS_RETURNED_BY_PRINCIPAL,
                 depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT,
-            ])->exists();
+            ]);
+        if ($isLegacy && $legacyId) {
+            $hasActiveQuery->where('legacy_student_id', $legacyId);
+        } elseif ($actualStudentId) {
+            $hasActiveQuery->where('student_id', $actualStudentId);
+        }
+        $hasActiveRequest = $hasActiveQuery->exists();
 
         if ($hasActiveRequest) {
             $res['status_code'] = 0;
@@ -326,12 +403,13 @@ class depositRefundController extends Controller
 
         $requestNo = 'DR/'.$syear.'/'.($requestNoResult->rid + 1);
 
-        $depositRefund = depositRefundModel::create([
+        $depositRefundData = [
             'sub_institute_id'         => $sub_institute_id,
             'syear'                    => $syear,
-            'student_id'               => $student_id,
-            'standard_id'              => $stuData['std_id'],
-            'section_id'               => $stuData['div_id'],
+            'legacy_student_id'        => $legacyId,
+            'student_id'               => $actualStudentId,
+            'standard_id'              => $stuData['std_id'] ?? null,
+            'section_id'               => $stuData['div_id'] ?? null,
             'request_no'               => $requestNo,
             'deposit_collected'        => $ledger['collected'],
             'deposit_returned_before'  => $ledger['returned'],
@@ -356,7 +434,9 @@ class depositRefundController extends Controller
             'created_by'               => $user_id,
             'created_ip_address'       => $_SERVER['REMOTE_ADDR'] ?? '',
             'created_date'             => date('Y-m-d H:i:s'),
-        ]);
+        ];
+
+        $depositRefund = depositRefundModel::create($depositRefundData);
 
         foreach ($deductions as $deduction) {
             depositRefundDeductionModel::create([
@@ -393,9 +473,13 @@ class depositRefundController extends Controller
         $syear = $request->session()->get('syear');
 
         $data = DB::table('deposit_refund as dr')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->join('deposit_refund_status_master as sm', 'sm.id', '=', 'dr.status')
-            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no, sm.title as status_title")
+            ->selectRaw("dr.*, 
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no, 
+                sm.title as status_title")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)
             ->orderByDesc('dr.id')
@@ -509,6 +593,31 @@ class depositRefundController extends Controller
      */
     protected function getStudentSnapshot($student_id, $syear, $sub_institute_id)
     {
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        
+        if ($isLegacy) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+            $legacy = DB::table('deposite_lagacy_students')->where('id', $legacyId)->first();
+            if (!$legacy) {
+                return null;
+            }
+            
+            return [
+                'student_id' => $student_id,
+                'legacy_id' => $legacy->id,
+                'is_legacy' => true,
+                'name' => $legacy->student_name,
+                'father_name' => null,
+                'enrollment_no' => $legacy->enrollment_no,
+                'mobile' => null,
+                'admission' => $legacy->admission_year,
+                'stddiv' => $legacy->semester . ' / ' . $legacy->student_quota,
+                'grade_id' => null,
+                'std_id' => null,
+                'div_id' => null,
+            ];
+        }
+
         $row = DB::table('tblstudent as s')
             ->join('tblstudent_enrollment as se', function ($join) {
                 $join->whereRaw('se.student_id = s.id AND s.sub_institute_id = se.sub_institute_id');
@@ -518,7 +627,7 @@ class depositRefundController extends Controller
             ->join('division as d', function ($join) {
                 $join->whereRaw('d.id = se.section_id AND d.sub_institute_id = se.sub_institute_id');
             })
-            ->selectRaw("s.id as student_id, CONCAT_WS(' ',s.first_name,s.middle_name,s.last_name) AS name,
+            ->selectRaw("s.id as student_id, CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) AS name,
                 s.father_name, s.enrollment_no, s.mobile, s.admission_date as admission,
                 CONCAT_WS('/',st.name,d.name) AS stddiv, se.grade_id, se.standard_id as std_id, se.section_id as div_id")
             ->where('s.id', $student_id)
@@ -528,7 +637,13 @@ class depositRefundController extends Controller
             ->orderByDesc('se.id')
             ->first();
 
-        return $row ? (array)$row : null;
+        if ($row) {
+            $rowArr = (array)$row;
+            $rowArr['is_legacy'] = false;
+            return $rowArr;
+        }
+
+        return null;
     }
 
     /**
@@ -536,6 +651,25 @@ class depositRefundController extends Controller
      */
     protected function getDepositLedger($student_id, $sub_institute_id)
     {
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        
+        if ($isLegacy) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+            $legacy = DB::table('deposite_lagacy_students')->where('id', $legacyId)->first();
+            $collected = $legacy ? (float)$legacy->security_deposit : 0.0;
+
+            $returned = (float)depositRefundModel::where('legacy_student_id', $legacyId)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('status', depositRefundModel::STATUS_PAID)
+                ->sum('final_refund_amount');
+
+            return [
+                'collected' => $collected,
+                'returned'  => $returned,
+                'balance'   => $collected - $returned,
+            ];
+        }
+
         $collected = (float)DB::table('fees_collect')
             ->where('student_id', $student_id)
             ->where('sub_institute_id', $sub_institute_id)
@@ -561,6 +695,11 @@ class depositRefundController extends Controller
      */
     protected function calculateUnpaidFees($student_id, $grade_id, $standard_id, $division_id)
     {
+        $isLegacy = is_string($student_id) && strpos($student_id, 'legacy_') === 0;
+        if ($isLegacy) {
+            return 0.0;
+        }
+        
         try {
             $feesStatusController = new feesStatusController;
             $fakeRequest = new Request([

@@ -33,12 +33,11 @@
                 </div>
                 <div class="col-md-3 form-group" style="margin-top:25px;">
                     <button type="submit" class="btn btn-success">Show</button>
-                    <button type="submit" name="export" value="csv" class="btn btn-info">Export CSV</button>
                 </div>
             </form>
 
             <div class="table-responsive">
-                <table class="table table-bordered table-striped">
+                <table id="example" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -61,21 +60,20 @@
                             <td>{{ trim($r->last_name.' '.$r->first_name.' '.$r->middle_name) }}</td>
                             <td>{{ $r->standard_name }} {{ $r->division_name }}</td>
                             <td>{{ $r->quota_name }}</td>
-                            <td class="text-right">{{ preg_replace('/\.00$/', '', number_format($r->amount, 2)) }}</td>
+                            <td class="text-right">{{ number_format($r->amount, 2) }}</td>
                             <td>{{ $r->remarks }}</td>
                             <td>{{ $r->applied_at ? \Carbon\Carbon::parse($r->applied_at)->format('d-m-Y') : '-' }}</td>
                             <td>{{ $r->created_by_name }}</td>
                             <td>{{ $r->created_at ? \Carbon\Carbon::parse($r->created_at)->format('d-m-Y h:i A') : '' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="text-center">No fees waiver found</td></tr>
                     @endforelse
                     </tbody>
                     @if(count($data['rows']))
                     <tfoot>
                         <tr>
                             <th colspan="5" class="text-right">Total</th>
-                            <th class="text-right">{{ preg_replace('/\.00$/', '', number_format($data['total'], 2)) }}</th>
+                            <th class="text-right">{{ number_format($data['total'], 2) }}</th>
                             <th colspan="4"></th>
                         </tr>
                     </tfoot>
@@ -87,4 +85,108 @@
 </div>
 
 @include('includes.footerJs')
+<script>
+    $(document).ready(function () {
+        var table = $('#example').DataTable({
+            select: false,
+            lengthMenu: [
+                [100, 500, 1000, -1],
+                ['100', '500', '1000', 'Show All']
+            ],
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Fees Waiver Report',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
+                    },
+                    customize: function (doc) {
+                        doc.styles.tableHeader.fillColor = '#f2f2f2';
+                        doc.styles.tableHeader.color = '#000';
+                        doc.styles.tableHeader.bold = true;
+                    }
+                },
+                {
+                    extend: 'csv',
+                    text: 'CSV',
+                    title: 'Fees Waiver Report',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'excel',
+                    text: 'EXCEL',
+                    title: 'Fees Waiver Report',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'print',
+                    text: 'PRINT',
+                    title: 'Fees Waiver Report',
+                    customize: function (win) {
+                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
+                        $(win.document.body).append(`<div style="text-align: right;margin-top:20px">Printed on: {{date('d-m-Y H:i:s')}}</div>`);
+                    },
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                'pageLength'
+            ],
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+                var intVal = function (i) {
+                    return typeof i === 'string' ?
+                        i.replace(/[\$,]/g, '') * 1 :
+                        typeof i === 'number' ?
+                            i : 0;
+                };
+                var total = api.column(5, {page: 'current'}).data().reduce(function (a, b) {
+                    return intVal(a) + intVal(b);
+                }, 0);
+                $(api.column(5).footer()).html(total.toFixed(2));
+            }
+        });
+
+        $('#example thead tr').clone(true).appendTo('#example thead');
+        $('#example thead tr:eq(1) th').each(function (i) {
+            var title = $(this).text();
+            if (title == '#') {
+                $(this).html('');
+                return;
+            }
+            $(this).html('<input type="text" placeholder="Search ' + title + '" style="width:100%" />');
+
+            $('input', this).on('keyup change', function () {
+                if (table.column(i).search() !== this.value) {
+                    table
+                        .column(i)
+                        .search(this.value)
+                        .draw();
+                }
+            });
+        });
+    });
+</script>
 @include('includes.footer')

@@ -184,6 +184,8 @@ class feesRefundController extends Controller
         $standard = $request->input('standard');
         $division = $request->input('division');
         $enrollment_no = $request->input('enrollment_no');
+        $first_name = $request->input('first_name');
+        $last_name = $request->input('last_name');
         $from_date = $request->input('from_date');
         $to_date = $request->input('to_date');
         $syear = $request->session()->get('syear');
@@ -212,6 +214,16 @@ class feesRefundController extends Controller
         if ($enrollment_no != '') {
             $extraSearchArray['tblstudent.enrollment_no'] = $enrollment_no;
             $other_extraSearchArray['tblstudent.enrollment_no'] = $enrollment_no;
+        }
+
+        if ($first_name != '') {
+            $extraSearchArrayRaw .= " AND (LOWER(tblstudent.first_name) LIKE '%".strtolower($first_name)."%' OR LOWER(tblstudent.middle_name) LIKE '%".strtolower($first_name)."%')";
+            $other_extraSearchArrayRaw .= " AND (LOWER(tblstudent.first_name) LIKE '%".strtolower($first_name)."%' OR LOWER(tblstudent.middle_name) LIKE '%".strtolower($first_name)."%')";
+        }
+
+        if ($last_name != '') {
+            $extraSearchArrayRaw .= " AND LOWER(tblstudent.last_name) LIKE '%".strtolower($last_name)."%'";
+            $other_extraSearchArrayRaw .= " AND LOWER(tblstudent.last_name) LIKE '%".strtolower($last_name)."%'";
         }
 
         if ($from_date != '') {
@@ -306,6 +318,8 @@ class feesRefundController extends Controller
         $res['standard_id'] = $standard;
         $res['division_id'] = $division;
         $res['enrollment_no'] = $enrollment_no;
+        $res['first_name'] = $first_name;
+        $res['last_name'] = $last_name;
         $res['from_date'] = $from_date;
         $res['to_date'] = $to_date;
 

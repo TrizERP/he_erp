@@ -80,12 +80,16 @@
                     $report_data = $data['report_data'];
                     $finalData = $data;
                 }
+                $total_refund_amount = 0;
+                foreach($report_data as $r){
+                    $total_refund_amount += isset($r['amount']) ? $r['amount'] : 0;
+                }
             @endphp
 
             <div class="card">
                 <div class="col-lg-12 col-sm-12 col-xs-12">
                     <div class="table-responsive">
-                        <table id="example" class="table table-striped">
+                        <table id="example" class="table table-striped table-bordered">
                             <thead>
                                 <tr>
                                     <th>Sr.No.</th>
@@ -108,42 +112,38 @@
                             <tbody>
                                 @php
                                     $j = 1;
-                                    $total_refund_amount = 0;
                                 @endphp
                                 
-                                @foreach($report_data as $key => $data)
-                                    @php
-                                        $total_refund_amount += $data['amount'];
-                                    @endphp
+                                @foreach($report_data as $key => $row)
                                     <tr>
                                         <td>{{ $j }}</td>
-                                        <td>{{ $data['receipt_no'] }}</td>
-                                        <td>{{ $data['enrollment_no'] }}</td>
-                                        <td>{{ $data['student_name'] }}</td>
-                                        <td>{{ $data['grade_name'] }}</td>
-                                        <td>{{ $data['std_name'] }}</td>
-                                        <td>{{ $data['division_name'] }}</td>
-                                        <td>{{ $data['amount'] }}</td>
-                                        <td>{{ $data['payment_mode'] }}</td>
-                                        <td>{{ $data['cheque_no'] ?? 'N/A' }}</td>
-                                        <td>{{ $data['bank_name'] ?? 'N/A' }}</td>
-                                        <td>{{ $data['bank_branch'] ?? 'N/A' }}</td>
-                                        <td>{{ $data['refund_remarks'] ?? 'N/A' }}</td>
-                                        <td>{{ $data['refund_date'] }}</td>
-                                        <td>{{ $data['refund_by'] }}</td>
+                                        <td>{{ $row['receipt_no'] }}</td>
+                                        <td>{{ $row['enrollment_no'] }}</td>
+                                        <td>{{ $row['student_name'] }}</td>
+                                        <td>{{ $row['grade_name'] }}</td>
+                                        <td>{{ $row['std_name'] }}</td>
+                                        <td>{{ $row['division_name'] }}</td>
+                                        <td>{{ number_format($row['amount'], 2) }}</td>
+                                        <td>{{ $row['payment_mode'] }}</td>
+                                        <td>{{ $row['cheque_no'] ?? 'N/A' }}</td>
+                                        <td>{{ $row['bank_name'] ?? 'N/A' }}</td>
+                                        <td>{{ $row['bank_branch'] ?? 'N/A' }}</td>
+                                        <td>{{ $row['remarks'] ?? ($row['refund_remarks'] ?? 'N/A') }}</td>
+                                        <td>{{ $row['refund_date'] ?? ($row['receipt_date'] ?? '') }}</td>
+                                        <td>{{ $row['refund_by'] ?? ($row['created_by'] ?? '') }}</td>
                                     </tr>
                                     @php
                                         $j++;
                                     @endphp
                                 @endforeach
-                                
-                                {{-- Total Row --}}
-                                <tr style="font-weight: bold; background-color: #f8f9fa;">
-                                    <td colspan="7" style="text-align: right;">Total Refund Amount:</td>
-                                    <td>{{ $total_refund_amount }}</td>
-                                    <td colspan="7"></td>
-                                </tr>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="7" style="text-align:right">Total:</th>
+                                    <th>{{ number_format($total_refund_amount, 2) }}</th>
+                                    <th colspan="7"></th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
 <script>
     $(document).ready(function () {
         var table = $('#example').DataTable({
-            select: true,
+            select: false,
             lengthMenu: [
                 [100, 500, 1000, -1],
                 ['100', '500', '1000', 'Show All']
@@ -167,30 +167,84 @@
                     extend: 'pdfHtml5',
                     title: 'Fees Refund Report',
                     orientation: 'landscape',
-                    pageSize: 'LEGAL',
+                    pageSize: 'A4',
                     exportOptions: {
-                        columns: ':visible'
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
                     },
                     customize: function (doc) {
-                        // Add footer with total amount
-                        doc.content.push({
-                            text: 'Total Refund Amount: {{ $total_refund_amount ?? 0 }}',
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        });
+                        doc.styles.tableHeader.fillColor = '#f2f2f2';
+                        doc.styles.tableHeader.color = '#000';
+                        doc.styles.tableHeader.bold = true;
                     }
                 },
-                {extend: 'csv', text: ' CSV', title: 'Fees Refund Report'},
-                {extend: 'excel', text: ' EXCEL', title: 'Fees Refund Report'},
-                {extend: 'print', text: ' PRINT', title: 'Fees Refund Report'},
+                {
+                    extend: 'csv',
+                    text: 'CSV',
+                    title: 'Fees Refund Report',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'excel',
+                    text: 'EXCEL',
+                    title: 'Fees Refund Report',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                return data.replace(/<[^>]*>/g, '');
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'print',
+                    text: 'PRINT',
+                    title: 'Fees Refund Report',
+                    customize: function (win) {
+                        $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
+                        $(win.document.body).append(`<div style="text-align: right;margin-top:20px">Printed on: {{date('d-m-Y H:i:s')}}</div>`);
+                    },
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
                 'pageLength'
             ],
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+                var intVal = function (i) {
+                    return typeof i === 'string' ?
+                        i.replace(/[\$,]/g, '') * 1 :
+                        typeof i === 'number' ?
+                            i : 0;
+                };
+                var total = api.column(7, {page: 'current'}).data().reduce(function (a, b) {
+                    return intVal(a) + intVal(b);
+                }, 0);
+                $(api.column(7).footer()).html(total.toFixed(2));
+            }
         });
 
         $('#example thead tr').clone(true).appendTo('#example thead');
         $('#example thead tr:eq(1) th').each(function (i) {
             var title = $(this).text();
-            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+            if (title == 'Sr.No.') {
+                $(this).html('');
+                return;
+            }
+            $(this).html('<input type="text" placeholder="Search ' + title + '" style="width:100%" />');
 
             $('input', this).on('keyup change', function () {
                 if (table.column(i).search() !== this.value) {
