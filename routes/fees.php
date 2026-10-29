@@ -235,7 +235,7 @@ Route::get('payphi', function ($id = null) {
     });
 
     Route::get('fees_refund_report_index',[feesRefundReportController::class, 'feesRefundReportIndex'])->name('fees_refund_report_index');
-    Route::get('fees_refund_report_fees',[feesRefundReportController::class, 'feesRefundReport'])->name('fees_refund_report_fees');
+    Route::match(['get', 'post'],'fees_refund_report_fees',[feesRefundReportController::class, 'feesRefundReport'])->name('fees_refund_report_fees');
 
     //Route::get('fees_refund_report_index', [feesRefundController::class,'index'])->name("fees_refund_report_index");
     //Route::post('fees_refund_report', [feesRefundController::class,'feesRefundReport'])->name("fees_refund_report");
