@@ -464,7 +464,7 @@ class feesRefundController extends Controller
             ->where('s.id', $student_id)
             ->where('se.syear', $syear)
             ->where('s.sub_institute_id', $sub_institute_id)
-            ->whereNull('se.end_date')->get()->toArray();
+            ->get()->toArray();
 
         $receipt_book_arr = [];
         foreach ($result as $temp_id => $receipt_detail) {
