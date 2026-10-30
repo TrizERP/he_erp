@@ -681,6 +681,17 @@ class depositRefundController extends Controller
             ->where('is_deleted', 'N')
             ->sum('deposit');
 
+        if ($collected <= 0) {
+            // Fallback to legacy table using enrollment number
+            $enrollmentNo = DB::table('tblstudent')->where('id', $student_id)->value('enrollment_no');
+            if ($enrollmentNo) {
+                $legacy = DB::table('deposite_lagacy_students')->where('enrollment_no', $enrollmentNo)->first();
+                if ($legacy) {
+                    $collected = (float)$legacy->security_deposit;
+                }
+            }
+        }
+
         $returned = (float)depositRefundModel::where('student_id', $student_id)
             ->where('sub_institute_id', $sub_institute_id)
             ->where('status', depositRefundModel::STATUS_PAID)
