@@ -287,6 +287,112 @@
             </div>
             @endif
             <!-- Other fees collect table end  -->
+
+            <!-- DEPOSIT REFUND INFORMATION start -->
+            <div class="personalData" style="padding:20px 30px;">
+                <h3><b>DEPOSIT REFUND INFORMATION</b></h3>
+                @if(!empty($data['depositRefundList']))
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <th><b>Sr. No.</b></th>
+                        <th><b>Voucher No.</b></th>
+                        <th><b>Request No.</b></th>
+                        <th><b>Final Amount</b></th>
+                        <th><b>Accounts Head</b></th>
+                        <th><b>Principal</b></th>
+                        <th><b>Paid On</b></th>
+                    </tr>
+                    @foreach($data['depositRefundList'] as $key => $value)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{$value->voucher_no ?? '-'}}</td>
+                        <td>{{$value->request_no ?? '-'}}</td>
+                        <td>&#8377; {{ number_format($value->final_refund_amount ?? 0, 2) }}</td>
+                        <td>{{$value->accounts_head_name ?? '-'}}</td>
+                        <td>{{$value->principal_name ?? '-'}}</td>
+                        <td>{{!empty($value->paid_date) ? date('d/m/Y',strtotime($value->paid_date)) : '-'}}</td>
+                    </tr>
+                    @endforeach
+                </table>
+                @else
+                <div class="alert alert-info text-center">No Records Found.</div>
+                @endif
+            </div>
+            <!-- DEPOSIT REFUND INFORMATION end -->
+
+            <!-- FEES REFUND INFORMATION start -->
+            <div class="personalData" style="padding:20px 30px;">
+                <h3><b>FEES REFUND INFORMATION</b></h3>
+                @if(!empty($data['feesRefundList']))
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <th><b>Sr. No.</b></th>
+                        <th><b>Semester</b></th>
+                        <th><b>Division</b></th>
+                        <th><b>Refund Amount</b></th>
+                        <th><b>Payment Mode</b></th>
+                        <th><b>Cheque No.</b></th>
+                        <th><b>Bank Name</b></th>
+                        <th><b>Bank Branch</b></th>
+                        <th><b>Refund Remarks</b></th>
+                        <th><b>Refund Date</b></th>
+                        <th><b>Refund By</b></th>
+                    </tr>
+                    @foreach($data['feesRefundList'] as $key => $value)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{$value->semester_name ?? '-'}}</td>
+                        <td>{{$value->division_name ?? '-'}}</td>
+                        <td>&#8377; {{ number_format($value->amount ?? 0, 2) }}</td>
+                        <td>{{$value->payment_mode ?? '-'}}</td>
+                        <td>{{$value->cheque_no ?? '-'}}</td>
+                        <td>{{$value->bank_name ?? '-'}}</td>
+                        <td>{{$value->bank_branch ?? '-'}}</td>
+                        <td>{{$value->remarks ?? '-'}}</td>
+                        <td>{{!empty($value->receipt_date) ? date('d/m/Y',strtotime($value->receipt_date)) : (!empty($value->created_date) ? date('d/m/Y',strtotime($value->created_date)) : '-')}}</td>
+                        <td>{{$value->refund_by_name ?? '-'}}</td>
+                    </tr>
+                    @endforeach
+                </table>
+                @else
+                <div class="alert alert-info text-center">No Records Found.</div>
+                @endif
+            </div>
+            <!-- FEES REFUND INFORMATION end -->
+
+            <!-- FEES WAIVER INFORMATION start -->
+            <div class="personalData" style="padding:20px 30px;">
+                <h3><b>FEES WAIVER INFORMATION</b></h3>
+                @if(!empty($data['feesWaiverList']))
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <th><b>Sr. No.</b></th>
+                        <th><b>Semester</b></th>
+                        <th><b>Student Quota</b></th>
+                        <th><b>Fees Waiver</b></th>
+                        <th><b>Remarks</b></th>
+                        <th><b>Applied Date</b></th>
+                        <th><b>Created By</b></th>
+                        <th><b>Created At</b></th>
+                    </tr>
+                    @foreach($data['feesWaiverList'] as $key => $value)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{$value->semester_name ?? '-'}}</td>
+                        <td>{{$value->student_quota_name ?? '-'}}</td>
+                        <td>&#8377; {{ number_format($value->amount ?? 0, 2) }}</td>
+                        <td>{{$value->remarks ?? '-'}}</td>
+                        <td>{{!empty($value->applied_at) ? date('d/m/Y',strtotime($value->applied_at)) : '-'}}</td>
+                        <td>{{$value->created_by_name ?? '-'}}</td>
+                        <td>{{!empty($value->created_at) ? date('d/m/Y H:i',strtotime($value->created_at)) : '-'}}</td>
+                    </tr>
+                    @endforeach
+                </table>
+                @else
+                <div class="alert alert-info text-center">No Records Found.</div>
+                @endif
+            </div>
+            <!-- FEES WAIVER INFORMATION end -->
         </div>
     </div>
 </div>

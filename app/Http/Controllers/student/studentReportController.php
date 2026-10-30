@@ -377,6 +377,54 @@ class studentReportController extends Controller
         // get result/exam marks information
         $resultInfo = $this->getStudentResultData($student_id, $sub_institute_id);
 
+        // Deposit Refund Information
+        $depositRefundList = DB::table('deposit_refund as dr')
+            ->leftJoin('tbluser as ua', 'ua.id', '=', 'dr.accounts_head_by')
+            ->leftJoin('tbluser as up', 'up.id', '=', 'dr.principal_by')
+            ->selectRaw("dr.*, 
+                CONCAT_WS(' ', COALESCE(ua.first_name,''), COALESCE(ua.middle_name,''), COALESCE(ua.last_name,'')) as accounts_head_name,
+                CONCAT_WS(' ', COALESCE(up.first_name,''), COALESCE(up.middle_name,''), COALESCE(up.last_name,'')) as principal_name")
+            ->where('dr.sub_institute_id', $sub_institute_id)
+            ->where('dr.student_id', $student_id)
+            ->orderBy('dr.id', 'desc')
+            ->get()->toArray();
+
+        // Fees Refund Information
+        $feesRefundList = DB::table('fees_refund as fr')
+            ->leftJoin('tblstudent_enrollment as se', function($q) use($sub_institute_id){
+                $q->on('se.student_id','=','fr.student_id')
+                  ->on('se.syear','=','fr.syear')
+                  ->where('se.sub_institute_id','=',$sub_institute_id)
+                  ->whereRaw('se.end_date IS NULL');
+            })
+            ->leftJoin('standard as st', 'st.id','=','se.standard_id')
+            ->leftJoin('division as dv', 'dv.id','=','se.section_id')
+            ->leftJoin('tbluser as u', 'u.id','=','fr.created_by')
+            ->selectRaw("fr.*, st.name as semester_name, dv.name as division_name, CONCAT_WS(' ', COALESCE(u.first_name,''), COALESCE(u.middle_name,''), COALESCE(u.last_name,'')) as refund_by_name")
+            ->where('fr.sub_institute_id', $sub_institute_id)
+            ->where('fr.student_id', $student_id)
+            ->groupBy('fr.id')
+            ->orderBy('fr.id', 'desc')
+            ->get()->toArray();
+
+        // Fees Waiver Information
+        $feesWaiverList = DB::table('fees_waiver as fw')
+            ->leftJoin('tblstudent_enrollment as se', function($q) use($sub_institute_id){
+                $q->on('se.student_id','=','fw.student_id')
+                  ->on('se.syear','=','fw.syear')
+                  ->where('se.sub_institute_id','=',$sub_institute_id)
+                  ->whereRaw('se.end_date IS NULL');
+            })
+            ->leftJoin('standard as st', 'st.id','=','se.standard_id')
+            ->leftJoin('student_quota as sq', 'sq.id','=','se.student_quota')
+            ->leftJoin('tbluser as u', 'u.id','=','fw.created_by')
+            ->selectRaw("fw.*, st.name as semester_name, sq.title as student_quota_name, CONCAT_WS(' ', COALESCE(u.first_name,''), COALESCE(u.middle_name,''), COALESCE(u.last_name,'')) as created_by_name")
+            ->where('fw.sub_institute_id', $sub_institute_id)
+            ->where('fw.student_id', $student_id)
+            ->groupBy('fw.id')
+            ->orderBy('fw.id', 'desc')
+            ->get()->toArray();
+
         // echo "<pre>";print_r($otherFeesDetails);exit;
         $enrollNo = $rollNo = $studentImg = '-';
 
@@ -428,6 +476,9 @@ class studentReportController extends Controller
         }
         // echo "<pre>";print_r($feesCollect);exit;
         $res['enrollment_no'] =$enrollNo;
+        $res['depositRefundList'] = $depositRefundList;
+        $res['feesRefundList'] = $feesRefundList;
+        $res['feesWaiverList'] = $feesWaiverList;
         $res['roll_no'] =$rollNo;
         $res['student_image'] =$studentImg;
         $res['personalData'] =$personalDatas;
