@@ -41,8 +41,12 @@
                     <tr>
                         <th>Voucher No</th>
                         <th>Request No</th>
+                        <th>Section</th>
+                        <th>Semester</th>
+                        <th>Division</th>
                         <th>Student</th>
                         <th>Gr.No.</th>
+                        <th>Year</th>
                         <th>Final Amount</th>
                         <th>Accounts Head</th>
                         <th>Principal</th>
@@ -54,8 +58,12 @@
                         <tr>
                             <td>{{ $row->voucher_no }}</td>
                             <td>{{ $row->request_no }}</td>
+                            <td>{{ $row->section_name }}</td>
+                            <td>{{ $row->semester_name }}</td>
+                            <td>{{ $row->division_name }}</td>
                             <td>{{ $row->student_name }}</td>
                             <td>{{ $row->enrollment_no }}</td>
+                            <td>{{ $row->year_name }}</td>
                             <td>{{ number_format($row->final_refund_amount, 2) }}</td>
                             <td>{{ $row->accounts_head_name }}</td>
                             <td>{{ $row->principal_name }}</td>
@@ -65,7 +73,7 @@
                     </tbody>
                     <tfoot>
                     <tr>
-                        <th colspan="4" class="text-right">Total Refunded</th>
+                        <th colspan="8" class="text-right">Total Refunded</th>
                         <th>{{ number_format($data['total_refunded'], 2) }}</th>
                         <th colspan="3"></th>
                     </tr>
@@ -154,10 +162,10 @@
                             typeof i === 'number' ?
                                 i : 0;
                     };
-                    var total = api.column(4, {page: 'current'}).data().reduce(function (a, b) {
+                    var total = api.column(8, {page: 'current'}).data().reduce(function (a, b) {
                         return intVal(a) + intVal(b);
                     }, 0);
-                    $(api.column(4).footer()).html(total.toFixed(2));
+                    $(api.column(8).footer()).html(total.toFixed(2));
                 }
             });
 

@@ -95,9 +95,20 @@ class depositRefundReportController extends Controller
             ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->leftJoin('tbluser as ah', 'ah.id', '=', 'dr.accounts_head_by')
             ->leftJoin('tbluser as pr', 'pr.id', '=', 'dr.principal_by')
-            ->selectRaw("dr.*, 
-                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+            // latest enrollment row of the student = the class they left from
+            ->leftJoin('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.id', '=', DB::raw('(SELECT MAX(e2.id) FROM tblstudent_enrollment e2 WHERE e2.student_id = dr.student_id)'));
+            })
+            ->leftJoin('academic_section as ac', 'ac.id', '=', 'se.grade_id')
+            ->leftJoin('standard as st', 'st.id', '=', DB::raw('COALESCE(dr.standard_id, se.standard_id)'))
+            ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
+            ->selectRaw("dr.*,
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name,
                 CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no,
+                CASE WHEN dr.student_id IS NOT NULL THEN ac.title ELSE NULL END as section_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN st.name ELSE ls.semester END as semester_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN dv.name ELSE NULL END as division_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN se.syear ELSE ls.admission_year END as year_name,
                 concat_ws(' ',ah.first_name,ah.last_name) as accounts_head_name,
                 concat_ws(' ',pr.first_name,pr.last_name) as principal_name")
             ->where('dr.sub_institute_id', $sub_institute_id)
