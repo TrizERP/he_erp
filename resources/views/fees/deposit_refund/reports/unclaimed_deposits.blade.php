@@ -9,6 +9,25 @@
             </div>
         </div>
 
+        @php
+            $grade_id = $data['grade_id'] ?? '';
+            $standard_id = $data['standard_id'] ?? '';
+            $division_id = $data['division_id'] ?? '';
+        @endphp
+        <div class="card">
+            <form action="{{ route('deposit_refund_report_unclaimed_deposits') }}" method="get">
+                <div class="row">
+                    {{ App\Helpers\SearchChain('4', 'single', 'grade,std,div', $grade_id, $standard_id, $division_id) }}
+                    <div class="col-md-12 form-group">
+                        <center>
+                            <input type="submit" name="submit" value="Search" class="btn btn-success">
+                        </center>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        @if (!empty($data['searched']))
         <div class="card">
             <div class="table-responsive">
                 <table id="example" class="table table-striped table-bordered">
@@ -45,8 +64,10 @@
                 </table>
             </div>
         </div>
+        @endif
     </div>
     @include('includes.footerJs')
+    @if (!empty($data['searched']))
     <script>
         $(document).ready(function () {
             var table = $('#example').DataTable({
@@ -151,5 +172,6 @@
             });
         });
     </script>
+    @endif
     @include('includes.footer')
 </div>
