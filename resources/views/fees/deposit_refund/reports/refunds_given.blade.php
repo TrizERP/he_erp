@@ -9,8 +9,14 @@
             </div>
         </div>
 
+        @php
+            $grade_id = $data['grade_id'] ?? '';
+            $standard_id = $data['standard_id'] ?? '';
+            $division_id = $data['division_id'] ?? '';
+        @endphp
         <div class="card">
             <form method="get" class="row">
+                {{ App\Helpers\SearchChain('4', 'single', 'grade,std,div', $grade_id, $standard_id, $division_id) }}
                 <div class="col-md-3 form-group">
                     <label>From Date</label>
                     <input type="text" name="from_date" value="{{ $data['from_date'] }}" class="form-control mydatepicker" autocomplete="off">
@@ -19,12 +25,15 @@
                     <label>To Date</label>
                     <input type="text" name="to_date" value="{{ $data['to_date'] }}" class="form-control mydatepicker" autocomplete="off">
                 </div>
-                <div class="col-md-3 form-group" style="margin-top:28px;">
-                    <input type="submit" value="Filter" class="btn btn-success">
+                <div class="col-md-12 form-group">
+                    <center>
+                        <input type="submit" name="submit" value="Search" class="btn btn-success">
+                    </center>
                 </div>
             </form>
         </div>
 
+        @if (!empty($data['searched']))
         <div class="card">
             <div class="table-responsive">
                 <table id="example" class="table table-striped table-bordered">
@@ -64,8 +73,10 @@
                 </table>
             </div>
         </div>
+        @endif
     </div>
     @include('includes.footerJs')
+    @if (!empty($data['searched']))
     <script>
         $(document).ready(function () {
             var table = $('#example').DataTable({
@@ -170,5 +181,6 @@
             });
         });
     </script>
+    @endif
     @include('includes.footer')
 </div>
