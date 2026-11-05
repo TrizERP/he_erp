@@ -242,10 +242,16 @@ class depositRefundReportController extends Controller
         }
 
         // ERP left students
-        $leftQuery = DB::table('tblstudent_enrollment as se')
-            ->join('tblstudent as s', 's.id', '=', 'se.student_id')
+        // latest enrollment row of the student = the class they left from
+        $leftQuery = DB::table('tblstudent as s')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.id', '=', DB::raw('(SELECT MAX(e2.id) FROM tblstudent_enrollment e2 WHERE e2.student_id = s.id)'));
+            })
+            ->leftJoin('academic_section as ac', 'ac.id', '=', 'se.grade_id')
+            ->leftJoin('standard as st', 'st.id', '=', 'se.standard_id')
+            ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
             ->selectRaw("s.id as student_id, CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) as student_name,
-                s.enrollment_no, s.mobile, MAX(se.end_date) as left_on")
+                s.enrollment_no, s.mobile, se.end_date as left_on, st.name as semester_name, dv.name as division_name")
             ->where('s.sub_institute_id', $sub_institute_id)
             ->whereNotNull('se.end_date');
 
@@ -259,9 +265,7 @@ class depositRefundReportController extends Controller
             $leftQuery->where('se.section_id', $division);
         }
 
-        $leftStudents = $leftQuery
-            ->groupBy('s.id', 's.last_name', 's.first_name', 's.middle_name', 's.enrollment_no', 's.mobile')
-            ->get();
+        $leftStudents = $leftQuery->get();
 
         foreach ($leftStudents as $student) {
             $collected = (float)DB::table('fees_collect')
@@ -285,6 +289,8 @@ class depositRefundReportController extends Controller
                 $data[] = [
                     'student_name'  => $student->student_name,
                     'enrollment_no' => $student->enrollment_no,
+                    'semester_name' => $student->semester_name ?? '',
+                    'division_name' => $student->division_name ?? '',
                     'mobile'        => $student->mobile,
                     'left_on'       => $student->left_on,
                     'collected'     => $collected,
@@ -312,6 +318,8 @@ class depositRefundReportController extends Controller
                 $data[] = [
                     'student_name'  => $legacy->student_name,
                     'enrollment_no' => $legacy->enrollment_no,
+                    'semester_name' => $legacy->semester ?? '',
+                    'division_name' => '',
                     'mobile'        => null,
                     'left_on'       => $legacy->received_date,
                     'collected'     => $collected,
