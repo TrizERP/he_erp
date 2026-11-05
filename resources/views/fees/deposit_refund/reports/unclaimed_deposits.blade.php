@@ -35,6 +35,8 @@
                     <tr>
                         <th>Student</th>
                         <th>Gr.No.</th>
+                        <th>Semester</th>
+                        <th>Division</th>
                         <th>Mobile</th>
                         <th>Left On</th>
                         <th>Collected</th>
@@ -47,6 +49,8 @@
                         <tr>
                             <td>{{ $row['student_name'] }}</td>
                             <td>{{ $row['enrollment_no'] }}</td>
+                            <td>{{ $row['semester_name'] }}</td>
+                            <td>{{ $row['division_name'] }}</td>
                             <td>{{ $row['mobile'] }}</td>
                             <td>{{ $row['left_on'] }}</td>
                             <td>{{ number_format($row['collected'], 2) }}</td>
@@ -57,7 +61,7 @@
                     </tbody>
                     <tfoot>
                     <tr>
-                        <th colspan="6" class="text-right">Total Unclaimed</th>
+                        <th colspan="8" class="text-right">Total Unclaimed</th>
                         <th>{{ number_format($data['total_unclaimed'], 2) }}</th>
                     </tr>
                     </tfoot>
@@ -128,7 +132,7 @@
                         text: 'PRINT',
                         title: 'Unclaimed Deposits Report',
                         customize: function (win) {
-                            $(win.document.body).prepend(`{!! App\Helpers\get_school_details("", "", "") !!}`);
+                            $(win.document.body).prepend(`{!! App\Helpers\get_school_details("$grade_id", "$standard_id", "$division_id") !!}`);
                             $(win.document.body).append(`<div style="text-align: right;margin-top:20px">Printed on: {{date('d-m-Y H:i:s')}}</div>`);
                         },
                         exportOptions: {
@@ -145,10 +149,10 @@
                             typeof i === 'number' ?
                                 i : 0;
                     };
-                    var total = api.column(6, {page: 'current'}).data().reduce(function (a, b) {
+                    var total = api.column(8, {page: 'current'}).data().reduce(function (a, b) {
                         return intVal(a) + intVal(b);
                     }, 0);
-                    $(api.column(6).footer()).html(total.toFixed(2));
+                    $(api.column(8).footer()).html(total.toFixed(2));
                 }
             });
 
