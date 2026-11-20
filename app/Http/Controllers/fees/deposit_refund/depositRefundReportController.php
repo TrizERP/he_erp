@@ -252,8 +252,8 @@ class depositRefundReportController extends Controller
             ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
             ->selectRaw("s.id as student_id, CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) as student_name,
                 s.enrollment_no, s.mobile, se.end_date as left_on, st.name as semester_name, dv.name as division_name")
-            ->where('s.sub_institute_id', $sub_institute_id)
-            ->whereNotNull('se.end_date');
+            ->where('s.sub_institute_id', $sub_institute_id);
+            //->whereNotNull('se.end_date');
 
         if ($grade != '') {
             $leftQuery->where('se.grade_id', $grade);
