@@ -48,37 +48,7 @@
                     </div>
                 </div>
 
-                <div class="box-title"><label>Deductions (if any)</label></div>
-                <div class="table-responsive">
-                    <table class="table" id="deductionTable">
-                        <thead>
-                        <tr>
-                            <th>Deduction Title</th>
-                            <th>Amount</th>
-                            <th>Remarks</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @if($data['unpaid_fees'] > 0)
-                            <tr>
-                                <td><input type="text" name="deduction_title[]" class="form-control" value="Outstanding Fees"></td>
-                                <td><input type="number" step="0.01" name="deduction_amount[]" class="form-control deduction-amount" value="{{ $data['unpaid_fees'] }}"></td>
-                                <td><input type="text" name="deduction_remarks[]" class="form-control" value="Auto-calculated outstanding fees"></td>
-                                <td><button type="button" class="btn btn-sm btn-danger remove-row">X</button></td>
-                            </tr>
-                        @endif
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-sm btn-secondary" id="addDeductionRow">+ Add Deduction</button>
-                </div>
 
-                <div class="row mt-3">
-                    <div class="col-md-4 form-group">
-                        <label>Final Refund Amount</label>
-                        <input type="text" id="finalRefundAmount" class="form-control" readonly style="font-weight:bold;">
-                    </div>
-                </div>
 
                 <div class="row mt-3">
                     <div class="col-md-4 form-group">
@@ -156,37 +126,6 @@
             $('.chequeFields').toggle(mode === 'Cheque');
             $('.bankFields').toggle(mode === 'Bank Transfer');
         }
-
-        function recalcFinalAmount() {
-            var balance = parseFloat($('#depositBalance').data('value')) || 0;
-            var totalDeduction = 0;
-            $('.deduction-amount').each(function () {
-                totalDeduction += parseFloat($(this).val()) || 0;
-            });
-            var finalAmount = balance - totalDeduction;
-            $('#finalRefundAmount').val('Rs. ' + finalAmount.toFixed(2));
-        }
-
-        $(document).on('input', '.deduction-amount', recalcFinalAmount);
-
-        $('#addDeductionRow').on('click', function () {
-            var row = '<tr>' +
-                '<td><input type="text" name="deduction_title[]" class="form-control"></td>' +
-                '<td><input type="number" step="0.01" name="deduction_amount[]" class="form-control deduction-amount" value="0"></td>' +
-                '<td><input type="text" name="deduction_remarks[]" class="form-control"></td>' +
-                '<td><button type="button" class="btn btn-sm btn-danger remove-row">X</button></td>' +
-                '</tr>';
-            $('#deductionTable tbody').append(row);
-        });
-
-        $(document).on('click', '.remove-row', function () {
-            $(this).closest('tr').remove();
-            recalcFinalAmount();
-        });
-
-        $(document).ready(function () {
-            recalcFinalAmount();
-        });
     </script>
     @include('includes.footer')
 </div>

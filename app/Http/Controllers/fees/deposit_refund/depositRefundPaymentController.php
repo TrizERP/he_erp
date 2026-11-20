@@ -24,11 +24,14 @@ class depositRefundPaymentController extends Controller
         $syear = $request->session()->get('syear');
 
         $data = DB::table('deposit_refund as dr')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->leftJoin('standard as st', 'st.id', '=', 'dr.standard_id')
             ->leftJoin('division as d', 'd.id', '=', 'dr.section_id')
-            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
-                concat_ws('/',st.name,d.name) as stddiv")
+            ->selectRaw("dr.*, 
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no,
+                CASE WHEN dr.student_id IS NOT NULL THEN concat_ws('/',st.name,d.name) ELSE CONCAT_WS(' / ',ls.semester,ls.student_quota) END as stddiv")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)
             ->where('dr.status', depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT)
@@ -66,10 +69,24 @@ class depositRefundPaymentController extends Controller
             return is_mobile($type, "deposit_refund_payment.index", $res, "redirect");
         }
 
-        $stuData = DB::table('tblstudent')
-            ->selectRaw("concat_ws(' ',first_name,middle_name,last_name) as name, enrollment_no, mobile")
-            ->where('id', $depositRefund->student_id)
-            ->first();
+        $stuData = null;
+        if ($depositRefund->student_id) {
+            $stuData = DB::table('tblstudent')
+                ->selectRaw("concat_ws(' ',last_name,first_name,middle_name) as name, enrollment_no, mobile")
+                ->where('id', $depositRefund->student_id)
+                ->first();
+        } else if ($depositRefund->legacy_student_id) {
+            $legacy = DB::table('deposite_lagacy_students')
+                ->where('id', $depositRefund->legacy_student_id)
+                ->first();
+            if ($legacy) {
+                $stuData = (object)[
+                    'name' => $legacy->student_name,
+                    'enrollment_no' => $legacy->enrollment_no,
+                    'mobile' => null,
+                ];
+            }
+        }
 
         $voucherNoResult = DB::table('deposit_refund')
             ->selectRaw("IFNULL(MAX(CONVERT(SUBSTRING_INDEX(voucher_no,'/',-1), UNSIGNED)),0) AS vid")

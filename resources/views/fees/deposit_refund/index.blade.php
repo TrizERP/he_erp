@@ -79,6 +79,9 @@
                                     <a href="{{ route('deposit_refund_account', $value['id']) }}" class="btn btn-sm btn-primary">
                                         View Deposit Account
                                     </a>
+                                    @if(isset($value['is_legacy']) && $value['is_legacy'])
+                                        <span class="badge badge-warning">Legacy</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

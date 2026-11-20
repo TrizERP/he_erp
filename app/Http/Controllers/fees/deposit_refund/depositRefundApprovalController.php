@@ -29,13 +29,71 @@ class depositRefundApprovalController extends Controller
     /**
      * Accounts Head approves (moves to Principal) or returns a request (back to clerk).
      */
-    public function accountsHeadAction(Request $request, $id)
+    public function accountsHeadAction(Request $request, $id = null)
     {
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $user_id = $request->session()->get('user_id');
         $decision = $request->input('decision'); // approve | return
         $remarks = $request->input('remarks');
+        $bulk_ids = $request->input('bulk_ids', []);
+
+        if (!empty($bulk_ids)) {
+            if ($decision == 'return' && trim((string)$remarks) == '') {
+                $res['status_code'] = 0;
+                $res['message'] = "Please enter a remark explaining why the requests are being returned.";
+
+                return is_mobile($type, "deposit_refund_accounts_head.index", $res, "redirect");
+            }
+
+            $count = 0;
+            foreach ($bulk_ids as $reqId) {
+                $depositRefund = depositRefundModel::where('id', $reqId)
+                    ->where('sub_institute_id', $sub_institute_id)
+                    ->where('status', depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD)
+                    ->first();
+
+                if (!$depositRefund) {
+                    continue;
+                }
+
+                $fromStatus = $depositRefund->status;
+                $toStatus = $decision == 'approve'
+                    ? depositRefundModel::STATUS_PENDING_PRINCIPAL
+                    : depositRefundModel::STATUS_RETURNED_BY_ACCOUNTS_HEAD;
+
+                $depositRefund->status = $toStatus;
+                $depositRefund->accounts_head_by = $user_id;
+                $depositRefund->accounts_head_remarks = $remarks;
+                $depositRefund->accounts_head_date = date('Y-m-d H:i:s');
+                $depositRefund->save();
+
+                depositRefundLogModel::create([
+                    'deposit_refund_id' => $depositRefund->id,
+                    'from_status'       => $fromStatus,
+                    'to_status'         => $toStatus,
+                    'action'            => $decision == 'approve' ? 'Approved' : 'Returned',
+                    'remarks'           => $remarks,
+                    'action_by'         => $user_id,
+                    'action_date'       => date('Y-m-d H:i:s'),
+                ]);
+                $count++;
+            }
+
+            $res['status_code'] = 1;
+            $res['message'] = $decision == 'approve'
+                ? $count . " request(s) forwarded to Principal for approval."
+                : $count . " request(s) returned to clerk.";
+
+            return is_mobile($type, "deposit_refund_accounts_head.index", $res, "redirect");
+        }
+
+        if (!$id) {
+            $res['status_code'] = 0;
+            $res['message'] = "Invalid request.";
+
+            return is_mobile($type, "deposit_refund_accounts_head.index", $res, "redirect");
+        }
 
         $depositRefund = depositRefundModel::where('id', $id)
             ->where('sub_institute_id', $sub_institute_id)
@@ -103,13 +161,71 @@ class depositRefundApprovalController extends Controller
     /**
      * Principal gives final approval (moves to Approved - Pending Payment) or returns the request.
      */
-    public function principalAction(Request $request, $id)
+    public function principalAction(Request $request, $id = null)
     {
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $user_id = $request->session()->get('user_id');
         $decision = $request->input('decision'); // approve | return
         $remarks = $request->input('remarks');
+        $bulk_ids = $request->input('bulk_ids', []);
+
+        if (!empty($bulk_ids)) {
+            if ($decision == 'return' && trim((string)$remarks) == '') {
+                $res['status_code'] = 0;
+                $res['message'] = "Please enter a remark explaining why the requests are being returned.";
+
+                return is_mobile($type, "deposit_refund_principal.index", $res, "redirect");
+            }
+
+            $count = 0;
+            foreach ($bulk_ids as $reqId) {
+                $depositRefund = depositRefundModel::where('id', $reqId)
+                    ->where('sub_institute_id', $sub_institute_id)
+                    ->where('status', depositRefundModel::STATUS_PENDING_PRINCIPAL)
+                    ->first();
+
+                if (!$depositRefund) {
+                    continue;
+                }
+
+                $fromStatus = $depositRefund->status;
+                $toStatus = $decision == 'approve'
+                    ? depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT
+                    : depositRefundModel::STATUS_RETURNED_BY_PRINCIPAL;
+
+                $depositRefund->status = $toStatus;
+                $depositRefund->principal_by = $user_id;
+                $depositRefund->principal_remarks = $remarks;
+                $depositRefund->principal_date = date('Y-m-d H:i:s');
+                $depositRefund->save();
+
+                depositRefundLogModel::create([
+                    'deposit_refund_id' => $depositRefund->id,
+                    'from_status'       => $fromStatus,
+                    'to_status'         => $toStatus,
+                    'action'            => $decision == 'approve' ? 'Approved' : 'Returned',
+                    'remarks'           => $remarks,
+                    'action_by'         => $user_id,
+                    'action_date'       => date('Y-m-d H:i:s'),
+                ]);
+                $count++;
+            }
+
+            $res['status_code'] = 1;
+            $res['message'] = $decision == 'approve'
+                ? $count . " request(s) approved. Sent to cashier for payment."
+                : $count . " request(s) returned to clerk.";
+
+            return is_mobile($type, "deposit_refund_principal.index", $res, "redirect");
+        }
+
+        if (!$id) {
+            $res['status_code'] = 0;
+            $res['message'] = "Invalid request.";
+
+            return is_mobile($type, "deposit_refund_principal.index", $res, "redirect");
+        }
 
         $depositRefund = depositRefundModel::where('id', $id)
             ->where('sub_institute_id', $sub_institute_id)
@@ -165,11 +281,14 @@ class depositRefundApprovalController extends Controller
         $syear = $request->session()->get('syear');
 
         return DB::table('deposit_refund as dr')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->leftJoin('standard as st', 'st.id', '=', 'dr.standard_id')
             ->leftJoin('division as d', 'd.id', '=', 'dr.section_id')
-            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
-                concat_ws('/',st.name,d.name) as stddiv,
+            ->selectRaw("dr.*, 
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no,
+                CASE WHEN dr.student_id IS NOT NULL THEN concat_ws('/',st.name,d.name) ELSE CONCAT_WS(' / ',ls.semester,ls.student_quota) END as stddiv,
                 DATEDIFF(NOW(), dr.requested_date) as days_pending")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)

@@ -22,6 +22,7 @@ class depositRefundModel extends Model
         'sub_institute_id',
         'syear',
         'student_id',
+        'legacy_student_id',
         'standard_id',
         'section_id',
         'request_no',

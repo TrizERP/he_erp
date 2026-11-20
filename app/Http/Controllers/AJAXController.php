@@ -338,8 +338,12 @@ class AJAXController extends Controller
 
     public function getSubjectList(Request $request)
     {
-        $standard_id = $request->standard_id;
-        $explode = explode(',', $request->standard_id);
+        $standard_id = $request->input('standard_id');
+        $division_id = $request->input('division_id');
+
+        $explode = !empty($standard_id)
+            ? explode(',', $standard_id)
+            : [];
 
         $arr = $request->server;
         $HTTP_REFERER = "";
@@ -348,47 +352,81 @@ class AJAXController extends Controller
                 $HTTP_REFERER = $val;
             }
         }
+
         $refer_arr = explode('/', $HTTP_REFERER);
 
-        if (count($refer_arr) >= 2 && $refer_arr[count($refer_arr) - 2] == 'exam_creation' || in_array('marks_entry', $refer_arr)) {
-            $where = array(
-                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
-                "sub_std_map.allow_grades" => "Yes",
-            );
+        if (
+            (count($refer_arr) >= 2 &&
+                $refer_arr[count($refer_arr) - 2] == 'exam_creation')
+            || in_array('marks_entry', $refer_arr)
+        ) {
+            $where = [
+                'sub_std_map.sub_institute_id' => session()->get('sub_institute_id'),
+                'sub_std_map.allow_grades' => 'Yes',
+            ];
         } else {
-            $where = array(
-                "sub_std_map.sub_institute_id" => session()->get('sub_institute_id'),
-            );
+            $where = [
+                'sub_std_map.sub_institute_id' => session()->get('sub_institute_id'),
+            ];
         }
-        if($request->is_optional){
-            $where["sub_std_map.elective_subject"] = "Yes";
+
+        if ($request->boolean('is_optional')) {
+            $where['sub_std_map.elective_subject'] = 'Yes';
         }
+
         $classTeacherStdArr = session()->get('classTeacherStdArr');
+
+        // Multiple standards selected
         if (count($explode) > 1) {
+
             $std_sub_map = DB::table('subject')
                 ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
-                ->whereIn("sub_std_map.standard_id", $explode)
+                ->whereIn('sub_std_map.standard_id', $explode)
                 ->where($where)
                 ->orderBy('sub_std_map.sort_order')
                 ->pluck('sub_std_map.display_name', 'subject.id');
+
         } else {
-            //if (session()->get('user_profile_name') != 'Admin') {
-            if (!isset($classTeacherStdArr) && session()->get('user_profile_name') != 'Admin') {
-                # Get subjects by teacher, standard and division
-                $std_sub_map = DB::table('subject as sub')
-                    ->whereIn('sub.id', function ($sub_query) use ($request) {
+
+            // Teacher-specific subjects
+            if (
+                !isset($classTeacherStdArr)
+                && session()->get('user_profile_name') != 'Admin'
+            ) {
+                $query = DB::table('subject as sub')
+                    ->whereIn('sub.id', function ($sub_query) use (
+                        $standard_id,
+                        $division_id
+                    ) {
                         $sub_query->select('subject_id')
                             ->from('timetable')
-                            ->where('teacher_id', session()->get('user_id'))
-                            ->where('standard_id', $request->standard_id)
-                            ->where('division_id', $request->division_id);
-                    })
+                            ->where('teacher_id', session()->get('user_id'));
+
+                        // Apply filters only when values are provided
+                        if (!empty($standard_id)) {
+                            $sub_query->where('standard_id', $standard_id);
+                        }
+
+                        if (!empty($division_id)) {
+                            $sub_query->where('division_id', $division_id);
+                        }
+                    });
+
+                $std_sub_map = $query
                     ->pluck('sub.subject_name as display_name', 'sub.id');
+
             } else {
-                $where['sub_std_map.standard_id'] = $request->standard_id;
-                $std_sub_map = DB::table('subject')
+
+                // Admin or class teacher subjects
+                $query = DB::table('subject')
                     ->join('sub_std_map', 'subject.id', '=', 'sub_std_map.subject_id')
-                    ->where($where)
+                    ->where($where);
+
+                if (!empty($standard_id)) {
+                    $query->where('sub_std_map.standard_id', $standard_id);
+                }
+
+                $std_sub_map = $query
                     ->orderBy('sub_std_map.sort_order')
                     ->pluck('sub_std_map.display_name', 'subject.id');
             }

@@ -71,12 +71,44 @@ class depositRefundReportController extends Controller
         $sub_institute_id = $request->session()->get('sub_institute_id');
         $from_date = $request->input('from_date');
         $to_date = $request->input('to_date');
+        $grade = $request->input('grade');
+        $standard = $request->input('standard');
+        $division = $request->input('division');
+
+        if (!$request->has('submit')) {
+            $res['status_code'] = 1;
+            $res['message'] = "Success";
+            $res['data'] = [];
+            $res['searched'] = false;
+            $res['from_date'] = $from_date;
+            $res['to_date'] = $to_date;
+            $res['grade_id'] = $grade;
+            $res['standard_id'] = $standard;
+            $res['division_id'] = $division;
+            $res['total_refunded'] = 0;
+
+            return is_mobile($type, "fees/deposit_refund/reports/refunds_given", $res, "view");
+        }
 
         $query = DB::table('deposit_refund as dr')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->leftJoin('tbluser as ah', 'ah.id', '=', 'dr.accounts_head_by')
             ->leftJoin('tbluser as pr', 'pr.id', '=', 'dr.principal_by')
-            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
+            // latest enrollment row of the student = the class they left from
+            ->leftJoin('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.id', '=', DB::raw('(SELECT MAX(e2.id) FROM tblstudent_enrollment e2 WHERE e2.student_id = dr.student_id)'));
+            })
+            ->leftJoin('academic_section as ac', 'ac.id', '=', 'se.grade_id')
+            ->leftJoin('standard as st', 'st.id', '=', DB::raw('COALESCE(dr.standard_id, se.standard_id)'))
+            ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
+            ->selectRaw("dr.*,
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no,
+                CASE WHEN dr.student_id IS NOT NULL THEN ac.title ELSE NULL END as section_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN st.name ELSE ls.semester END as semester_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN dv.name ELSE NULL END as division_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN se.syear ELSE ls.admission_year END as year_name,
                 concat_ws(' ',ah.first_name,ah.last_name) as accounts_head_name,
                 concat_ws(' ',pr.first_name,pr.last_name) as principal_name")
             ->where('dr.sub_institute_id', $sub_institute_id)
@@ -89,13 +121,35 @@ class depositRefundReportController extends Controller
             $query->whereDate('dr.paid_date', '<=', $to_date);
         }
 
+        // Legacy refunds carry no grade/standard/division, so a class filter excludes them.
+        if ($grade != '' || $standard != '' || $division != '') {
+            $query->whereExists(function ($q) use ($grade, $standard, $division) {
+                $q->select(DB::raw(1))
+                    ->from('tblstudent_enrollment as se')
+                    ->whereRaw('se.student_id = dr.student_id');
+                if ($grade != '') {
+                    $q->where('se.grade_id', $grade);
+                }
+                if ($standard != '') {
+                    $q->where('se.standard_id', $standard);
+                }
+                if ($division != '') {
+                    $q->where('se.section_id', $division);
+                }
+            });
+        }
+
         $data = $query->orderByDesc('dr.paid_date')->get()->toArray();
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
         $res['data'] = $data;
+        $res['searched'] = true;
         $res['from_date'] = $from_date;
         $res['to_date'] = $to_date;
+        $res['grade_id'] = $grade;
+        $res['standard_id'] = $standard;
+        $res['division_id'] = $division;
         $res['total_refunded'] = array_sum(array_column($data, 'final_refund_amount'));
 
         return is_mobile($type, "fees/deposit_refund/reports/refunds_given", $res, "view");
@@ -108,24 +162,52 @@ class depositRefundReportController extends Controller
     {
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
+        $from_date = $request->input('from_date');
+        $to_date = $request->input('to_date');
+        $approval_status = $request->input('approval_status');
 
-        $data = DB::table('deposit_refund as dr')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+        $query = DB::table('deposit_refund as dr')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->join('deposit_refund_status_master as sm', 'sm.id', '=', 'dr.status')
-            ->selectRaw("dr.*, concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no,
+            ->selectRaw("dr.*, 
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no,
                 sm.title as status_title,
                 DATEDIFF(NOW(), COALESCE(dr.accounts_head_date, dr.requested_date)) as days_pending")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->whereIn('dr.status', [
                 depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
                 depositRefundModel::STATUS_PENDING_PRINCIPAL,
-            ])
-            ->orderByDesc('days_pending')
-            ->get()->toArray();
+                depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT,
+            ]);
+
+        if ($approval_status != '') {
+            if ($approval_status == 'pending') {
+                $query->whereIn('dr.status', [
+                    depositRefundModel::STATUS_PENDING_ACCOUNTS_HEAD,
+                    depositRefundModel::STATUS_PENDING_PRINCIPAL,
+                ]);
+            } elseif ($approval_status == 'approved') {
+                $query->where('dr.status', depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT);
+            }
+        }
+
+        if ($from_date != '') {
+            $query->whereDate('dr.requested_date', '>=', $from_date);
+        }
+        if ($to_date != '') {
+            $query->whereDate('dr.requested_date', '<=', $to_date);
+        }
+
+        $data = $query->orderByDesc('days_pending')->get()->toArray();
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
         $res['data'] = $data;
+        $res['from_date'] = $from_date;
+        $res['to_date'] = $to_date;
+        $res['approval_status'] = $approval_status;
 
         return is_mobile($type, "fees/deposit_refund/reports/pending_approvals", $res, "view");
     }
@@ -138,16 +220,53 @@ class depositRefundReportController extends Controller
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
-        $leftStudents = DB::table('tblstudent_enrollment as se')
-            ->join('tblstudent as s', 's.id', '=', 'se.student_id')
-            ->selectRaw("s.id as student_id, concat_ws(' ',s.first_name,s.last_name) as student_name,
-                s.enrollment_no, s.mobile, MAX(se.end_date) as left_on")
-            ->where('s.sub_institute_id', $sub_institute_id)
-            ->whereNotNull('se.end_date')
-            ->groupBy('s.id', 's.first_name', 's.last_name', 's.enrollment_no', 's.mobile')
-            ->get();
+        $grade = $request->input('grade');
+        $standard = $request->input('standard');
+        $division = $request->input('division');
+        $hasClassFilter = $grade != '' || $standard != '' || $division != '';
+        $searched = $request->has('submit');
 
         $data = [];
+
+        if (!$searched) {
+            $res['status_code'] = 1;
+            $res['message'] = "Success";
+            $res['data'] = [];
+            $res['searched'] = false;
+            $res['total_unclaimed'] = 0;
+            $res['grade_id'] = $grade;
+            $res['standard_id'] = $standard;
+            $res['division_id'] = $division;
+
+            return is_mobile($type, "fees/deposit_refund/reports/unclaimed_deposits", $res, "view");
+        }
+
+        // ERP left students
+        // latest enrollment row of the student = the class they left from
+        $leftQuery = DB::table('tblstudent as s')
+            ->join('tblstudent_enrollment as se', function ($join) {
+                $join->on('se.id', '=', DB::raw('(SELECT MAX(e2.id) FROM tblstudent_enrollment e2 WHERE e2.student_id = s.id)'));
+            })
+            ->leftJoin('academic_section as ac', 'ac.id', '=', 'se.grade_id')
+            ->leftJoin('standard as st', 'st.id', '=', 'se.standard_id')
+            ->leftJoin('division as dv', 'dv.id', '=', 'se.section_id')
+            ->selectRaw("s.id as student_id, CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) as student_name,
+                s.enrollment_no, s.mobile, se.end_date as left_on, st.name as semester_name, dv.name as division_name")
+            ->where('s.sub_institute_id', $sub_institute_id)
+            ->whereNotNull('se.end_date');
+
+        if ($grade != '') {
+            $leftQuery->where('se.grade_id', $grade);
+        }
+        if ($standard != '') {
+            $leftQuery->where('se.standard_id', $standard);
+        }
+        if ($division != '') {
+            $leftQuery->where('se.section_id', $division);
+        }
+
+        $leftStudents = $leftQuery->get();
+
         foreach ($leftStudents as $student) {
             $collected = (float)DB::table('fees_collect')
                 ->where('student_id', $student->student_id)
@@ -170,11 +289,43 @@ class depositRefundReportController extends Controller
                 $data[] = [
                     'student_name'  => $student->student_name,
                     'enrollment_no' => $student->enrollment_no,
+                    'semester_name' => $student->semester_name ?? '',
+                    'division_name' => $student->division_name ?? '',
                     'mobile'        => $student->mobile,
                     'left_on'       => $student->left_on,
                     'collected'     => $collected,
                     'returned'      => $returned,
                     'balance'       => $balance,
+                    'is_legacy'     => false,
+                ];
+            }
+        }
+
+        // Legacy students with deposit not fully refunded
+        // Legacy records carry no grade/standard/division, so a class filter excludes them.
+        $legacyStudents = $hasClassFilter ? collect() : DB::table('deposite_lagacy_students')->get();
+        foreach ($legacyStudents as $legacy) {
+            $collected = (float)$legacy->security_deposit;
+            if ($collected <= 0) {
+                continue;
+            }
+            $returned = (float)depositRefundModel::where('legacy_student_id', $legacy->id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('status', depositRefundModel::STATUS_PAID)
+                ->sum('final_refund_amount');
+            $balance = $collected - $returned;
+            if ($balance > 0) {
+                $data[] = [
+                    'student_name'  => $legacy->student_name,
+                    'enrollment_no' => $legacy->enrollment_no,
+                    'semester_name' => $legacy->semester ?? '',
+                    'division_name' => '',
+                    'mobile'        => null,
+                    'left_on'       => $legacy->received_date,
+                    'collected'     => $collected,
+                    'returned'      => $returned,
+                    'balance'       => $balance,
+                    'is_legacy'     => true,
                 ];
             }
         }
@@ -183,6 +334,10 @@ class depositRefundReportController extends Controller
         $res['message'] = "Success";
         $res['data'] = $data;
         $res['total_unclaimed'] = array_sum(array_column($data, 'balance'));
+        $res['searched'] = true;
+        $res['grade_id'] = $grade;
+        $res['standard_id'] = $standard;
+        $res['division_id'] = $division;
 
         return is_mobile($type, "fees/deposit_refund/reports/unclaimed_deposits", $res, "view");
     }
@@ -195,11 +350,29 @@ class depositRefundReportController extends Controller
         $type = $request->input('type');
         $sub_institute_id = $request->session()->get('sub_institute_id');
 
-        $student = DB::table('tblstudent')
-            ->selectRaw("concat_ws(' ',first_name,middle_name,last_name) as name, enrollment_no, mobile")
-            ->where('id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
-            ->first();
+        $student = null;
+        if (is_string($student_id) && strpos($student_id, 'legacy_') === 0) {
+            $legacyId = (int)str_replace('legacy_', '', $student_id);
+            $legacy = DB::table('deposite_lagacy_students')->where('id', $legacyId)->first();
+            if ($legacy) {
+                $student = (object)[
+                    'name' => $legacy->student_name,
+                    'enrollment_no' => $legacy->enrollment_no,
+                    'mobile' => null,
+                    'is_legacy' => true,
+                    'legacy_id' => $legacy->id,
+                ];
+            }
+        } else {
+            $student = DB::table('tblstudent')
+                ->selectRaw("concat_ws(' ',last_name,first_name,middle_name) as name, enrollment_no, mobile")
+                ->where('id', $student_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->first();
+            if ($student) {
+                $student = (object)array_merge((array)$student, ['is_legacy' => false]);
+            }
+        }
 
         if (!$student) {
             $res['status_code'] = 0;
@@ -208,32 +381,51 @@ class depositRefundReportController extends Controller
             return is_mobile($type, "deposit_refund.index", $res, "redirect");
         }
 
-        $receipts = DB::table('fees_collect')
-            ->selectRaw("receipt_no, receiptdate, deposit")
-            ->where('student_id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
-            ->where('is_deleted', 'N')
-            ->where('deposit', '>', 0)
-            ->orderBy('receiptdate')
-            ->get();
+        if (isset($student->is_legacy) && $student->is_legacy) {
+            $collected = (float)DB::table('deposite_lagacy_students')->where('id', $student->legacy_id)->value('security_deposit');
+            $refunds = depositRefundModel::where('legacy_student_id', $student->legacy_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('status', depositRefundModel::STATUS_PAID)
+                ->orderBy('paid_date')
+                ->get();
+            $returned = (float)$refunds->sum('final_refund_amount');
+            $receipts = collect([]);
+        } else {
+            $receipts = DB::table('fees_collect')
+                ->selectRaw("receipt_no, receiptdate, deposit")
+                ->where('student_id', $student_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('is_deleted', 'N')
+                ->where('deposit', '>', 0)
+                ->orderBy('receiptdate')
+                ->get();
 
-        $refunds = depositRefundModel::where('student_id', $student_id)
-            ->where('sub_institute_id', $sub_institute_id)
-            ->where('status', depositRefundModel::STATUS_PAID)
-            ->orderBy('paid_date')
-            ->get();
+            $refunds = depositRefundModel::where('student_id', $student_id)
+                ->where('sub_institute_id', $sub_institute_id)
+                ->where('status', depositRefundModel::STATUS_PAID)
+                ->orderBy('paid_date')
+                ->get();
 
-        $collected = (float)$receipts->sum('deposit');
-        $returned = (float)$refunds->sum('final_refund_amount');
+            $collected = (float)$receipts->sum('deposit');
+            $returned = (float)$refunds->sum('final_refund_amount');
+        }
+
+        $data = [];
+        foreach ($receipts as $r) {
+            $data[] = ['type' => 'receipt', 'ref' => $r->receipt_no, 'date' => $r->receiptdate, 'collected' => $r->deposit, 'returned' => 0];
+        }
+        foreach ($refunds as $r) {
+            $data[] = ['type' => 'refund', 'ref' => $r->voucher_no, 'date' => $r->paid_date, 'collected' => 0, 'returned' => $r->final_refund_amount];
+        }
+        usort($data, function($a,$b){ return strtotime($a['date']) <=> strtotime($b['date']); });
 
         $res['status_code'] = 1;
         $res['message'] = "Success";
         $res['student'] = $student;
-        $res['receipts'] = $receipts;
-        $res['refunds'] = $refunds;
-        $res['collected'] = $collected;
-        $res['returned'] = $returned;
-        $res['balance'] = $collected - $returned;
+        $res['statement'] = $data;
+        $res['collected'] = isset($collected) ? $collected : 0;
+        $res['returned'] = isset($returned) ? $returned : 0;
+        $res['balance'] = (isset($collected) ? $collected : 0) - (isset($returned) ? $returned : 0);
 
         return is_mobile($type, "fees/deposit_refund/reports/student_statement", $res, "view");
     }
@@ -250,9 +442,11 @@ class depositRefundReportController extends Controller
 
         $query = DB::table('deposit_refund_deduction as drd')
             ->join('deposit_refund as dr', 'dr.id', '=', 'drd.deposit_refund_id')
-            ->join('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('tblstudent as s', 's.id', '=', 'dr.student_id')
+            ->leftJoin('deposite_lagacy_students as ls', 'ls.id', '=', 'dr.legacy_student_id')
             ->selectRaw("drd.title, drd.amount, drd.remarks, dr.voucher_no, dr.paid_date,
-                concat_ws(' ',s.first_name,s.last_name) as student_name, s.enrollment_no")
+                CASE WHEN dr.student_id IS NOT NULL THEN CONCAT_WS(' ',s.last_name,s.first_name,s.middle_name) ELSE ls.student_name END as student_name, 
+                CASE WHEN dr.student_id IS NOT NULL THEN s.enrollment_no ELSE ls.enrollment_no END as enrollment_no")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.status', depositRefundModel::STATUS_PAID);
 

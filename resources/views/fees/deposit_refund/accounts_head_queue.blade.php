@@ -17,43 +17,56 @@
         @endif
 
         <div class="card">
-            <div class="table-responsive">
-                <table id="example" class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Request No</th>
-                        <th>Student</th>
-                        <th>Gr.No.</th>
-                        <th>Deposit Balance</th>
-                        <th>Deductions</th>
-                        <th>Final Amount</th>
-                        <th>Reason</th>
-                        <th>Days Pending</th>
-                        <th>Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($data['data'] as $req)
+            <form id="bulkForm" action="{{ route('deposit_refund_accounts_head_bulk_action') }}" method="post">
+                @csrf
+                <input type="hidden" name="decision" id="bulkDecision">
+                <input type="hidden" name="remarks" id="bulkRemarks">
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-success" onclick="bulkAction('approve')">Approve Selected</button>
+                        <button type="button" class="btn btn-danger" onclick="bulkAction('return')">Return Selected</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="example" class="table table-striped">
+                        <thead>
                         <tr>
-                            <td>{{ $req->request_no }}</td>
-                            <td>{{ $req->student_name }}</td>
-                            <td>{{ $req->enrollment_no }}</td>
-                            <td>&#8377; {{ number_format($req->deposit_balance, 2) }}</td>
-                            <td>&#8377; {{ number_format($req->deduction_total, 2) }}</td>
-                            <td>&#8377; {{ number_format($req->final_refund_amount, 2) }}</td>
-                            <td>{{ $req->reason }}</td>
-                            <td>{{ $req->days_pending }}</td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-success"
-                                        onclick="showActionForm({{ $req->id }}, 'approve');">Approve</button>
-                                <button type="button" class="btn btn-sm btn-danger"
-                                        onclick="showActionForm({{ $req->id }}, 'return');">Return</button>
-                            </td>
+                            <th><input type="checkbox" id="checkAll"></th>
+                            <th>Request No</th>
+                            <th>Student</th>
+                            <th>Gr.No.</th>
+                            <th>Deposit Balance</th>
+                            <th>Deductions</th>
+                            <th>Final Amount</th>
+                            <th>Reason</th>
+                            <th>Days Pending</th>
+                            <th>Action</th>
                         </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                        @foreach($data['data'] as $req)
+                            <tr>
+                                <td><input type="checkbox" name="bulk_ids[]" value="{{ $req->id }}" class="bulkCheck"></td>
+                                <td>{{ $req->request_no }}</td>
+                                <td>{{ $req->student_name }}</td>
+                                <td>{{ $req->enrollment_no }}</td>
+                                <td>&#8377; {{ number_format($req->deposit_balance, 2) }}</td>
+                                <td>&#8377; {{ number_format($req->deduction_total, 2) }}</td>
+                                <td>&#8377; {{ number_format($req->final_refund_amount, 2) }}</td>
+                                <td>{{ $req->reason }}</td>
+                                <td>{{ $req->days_pending }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-success"
+                                            onclick="showActionForm({{ $req->id }}, 'approve');">Approve</button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="showActionForm({{ $req->id }}, 'return');">Return</button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </div>
 
         <div class="modal" id="actionModal" tabindex="-1" role="dialog">
@@ -91,8 +104,31 @@
             $('#actionModal').modal('show');
         }
 
+        function bulkAction(decision) {
+            var checked = $('.bulkCheck:checked').length;
+            if (checked == 0) {
+                alert('Please select at least one request');
+                return;
+            }
+            if (decision == 'return') {
+                var remarks = prompt('Please enter remarks for return:');
+                if (remarks == null || remarks.trim() == '') {
+                    alert('Remarks are mandatory for return');
+                    return;
+                }
+                $('#bulkRemarks').val(remarks);
+            } else {
+                $('#bulkRemarks').val('');
+            }
+            $('#bulkDecision').val(decision);
+            $('#bulkForm').submit();
+        }
+
         $(document).ready(function () {
             $('#example').DataTable();
+            $('#checkAll').on('click', function () {
+                $('.bulkCheck').prop('checked', this.checked);
+            });
         });
     </script>
     @include('includes.footer')
