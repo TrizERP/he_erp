@@ -49,6 +49,7 @@
                         <th>Gr.No.</th>
                         <th>Final Amount</th>
                         <th>Current Status</th>
+                        <th>Bank Name</th>
                         <th>Bank Account No</th>
                         <th>IFSC Code</th>
                         <th>Requested Date</th>
@@ -63,6 +64,7 @@
                             <td>{{ $row->enrollment_no }}</td>
                             <td>{{ number_format($row->final_refund_amount, 2) }}</td>
                             <td>{{ $row->status_title }}</td>
+                            <td>{{ $row->bank_name }}</td>
                             <td>{{ $row->bank_account_number }}</td>
                             <td>{{ $row->ifsc_code }}</td>
                             <td>{{ $row->requested_date }}</td>
