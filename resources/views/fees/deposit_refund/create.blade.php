@@ -91,7 +91,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4 form-group bankFields" style="display:none;">
+                    <div class="col-md-4 form-group">
                         <label>Bank Branch</label>
                         <input type="text" name="bank_branch" class="form-control">
                     </div>

@@ -197,6 +197,7 @@ class depositRefundPaymentController extends Controller
         $html .= '<tr><td colspan="4">Payment Mode : <b>'.$depositRefund->payment_mode.'</b>';
         if ($depositRefund->payment_mode == 'Cheque') {
             $html .= ' | Cheque No : <b>'.$depositRefund->cheque_no.'</b> | Cheque Date : <b>'.$depositRefund->cheque_date.'</b>';
+            $html .= ' | Bank : <b>'.$depositRefund->bank_name.'</b> | Branch : <b>'.$depositRefund->bank_branch.'</b>';
         } elseif ($depositRefund->payment_mode == 'Bank Transfer') {
             $html .= ' | Bank : <b>'.$depositRefund->bank_name.'</b> | Branch : <b>'.$depositRefund->bank_branch.'</b>';
             $html .= ' | A/C No : <b>'.$depositRefund->bank_account_number.'</b> | IFSC : <b>'.$depositRefund->ifsc_code.'</b>';
