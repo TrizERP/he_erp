@@ -79,6 +79,9 @@
                         <label>Cheque Date</label>
                         <input type="text" name="cheque_date" class="form-control mydatepicker" autocomplete="off">
                     </div>
+                </div>
+
+                <div class="row bankNameFields" style="display:none;">
                     <div class="col-md-4 form-group">
                         <label>Bank Name</label>
                         <select class="form-control" name="bank_name">
@@ -87,6 +90,10 @@
                                 <option value="{{ $bank->bank_name }}">{{ $bank->bank_name }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="col-md-4 form-group bankFields" style="display:none;">
+                        <label>Bank Branch</label>
+                        <input type="text" name="bank_branch" class="form-control">
                     </div>
                 </div>
 
@@ -124,6 +131,7 @@
         function toggleModeFields() {
             var mode = $('#payment_mode').val();
             $('.chequeFields').toggle(mode === 'Cheque');
+            $('.bankNameFields').toggle(mode === 'Cheque' || mode === 'Bank Transfer');
             $('.bankFields').toggle(mode === 'Bank Transfer');
         }
     </script>
