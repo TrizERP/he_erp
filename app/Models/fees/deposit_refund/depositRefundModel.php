@@ -40,6 +40,7 @@ class depositRefundModel extends Model
         'cheque_no',
         'cheque_date',
         'bank_name',
+        'bank_branch',
         'bank_account_number',
         'ifsc_code',
         'supporting_document',

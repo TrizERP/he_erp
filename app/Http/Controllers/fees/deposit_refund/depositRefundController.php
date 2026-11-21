@@ -281,6 +281,7 @@ class depositRefundController extends Controller
         $cheque_no = $request->input('cheque_no');
         $cheque_date = $request->input('cheque_date') ?: null;
         $bank_name = $request->input('bank_name');
+        $bank_branch = $request->input('bank_branch');
         $bank_account_number = $request->input('bank_account_number');
         $ifsc_code = $request->input('ifsc_code');
         $clerk_remarks = $request->input('clerk_remarks');
@@ -429,6 +430,7 @@ class depositRefundController extends Controller
             'cheque_no'                => $cheque_no,
             'cheque_date'              => $cheque_date,
             'bank_name'                => $bank_name,
+            'bank_branch'              => $bank_branch,
             'bank_account_number'      => $bank_account_number,
             'ifsc_code'                => $ifsc_code,
             'supporting_document'      => $supportingDocument,
