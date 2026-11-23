@@ -103,7 +103,8 @@ class studentReportController extends Controller
         //$tblcustom_fields['amount'] = 'Amount';
         //$tblcustom_fields['van'] = 'Van(Shift Wise)';
         //$tblcustom_fields['distance'] = 'Distance';
-        //$tblcustom_fields['optional_subjects'] = 'Optional Subjects';        
+        $tblcustom_fields['optional_subjects'] = 'Optional Subjects';
+        $tblcustom_fields['optional_subject_batch'] = 'Subject Batch';
         $tblcustom_fields['nationality'] = get_string('nationality','request');
         $tblcustom_fields['place_of_birth'] = get_string('birthplace','request');
 
@@ -183,11 +184,11 @@ class studentReportController extends Controller
             // $res['message'] = "Please select one checkbox atlease to view report";
             // return is_mobile($type, "student_report.index", $res);
         } else {
-            $searchArr1 = ['first_name', 'last_name', 'place_of_birth', 'student_mobile','optional_subjects'];
-            $replaceArr1 = ['First Name', 'Surname', get_string('birthplace','request'), get_string('studentmobile','request'),'Optional Subjects'];
+            $searchArr1 = ['first_name', 'last_name', 'place_of_birth', 'student_mobile','optional_subjects','optional_subject_batch'];
+            $replaceArr1 = ['First Name', 'Surname', get_string('birthplace','request'), get_string('studentmobile','request'),'Optional Subjects','Subject Batch'];
 
             foreach ($request->input('dynamicFields') as $key => $value) {
-                if ($value != "bloodgroup" && $value != "van" && $value != "optional_subjects") {
+                if ($value != "bloodgroup" && $value != "van" && $value != "optional_subjects" && $value != "optional_subject_batch") {
                     $array[] = $value;
                 }
                 
@@ -205,7 +206,8 @@ class studentReportController extends Controller
             $array[] = 'CONCAT(transport_vehicle.vehicle_number, " (", transport_school_shift.shift_title, ")") as van';
             $array[] = 'tblstudent.place_of_birth as place_of_birth';
             $array[] = 'tblstudent.student_mobile as studentmobile';
-            $array[] = 'GROUP_CONCAT(IFNULL(subject.subject_name, "-")) as optional_subjects';
+            $array[] = 'GROUP_CONCAT(DISTINCT COALESCE(opt_ssm.display_name, subject.subject_name) ORDER BY COALESCE(opt_ssm.display_name, subject.subject_name) SEPARATOR ", ") as optional_subjects';
+            $array[] = 'GROUP_CONCAT(DISTINCT opt_subject_batch.title ORDER BY opt_subject_batch.title SEPARATOR ", ") as optional_subject_batch';
             $array[] = 'batch.title as studentbatch';
         }
         $array[] = 'concat_ws(" ",tblstudent.first_name,tblstudent.middle_name,tblstudent.last_name) AS student_name';
@@ -240,6 +242,11 @@ class studentReportController extends Controller
                 $join->on('student_optional_subject.student_id', '=', 'tblstudent.id')->where('student_optional_subject.syear',session()->get('syear'));
             })
             ->leftjoin('subject', 'student_optional_subject.subject_id', '=', 'subject.id')
+            ->leftJoin('sub_std_map as opt_ssm', function($join) {
+                $join->on('opt_ssm.subject_id', '=', 'student_optional_subject.subject_id')
+                     ->on('opt_ssm.standard_id', '=', 'tblstudent_enrollment.standard_id');
+            })
+            ->leftJoin('batch as opt_subject_batch', 'student_optional_subject.batch_id', '=', 'opt_subject_batch.id')
             ->leftJoin('transport_school_shift', 'transport_vehicle.school_shift', '=', 'transport_school_shift.id')
             ->where($extraSearchArray)
             ->when($request->student_status==0,function($q) use ($request) {
