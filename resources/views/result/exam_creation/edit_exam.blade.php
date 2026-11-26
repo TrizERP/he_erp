@@ -215,11 +215,11 @@ $(document).ready(function () {
     var subject = "{{ $data['subject_id'] }}";
 
     // auto trigger loading for subject + exam
+    // Note: term change is NOT triggered here because it clears #standard.
+    // The combined $('#standard, #term') listener fires on standard change
+    // and term already has its value from server-side TermDD, so exams load correctly.
     @if(isset($data['standard_id']))
         $('#standard').trigger('change');
-    @endif
-    @if(isset($data['term_id']))
-        $('#term').trigger('change');
     @endif
 
     var subject ="{{ $data['subject_id'] }}";
