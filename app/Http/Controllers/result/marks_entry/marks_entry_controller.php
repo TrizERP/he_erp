@@ -289,6 +289,7 @@ class marks_entry_controller extends Controller
             ->where('rce.subject_id', $request->subject)
             ->where('se.section_id', $request->division)
             ->where('se.syear', session()->get('syear'))
+            ->where('rce.is_remedial', 1)
             ->select(
                 'rm.student_id',
                 'se.grade_id',
@@ -298,7 +299,7 @@ class marks_entry_controller extends Controller
                 DB::raw('SUM(rce.points) AS total_marks'),
                 DB::raw('MAX(rce.cutoff) AS cutoff_reference')
             )
-            ->groupBy('rm.student_id', 'se.grade_id', 'se.standard_id', 'se.section_id')
+            ->groupBy('rm.student_id','rce.exam_id', 'se.grade_id', 'se.standard_id', 'se.section_id')
             ->havingRaw('SUM(rm.points) < MAX(rce.cutoff)')
             ->pluck('rm.student_id')
             ->toArray();
