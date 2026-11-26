@@ -982,6 +982,7 @@ die; */
 		$data = $this->updateData($request);
 
 		//START Save Optional Subject
+/* HIDE BY RAJESH 26-11-2026
 		student_optional_subjectModel::where(["sub_institute_id" => $sub_institute_id, 'student_id' => $student_id, 'syear' => $syear])->delete();
 		if ($request->input('optional_subject')) {
 			$optional_subject['student_id'] = $student_id;
@@ -992,6 +993,7 @@ die; */
 				student_optional_subjectModel::insert($optional_subject);
 			}
 		}
+*/		
 		//END Save Optional Subject
 
 		$studentEnrollment['standard_id'] = $request->input('standard');
