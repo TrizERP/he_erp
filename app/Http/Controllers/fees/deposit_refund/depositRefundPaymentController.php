@@ -35,7 +35,7 @@ class depositRefundPaymentController extends Controller
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)
             ->where('dr.status', depositRefundModel::STATUS_APPROVED_PENDING_PAYMENT)
-            ->orderBy('dr.principal_date')
+            ->orderBy('dr.id')
             ->get()->toArray();
 
         $res['status_code'] = 1;
@@ -117,7 +117,7 @@ class depositRefundPaymentController extends Controller
             'action_date'       => date('Y-m-d H:i:s'),
         ]);
 
-        $this->sendRefundSms($depositRefund, $stuData, $voucherNo, $sub_institute_id, $syear);
+        //$this->sendRefundSms($depositRefund, $stuData, $voucherNo, $sub_institute_id, $syear);
 
         $res['status_code'] = 1;
         $res['message'] = "Deposit refund voucher ".$voucherNo." generated successfully.";
@@ -176,7 +176,7 @@ class depositRefundPaymentController extends Controller
         $html = '<br><table class="deposit-voucher" style="margin:0 auto;" width="80%"><tbody>';
         $html .= '<tr class="double-border"><td colspan="4" align="center"><span class="sc-hd">Deposit Refund Voucher</span></td></tr>';
         $html .= '<tr><td colspan="2">Voucher No. : <b>'.$voucherNo.'</b></td><td colspan="2" align="right">Date : <b>'.date('d-m-Y').'</b></td></tr>';
-        $html .= '<tr><td colspan="2">Request No. : <b>'.$depositRefund->request_no.'</b></td><td colspan="2" align="right">Gr.No. : <b>'.$stuData->enrollment_no.'</b></td></tr>';
+        $html .= '<tr><td colspan="2">Request No. : <b>'.$depositRefund->request_no.'</b></td><td colspan="2" align="right">Enrollment No. : <b>'.$stuData->enrollment_no.'</b></td></tr>';
         $html .= '<tr><td colspan="4">Student Name : <b>'.$stuData->name.'</b></td></tr>';
         $html .= '<tr><td colspan="4">Received By : <b>'.$depositRefund->receiver_name.($depositRefund->receiver_relation ? ' ('.$depositRefund->receiver_relation.')' : '').'</b></td></tr>';
 
@@ -203,6 +203,9 @@ class depositRefundPaymentController extends Controller
         }
         $html .= '</td></tr>';
 
+        if (!empty($depositRefund->payment_reference)) {
+            $html .= '<tr><td colspan="4">Remarks : <b>'.htmlspecialchars($depositRefund->payment_reference).'</b></td></tr>';
+        }
         $html .= '<tr><td colspan="3"><b>THIS IS A COMPUTER GENERATED VOUCHER.</b></td><td align="center">'.session()->get('name').'<br>Signature</td></tr>';
         $html .= '</tbody></table>';
 

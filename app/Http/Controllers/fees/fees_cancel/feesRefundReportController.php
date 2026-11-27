@@ -687,12 +687,19 @@ public function feesRefundReport(Request $request)
             CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS refund_by,
             fr.cheque_no,
             fr.bank_name,
-            fr.bank_branch
+            fr.bank_branch,
+            fr.account_no,
+            fr.ifsc_code
         ")
         ->where('te.syear', $syear)
         ->where('fr.sub_institute_id', $sub_institute_id)
         ->where('fr.syear', $syear)
-        ->whereRaw("DATE_FORMAT(fr.receipt_date, '%Y-%m-%d') BETWEEN ? AND ?", [$from_date, $to_date]);
+        ->when($from_date != '', function ($q) use ($from_date) {
+            $q->whereRaw("DATE_FORMAT(fr.receipt_date, '%Y-%m-%d') >= ?", [$from_date]);
+        })
+        ->when($to_date != '', function ($q) use ($to_date) {
+            $q->whereRaw("DATE_FORMAT(fr.receipt_date, '%Y-%m-%d') <= ?", [$to_date]);
+        });
 
     // ✔️ Standard
     if ($standard != '') {

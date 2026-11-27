@@ -197,6 +197,18 @@
                                                            class="form-control" value="N/A">
                                                 </td>
                                             </tr>
+                                            <tr class="onlineDetail" style="display:none; border-bottom: 2px solid black;">
+                                                <td>Account Number</td>
+                                                <td>
+                                                    <input type="text" name="account_no" id="account_no"
+                                                           class="form-control">
+                                                </td>
+                                                <td>IFSC Code</td>
+                                                <td>
+                                                    <input type="text" name="ifsc_code" id="ifsc_code"
+                                                           class="form-control">
+                                                </td>
+                                            </tr>
                                         </table>
                                     </div>
                                     <div class="table-responsive col-md-12">
@@ -223,14 +235,17 @@
                 alert("Please Select Receipt Date.");
                 return false;
             }
-            if ($('#payment_mode').val() != 'Cash') {
-                if ($('#cheque_date').val() == '') {
-                    alert("Please Select Cheque Date.");
-                    return false;
-                }
-                if ($('#cheque_no').val() == '') {
-                    alert("Please Select Cheque Number.");
-                    return false;
+            var mode = $('#payment_mode').val();
+            if (mode != 'Cash') {
+                if (mode != 'Online') {
+                    if ($('#cheque_date').val() == '') {
+                        alert("Please Select Cheque Date.");
+                        return false;
+                    }
+                    if ($('#cheque_no').val() == '') {
+                        alert("Please Select Cheque Number.");
+                        return false;
+                    }
                 }
                 if ($('#bank_name').val() == '') {
                     alert("Please Select Bank Name.");
@@ -240,6 +255,16 @@
                     alert("Please Select Bank Branch.");
                     return false;
                 }
+                if (mode == 'Online') {
+                    if ($('#account_no').val() == '') {
+                        alert("Please Enter Account Number.");
+                        return false;
+                    }
+                    if ($('#ifsc_code').val() == '') {
+                        alert("Please Enter IFSC Code.");
+                        return false;
+                    }
+                }
             }
             return true;
         }
@@ -247,8 +272,13 @@
         function sh_bankDetail(selectedVal) {
             if (selectedVal == 'Cash') {
                 $('.bnakDetail').hide();
+                $('.onlineDetail').hide();
+            } else if (selectedVal == 'Online') {
+                $('.bnakDetail').show();
+                $('.onlineDetail').show();
             } else {
                 $('.bnakDetail').show();
+                $('.onlineDetail').hide();
             }
         }
 

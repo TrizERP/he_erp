@@ -34,7 +34,7 @@
                             <th><input type="checkbox" id="checkAll"></th>
                             <th>Request No</th>
                             <th>Student</th>
-                            <th>Gr.No.</th>
+                            <th>Enrollment No.</th>
                             <th>Deposit Balance</th>
                             <th>Deductions</th>
                             <th>Final Amount</th>
@@ -125,7 +125,9 @@
         }
 
         $(document).ready(function () {
-            $('#example').DataTable();
+            $('#example').DataTable({
+                order: [[1, 'asc']]
+            });
             $('#checkAll').on('click', function () {
                 $('.bulkCheck').prop('checked', this.checked);
             });

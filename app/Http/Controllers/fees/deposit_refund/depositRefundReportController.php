@@ -108,7 +108,7 @@ class depositRefundReportController extends Controller
                 CASE WHEN dr.student_id IS NOT NULL THEN ac.title ELSE NULL END as section_name,
                 CASE WHEN dr.student_id IS NOT NULL THEN st.name ELSE ls.semester END as semester_name,
                 CASE WHEN dr.student_id IS NOT NULL THEN dv.name ELSE NULL END as division_name,
-                CASE WHEN dr.student_id IS NOT NULL THEN se.syear ELSE ls.admission_year END as year_name,
+                CASE WHEN dr.student_id IS NOT NULL THEN s.admission_year ELSE ls.admission_year END as admission_year,
                 concat_ws(' ',ah.first_name,ah.last_name) as accounts_head_name,
                 concat_ws(' ',pr.first_name,pr.last_name) as principal_name")
             ->where('dr.sub_institute_id', $sub_institute_id)
@@ -139,7 +139,7 @@ class depositRefundReportController extends Controller
             });
         }
 
-        $data = $query->orderByDesc('dr.paid_date')->get()->toArray();
+        $data = $query->orderBy('dr.request_no')->get()->toArray();
 
         $res['status_code'] = 1;
         $res['message'] = "Success";

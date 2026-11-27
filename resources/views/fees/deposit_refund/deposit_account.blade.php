@@ -26,7 +26,7 @@
                 <div class="col-md-6">
                     <table class="table table-striped">
                         <tr><td>Student Name</td><td>{{ $stu['name'] }}</td></tr>
-                        <tr><td>Gr.No.</td><td>{{ $stu['enrollment_no'] }}</td></tr>
+                        <tr><td>Enrollment No.</td><td>{{ $stu['enrollment_no'] }}</td></tr>
                         <tr><td>Standard/Division</td><td>{{ $stu['stddiv'] }}</td></tr>
                     </table>
                 </div>

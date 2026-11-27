@@ -45,12 +45,18 @@
                         <th>Semester</th>
                         <th>Division</th>
                         <th>Student</th>
-                        <th>Gr.No.</th>
-                        <th>Year</th>
+                        <th>Enrollment No.</th>
+                        <th>Admission Year</th>
                         <th>Final Amount</th>
+                        <th>Bank Name</th>
+                        <th>Bank Branch</th>
+                        <th>Account Number</th>
+                        <th>IFSC Code</th>
                         <th>Accounts Head</th>
                         <th>Principal</th>
                         <th>Paid On</th>
+                        <th>Remarks</th>
+                        <th>Document</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -63,11 +69,25 @@
                             <td>{{ $row->division_name }}</td>
                             <td>{{ $row->student_name }}</td>
                             <td>{{ $row->enrollment_no }}</td>
-                            <td>{{ $row->year_name }}</td>
+                            <td>{{ $row->admission_year }}</td>
                             <td>{{ number_format($row->final_refund_amount, 2) }}</td>
+                            <td>{{ $row->bank_name }}</td>
+                            <td>{{ $row->bank_branch }}</td>
+                            <td>{{ $row->bank_account_number }}</td>
+                            <td>{{ $row->ifsc_code }}</td>
                             <td>{{ $row->accounts_head_name }}</td>
                             <td>{{ $row->principal_name }}</td>
                             <td>{{ $row->paid_date }}</td>
+                            <td>{{ $row->payment_reference }}</td>
+                            <td>
+                                @if(!empty($row->supporting_document))
+                                    <a href="https://s3-triz.fra1.digitaloceanspaces.com/public/deposit_refund_docs/{{ $row->supporting_document }}" target="_blank" class="btn btn-xs btn-info">
+                                        <i class="fa fa-file"></i> View
+                                    </a>
+                                @else
+                                    —
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -75,7 +95,7 @@
                     <tr>
                         <th colspan="8" class="text-right">Total Refunded</th>
                         <th>{{ number_format($data['total_refunded'], 2) }}</th>
-                        <th colspan="3"></th>
+                        <th colspan="8"></th>
                     </tr>
                     </tfoot>
                 </table>
@@ -166,6 +186,7 @@
                         return intVal(a) + intVal(b);
                     }, 0);
                     $(api.column(8).footer()).html(total.toFixed(2));
+                    // columns 9-15 are bank/remarks/etc — no footer sum needed
                 }
             });
 

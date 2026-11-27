@@ -10,6 +10,7 @@ use App\Models\fees\deposit_refund\depositRefundModel;
 use App\Models\student\tblstudentModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use function App\Helpers\is_mobile;
 
 class depositRefundController extends Controller
@@ -397,7 +398,7 @@ class depositRefundController extends Controller
         if ($request->hasFile('supporting_document')) {
             $file = $request->file('supporting_document');
             $supportingDocument = 'DR-'.$student_id.'-'.time().'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('deposit_refund_docs'), $supportingDocument);
+            Storage::disk('digitalocean')->putFileAs('public/deposit_refund_docs', $file, $supportingDocument, 'public');
         }
 
         $unpaidFees = $this->calculateUnpaidFees($student_id, $stuData['grade_id'], $stuData['std_id'], $stuData['div_id']);
@@ -489,7 +490,7 @@ class depositRefundController extends Controller
                 sm.title as status_title")
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)
-            ->orderByDesc('dr.id')
+            ->orderBy('dr.id')
             ->get()->toArray();
 
         $res['status_code'] = 1;
