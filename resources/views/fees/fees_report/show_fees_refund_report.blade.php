@@ -56,13 +56,13 @@
                     <div class="col-md-4 form-group">
                         <label>From Date</label>
                         <input type="text" id="from_date" name="from_date" value="{{ $from_date }}" 
-                               class="form-control mydatepicker" required="required" autocomplete="off">
+                               class="form-control mydatepicker" autocomplete="off">
                     </div>
 
                     <div class="col-md-4 form-group">
                         <label>To Date</label>
                         <input type="text" id="to_date" name="to_date" value="{{ $to_date }}"
-                               class="form-control mydatepicker" required="required" autocomplete="off">
+                               class="form-control mydatepicker" autocomplete="off">
                     </div>
 
                     <div class="col-md-12 form-group">
@@ -104,6 +104,8 @@
                                     <th>Cheque No</th>
                                     <th>Bank Name</th>
                                     <th>Bank Branch</th>
+                                    <th>Account Number</th>
+                                    <th>IFSC Code</th>
                                     <th>Refund Remarks</th>
                                     <th>Refund Date</th>
                                     <th>Refund By</th>
@@ -128,6 +130,8 @@
                                         <td>{{ $row['cheque_no'] ?? 'N/A' }}</td>
                                         <td>{{ $row['bank_name'] ?? 'N/A' }}</td>
                                         <td>{{ $row['bank_branch'] ?? 'N/A' }}</td>
+                                        <td>{{ $row['account_no'] ?? 'N/A' }}</td>
+                                        <td>{{ $row['ifsc_code'] ?? 'N/A' }}</td>
                                         <td>{{ $row['remarks'] ?? ($row['refund_remarks'] ?? 'N/A') }}</td>
                                         <td>{{ $row['refund_date'] ?? ($row['receipt_date'] ?? '') }}</td>
                                         <td>{{ $row['refund_by'] ?? ($row['created_by'] ?? '') }}</td>
@@ -141,7 +145,7 @@
                                 <tr>
                                     <th colspan="7" style="text-align:right">Total:</th>
                                     <th>{{ number_format($total_refund_amount, 2) }}</th>
-                                    <th colspan="7"></th>
+                                    <th colspan="9"></th>
                                 </tr>
                             </tfoot>
                         </table>

@@ -288,9 +288,17 @@ class feesRefundController extends Controller
         if (count($feesData) == 0) {
             $res['status_code'] = 0;
             $res['message'] = "No Fees Receipt Found Please Search Again";
+            $res['fees_data'] = [];
+            $res['grade_id'] = $grade;
+            $res['standard_id'] = $standard;
+            $res['division_id'] = $division;
+            $res['enrollment_no'] = $enrollment_no;
+            $res['first_name'] = $first_name;
+            $res['last_name'] = $last_name;
+            $res['from_date'] = $from_date;
+            $res['to_date'] = $to_date;
 
-            // return is_mobile($type, "fees_cancel.index", $res);
-            return is_mobile($type, "fees_refund.index", $res, "redirect");
+            return is_mobile($type, "fees/fees_cancel/fees_refund", $res, "view");
         }
 
         $fees_config = DB::table('fees_config_master as fc')
@@ -344,6 +352,8 @@ class feesRefundController extends Controller
         $cheque_no = $request->input('cheque_no');
         $bank_name = $request->input('bank_name');
         $bank_branch = $request->input('bank_branch');
+        $account_no = $request->input('account_no') ?? '';
+        $ifsc_code = $request->input('ifsc_code') ?? '';
         $refund_remark = $request->input('refund_remark') ?? '';
         $marking_period_id=session()->get('term_id');
 
@@ -615,6 +625,8 @@ class feesRefundController extends Controller
         $feesRefundLog['cheque_no'] = $cheque_no;
         $feesRefundLog['bank_name'] = $bank_name;
         $feesRefundLog['bank_branch'] = $bank_branch;
+        $feesRefundLog['account_no'] = $account_no;
+        $feesRefundLog['ifsc_code'] = $ifsc_code;
         $feesRefundLog['remarks'] = $refund_remark;
 
         foreach ($fees_title as $fees_title_name => $fees_title_id) {

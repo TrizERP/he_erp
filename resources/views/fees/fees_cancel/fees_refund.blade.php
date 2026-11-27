@@ -114,7 +114,7 @@
                                     <tr>
                                         <th>Sr.No</th>
                                         <th>{{ App\Helpers\get_string('studentname','request')}}</th>
-                                        <th>{{ App\Helpers\get_string('grno','request')}}</th>
+                                        <th>Enrollment No.</th>
                                         <th>{{ App\Helpers\get_string('standard','request')}}</th>
                                         <th>{{ App\Helpers\get_string('division','request')}}</th>
                                     </tr>

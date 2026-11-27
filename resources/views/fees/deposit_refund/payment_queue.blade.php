@@ -23,7 +23,7 @@
                     <tr>
                         <th>Request No</th>
                         <th>Student</th>
-                        <th>Gr.No.</th>
+                        <th>Enrollment No.</th>
                         <th>Receiver</th>
                         <th>Payment Mode</th>
                         <th>Final Amount</th>
@@ -47,7 +47,14 @@
                             </td>
                             <td>&#8377; {{ number_format($req->final_refund_amount, 2) }}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-success" onclick="showPayForm({{ $req->id }});">
+                                <button type="button" class="btn btn-sm btn-success" onclick="showPayForm(
+                                        {{ $req->id }},
+                                        '{{ addslashes($req->payment_mode) }}',
+                                        '{{ addslashes($req->bank_name ?? '') }}',
+                                        '{{ addslashes($req->bank_branch ?? '') }}',
+                                        '{{ addslashes($req->bank_account_number ?? '') }}',
+                                        '{{ addslashes($req->ifsc_code ?? '') }}'
+                                    );">
                                     Pay &amp; Print Voucher
                                 </button>
                             </td>
@@ -68,9 +75,33 @@
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <label>Payment Reference / Transaction Note</label>
-                            <input type="text" name="payment_reference" class="form-control"
-                                   placeholder="Cheque handed over / NEFT UTR no. etc.">
+                            <div class="form-group">
+                                <label>Payment Mode</label>
+                                <input type="text" id="modal_payment_mode" class="form-control" readonly>
+                            </div>
+                            <div id="modal_bank_details" style="display:none;">
+                                <div class="form-group">
+                                    <label>Bank Name</label>
+                                    <input type="text" id="modal_bank_name" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bank Branch</label>
+                                    <input type="text" id="modal_bank_branch" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Account Number</label>
+                                    <input type="text" id="modal_account_number" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>IFSC Code</label>
+                                    <input type="text" id="modal_ifsc_code" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Payment Reference / Transaction Note</label>
+                                <input type="text" name="payment_reference" class="form-control"
+                                       placeholder="Cheque handed over / NEFT UTR no. etc.">
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Confirm Payment &amp; Print Voucher</button>
@@ -85,13 +116,25 @@
     <script>
         var payUrlTemplate = "{{ route('deposit_refund_pay', 0) }}";
 
-        function showPayForm(id) {
+        function showPayForm(id, paymentMode, bankName, bankBranch, accountNumber, ifscCode) {
             $('#payForm').attr('action', payUrlTemplate.replace(/0$/, id));
+            $('#modal_payment_mode').val(paymentMode);
+            if (paymentMode === 'Bank Transfer') {
+                $('#modal_bank_name').val(bankName);
+                $('#modal_bank_branch').val(bankBranch);
+                $('#modal_account_number').val(accountNumber);
+                $('#modal_ifsc_code').val(ifscCode);
+                $('#modal_bank_details').show();
+            } else {
+                $('#modal_bank_details').hide();
+            }
             $('#payModal').modal('show');
         }
 
         $(document).ready(function () {
-            $('#example').DataTable();
+            $('#example').DataTable({
+                order: [[0, 'asc']]
+            });
         });
     </script>
     @include('includes.footer')

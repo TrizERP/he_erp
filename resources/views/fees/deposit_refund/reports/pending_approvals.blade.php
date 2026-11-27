@@ -46,7 +46,7 @@
                     <tr>
                         <th>Request No</th>
                         <th>Student</th>
-                        <th>Gr.No.</th>
+                        <th>Enrollment No.</th>
                         <th>Final Amount</th>
                         <th>Current Status</th>
                         <th>Bank Name</th>

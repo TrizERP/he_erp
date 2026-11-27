@@ -26,7 +26,7 @@
                     <tr>
                         <th>Request No</th>
                         <th>Student</th>
-                        <th>Gr.No.</th>
+                        <th>Enrollment No.</th>
                         <th>Final Amount</th>
                         <th>Status</th>
                         <th>Requested On</th>
@@ -102,7 +102,9 @@
         }
 
         $(document).ready(function () {
-            $('#example').DataTable();
+            $('#example').DataTable({
+                order: [[0, 'asc']]
+            });
         });
     </script>
     @include('includes.footer')

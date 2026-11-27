@@ -61,7 +61,7 @@
                         <tr>
                             <th>Sr.No</th>
                             <th>Student Name</th>
-                            <th>Gr.No.</th>
+                            <th>Enrollment No.</th>
                             <th>Standard</th>
                             <th>Division</th>
                             <th>Action</th>

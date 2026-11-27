@@ -45,7 +45,7 @@
                     <tr>
                         <th>Voucher No</th>
                         <th>Student</th>
-                        <th>Gr.No.</th>
+                        <th>Enrollment No.</th>
                         <th>Deduction Title</th>
                         <th>Amount</th>
                         <th>Remarks</th>

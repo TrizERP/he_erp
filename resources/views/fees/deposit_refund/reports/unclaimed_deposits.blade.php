@@ -34,7 +34,7 @@
                     <thead>
                     <tr>
                         <th>Student</th>
-                        <th>Gr.No.</th>
+                        <th>Enrollment No.</th>
                         <th>Semester</th>
                         <th>Division</th>
                         <th>Mobile</th>

@@ -293,7 +293,7 @@ class depositRefundApprovalController extends Controller
             ->where('dr.sub_institute_id', $sub_institute_id)
             ->where('dr.syear', $syear)
             ->where('dr.status', $status)
-            ->orderBy('dr.requested_date')
+            ->orderBy('dr.id')
             ->get()->toArray();
     }
 }
